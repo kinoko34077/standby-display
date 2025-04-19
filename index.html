@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Standby Display</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Helvetica Neue', sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .left-info {
+      flex: 1;
+      padding: 2vh 2vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-size: 3vh;
+      line-height: 1.8;
+    }
+    .right-clock {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .time {
+      font-size: 14vh;
+      font-weight: bold;
+    }
+    .seconds {
+      position: absolute;
+      bottom: 5vh;
+      right: 5vw;
+      font-size: 3vh;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="left-info">
+    <div id="year">2025年</div>
+    <div id="date">4月20日(日)</div>
+    <div id="weather">晴れ / 20℃</div>
+    <div id="misc">満月 / 大安</div>
+  </div>
+  <div class="right-clock">
+    <div class="time" id="clock">20:45</div>
+    <div class="seconds" id="seconds">:03</div>
+  </div>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${minutes}`;
+      document.getElementById('seconds').textContent = `:${seconds}`;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+  </script>
+</body>
+</html>
