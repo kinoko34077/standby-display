@@ -3,29 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Standby Display</title>
+  <title>Standby Clock</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="left-info">
-    <div id="year">2025年</div>
     <div id="date">4月20日(日)</div>
-    <div id="weather">晴れ / 20℃</div>
+    <div id="temp">20℃</div>
     <div id="misc">満月 / 大安</div>
   </div>
   <div class="right-clock">
-    <div class="time" id="clock">20:45</div>
+    <div class="time" id="clock">8:48</div>
     <div class="seconds" id="seconds">:03</div>
   </div>
 
   <script>
     function updateTime() {
       const now = new Date();
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      document.getElementById('clock').textContent = `${hours}:${minutes}`;
-      document.getElementById('seconds').textContent = `:${seconds}`;
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      const s = now.getSeconds().toString().padStart(2, '0');
+      document.getElementById("clock").textContent = `${h}:${m}`;
+      document.getElementById("seconds").textContent = `:${s}`;
     }
 
     setInterval(updateTime, 1000);
