@@ -86,9 +86,9 @@ html, body {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-45%, -50%);
+  transform: translate(-50%, -50%);
   font-family: 'D7', sans-serif;
-  font-size: min(110vh, 50vw);
+  font-size: min(105vh, 48vw);
   color: #70b8ff;
   text-align: center;
   line-height: 1;
@@ -102,7 +102,7 @@ html, body {
 .seconds {
   position: absolute;
   bottom: 5%;
-  right: 0vw;
+  right: 2vw;
   font-size: 5vw;
   opacity: 0.4;
   font-family: 'D7';
@@ -141,7 +141,7 @@ html, body {
   }
 
   .clock-block {
-    font-size: min(55vw, 55vh);
+    font-size: min(48vw, 55vh);
     transform: translate(-50%, -50%);
     z-index: 1;
   }
