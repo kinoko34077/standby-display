@@ -1,8 +1,14 @@
+@font-face {
+  font-family: D7;
+  src: url(https://exis9.github.io/tradingviews/fonts/digital-7.ttf);
+}
+
+
 body {
   margin: 0;
   background-color: #000;
   color: #fff;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: D7, 'Rajdhani', sans-serif;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -11,18 +17,16 @@ body {
   width: 100vw;
   overflow: hidden;
 }
-
 .left-info {
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding-left: 5vw;
   font-size: 3vh;
-  line-height: 1.8;
+  line-height: 2;
   max-width: 40vw;
   font-family: 'Noto Sans JP', sans-serif;
 }
-
 .right-clock {
   display: flex;
   align-items: center;
@@ -32,7 +36,6 @@ body {
   height: 100vh;
   padding-right: 4vw;
 }
-
 .time {
   font-size: 30vw;
   font-weight: 600;
@@ -40,12 +43,13 @@ body {
   line-height: 1;
   text-align: right;
 }
-
+.colon {
+  transition: opacity 0.3s ease-in-out;
+}
 .seconds {
   position: absolute;
   right: 6vw;
   bottom: 4vh;
   font-size: 3vh;
   opacity: 0.7;
-  transition: opacity 0.3s ease-in-out;
 }
