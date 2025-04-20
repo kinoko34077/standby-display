@@ -4,16 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Standby Clock</title>
-  <link rel="stylesheet" href="style.css" />
-
-  <script src="wakelock.js"></script>
-  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json" />
-  <!-- iOS用全画面表示 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#000000">
   <link rel="apple-touch-icon" href="icon-192.png" />
-
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="left-info">
@@ -22,7 +17,7 @@
     <div id="misc">満月 / 大安</div>
   </div>
   <div class="right-clock">
-    <div class="time" id="clock">8:48</div>
+    <div class="time" id="clock">08:48</div>
     <div class="seconds" id="seconds">:03</div>
   </div>
 
@@ -34,10 +29,15 @@
       const s = now.getSeconds().toString().padStart(2, '0');
       document.getElementById("clock").textContent = `${h}:${m}`;
       document.getElementById("seconds").textContent = `:${s}`;
+
+      // ：を点滅（秒ごとにON/OFF）
+      const blink = parseInt(s) % 2 === 0;
+      document.getElementById("seconds").style.opacity = blink ? "1" : "0";
     }
 
     setInterval(updateTime, 1000);
     updateTime();
   </script>
+  <script src="wakelock.js"></script>
 </body>
 </html>
