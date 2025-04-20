@@ -1,22 +1,33 @@
+/*
 @font-face {
   font-family: D7;
   src: url(https://exis9.github.io/tradingviews/fonts/digital-7.ttf);
 }
+*/
 
+:root {
+  --vh: 1vh;
+}
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  height: calc(var(--vh, 1vh) * 100);
+  width: 100vw;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  position: fixed;
+  inset: 0;
   background-color: #000;
   color: #fff;
-  font-family: D7, 'Rajdhani', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
 }
+
 .left-info {
   display: flex;
   flex-direction: column;
@@ -27,15 +38,17 @@ body {
   max-width: 40vw;
   font-family: 'Noto Sans JP', sans-serif;
 }
+
 .right-clock {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   flex-grow: 1;
-  height: 100vh;
+  height: 100%;
   padding-right: 4vw;
 }
+
 .time {
   font-size: 30vw;
   font-weight: 600;
@@ -43,13 +56,15 @@ body {
   line-height: 1;
   text-align: right;
 }
+
 .colon {
   transition: opacity 0.3s ease-in-out;
 }
+
 .seconds {
   position: absolute;
   right: 6vw;
   bottom: 4vh;
-  font-size: 3vh;
-  opacity: 0.7;
+  font-size: 8vh;
+  opacity: 0.4;
 }
