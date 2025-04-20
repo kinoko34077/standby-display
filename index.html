@@ -3,41 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Standby Clock</title>
+  <title>和風スタンバイ時計</title>
   <link rel="manifest" href="manifest.json" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#000000">
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#000000" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+    .left-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-left: 5vw;
+      font-size: 3vh;
+      line-height: 2;
+      max-width: 40vw;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .right-clock {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-grow: 1;
+      height: 100vh;
+      padding-right: 4vw;
+    }
+    .time {
+      font-size: 30vw;
+      font-weight: 600;
+      color: #70b8ff;
+      line-height: 1;
+      text-align: right;
+    }
+    .colon {
+      transition: opacity 0.3s ease-in-out;
+    }
+    .seconds {
+      position: absolute;
+      right: 6vw;
+      bottom: 4vh;
+      font-size: 3vh;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 <body>
   <div class="left-info">
-    <div id="date">4月20日(日)</div>
-    <div id="temp">20℃</div>
-    <div id="misc">満月 / 大安</div>
+    <div id="wareki">令和六年 睦月三日(火)</div>
+    <div id="seikoku">暮六つ</div>
+    <div id="jishin">亥三つ</div>
   </div>
   <div class="right-clock">
-    <div class="time" id="clock">08:48</div>
+    <div class="time">
+      <span id="hour">08</span><span class="colon">:</span><span id="minute">48</span>
+    </div>
     <div class="seconds" id="seconds">:03</div>
   </div>
 
-  <script>
-    function updateTime() {
-      const now = new Date();
-      const h = now.getHours().toString().padStart(2, '0');
-      const m = now.getMinutes().toString().padStart(2, '0');
-      const s = now.getSeconds().toString().padStart(2, '0');
-      document.getElementById("clock").textContent = `${h}:${m}`;
-      document.getElementById("seconds").textContent = `:${s}`;
-
-      // ：を点滅（秒ごとにON/OFF）
-      const blink = parseInt(s) % 2 === 0;
-      document.getElementById("seconds").style.opacity = blink ? "1" : "0";
-    }
-
-    setInterval(updateTime, 1000);
-    updateTime();
-  </script>
+  <script src="main.js"></script>
   <script src="wakelock.js"></script>
 </body>
 </html>
