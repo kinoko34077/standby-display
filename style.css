@@ -14,9 +14,9 @@ html, body {
   padding: 0;
   height: calc(var(--vh, 1vh) * 100);
   width: 100vw;
-  overflow: hidden;
+  /*overflow: hidden;
   overscroll-behavior: none;
-  touch-action: none;
+  touch-action: none;*/
   position: fixed;
   inset: 0;
   background-color: #000;

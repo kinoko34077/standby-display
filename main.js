@@ -45,11 +45,19 @@ function getSeikoku(h) {
 }
 
 function getJishin(h, m) {
-  const jikan = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
-  const base = Math.floor(((h + 1) % 24) / 2) % 12;
-  const quarter = Math.floor(m / 30);
-  return jikan[base] + ["一","二","三","四"][quarter] + "つ";
-}
+    const jikan = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+    const totalMinutes = h * 60 + m;
+  
+    // 23:00を起点にする（0時ではない点に注意）
+    const adjustedMinutes = (totalMinutes - 1380 + 1440) % 1440;
+  
+    const jikanIndex = Math.floor(adjustedMinutes / 120) % 12;
+    const mod30 = adjustedMinutes % 120;
+    const quarter = Math.floor(mod30 / 30);
+  
+    return jikan[jikanIndex] + ["一", "二", "三", "四"][quarter] + "つ";
+  }
+  
 
 setInterval(updateTime, 1000);
 updateTime();
