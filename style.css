@@ -1,9 +1,8 @@
-/*
+/* フォント読み込み */
 @font-face {
   font-family: D7;
   src: url(https://exis9.github.io/tradingviews/fonts/digital-7.ttf);
 }
-*/
 
 :root {
   --vh: 1vh;
@@ -14,57 +13,149 @@ html, body {
   padding: 0;
   height: calc(var(--vh, 1vh) * 100);
   width: 100vw;
-  /*overflow: hidden;
-  overscroll-behavior: none;
-  touch-action: none;*/
   position: fixed;
   inset: 0;
   background-color: #000;
   color: #fff;
   font-family: 'Rajdhani', sans-serif;
+  overflow: hidden;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
 
-.left-info {
+.main-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 2vh 2vw;
+  gap: 2vw;
+  position: relative;
+}
+
+.left-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 30vw;
+  flex-shrink: 0;
+  gap: 2vh;
+  z-index: 2;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1vh;
+}
+
+.extra-block-horizontal {
+  display: block;
+  font-size: 4vh;
+  line-height: 1.8;
+  font-family: 'Noto Sans JP', sans-serif;
+  z-index: 2;
+}
+
+.extra-block-vertical {
+  display: none;
+  font-size: 4vh;
+  line-height: 1.8;
+  font-family: 'Noto Sans JP', sans-serif;
+  z-index: 2;
+}
+
+.block {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-left: 5vw;
-  font-size: 3vh;
-  line-height: 2;
-  max-width: 40vw;
+  flex-shrink: 0;
+}
+
+.date-block {
+  font-size: 4vh;
+  line-height: 1.6;
   font-family: 'Noto Sans JP', sans-serif;
 }
 
-.right-clock {
+.clock-block {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-45%, -50%);
+  font-family: 'D7', sans-serif;
+  font-size: min(110vh, 50vw);
+  color: #70b8ff;
+  text-align: center;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  flex-grow: 1;
-  height: 100%;
-  padding-right: 4vw;
-}
-
-.time {
-  font-size: 30vw;
-  font-weight: 600;
-  color: #70b8ff;
-  line-height: 1;
-  text-align: right;
-}
-
-.colon {
-  transition: opacity 0.3s ease-in-out;
+  z-index: 1;
+  white-space: nowrap;
 }
 
 .seconds {
   position: absolute;
-  right: 6vw;
-  bottom: 4vh;
-  font-size: 8vh;
+  bottom: 5%;
+  right: 0vw;
+  font-size: 5vw;
   opacity: 0.4;
+  font-family: 'D7';
+  z-index: 3;
+}
+
+/* 縦画面用レイアウト調整 */
+@media (max-aspect-ratio: 1/1) {
+  html, body {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .main-layout {
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4vh;
+    padding: 3vh 2vw;
+  }
+
+  .left-area {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: auto;
+    max-width: 90vw;
+    gap: 2vh;
+    z-index: 2;
+  }
+
+  .container {
+    align-items: center;
+    gap: 1vh;
+  }
+
+  .clock-block {
+    font-size: min(55vw, 55vh);
+    transform: translate(-50%, -50%);
+    z-index: 1;
+  }
+
+  .seconds {
+    font-size: 8vh;
+    bottom: -8vh;
+  }
+
+  .extra-block-horizontal {
+    display: none;
+  }
+
+  .extra-block-vertical {
+    display: block;
+  }
 }

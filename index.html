@@ -11,30 +11,43 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="left-info">
-    <div id="wareki-line1">令和七年</div>
-    <div id="wareki-line2">卯月廿日(日)</div>
-    <hr style="width:80%; border: 0.5px solid #555;" />
-    <div><span id="seikoku">朝四つ</span> | <span id="weather">🌤20℃</span></div>
-    <div><span id="jishin">巳二つ</span> | <span id="moon">🌓友引</span></div>
-  </div>
-  <div class="right-clock">
-    <div class="time">
-      <span id="hour">08</span><span class="colon">:</span><span id="minute">48</span>
+  <div class="main-layout">
+    <!-- 左側：日付と（横画面用）その他情報 -->
+    <div class="left-area">
+      <div class="container">
+        <div class="block date-block">
+          <div id="wareki-line1">令和七年</div>
+          <div id="wareki-line2">卯月廿日(日)</div>
+        </div>
+      </div>
+      <div class="extra-block-horizontal">
+        <div><span class="seikoku">朝四つ</span> <span class="weather">🌤20℃</span></div>
+        <div><span class="jishin">巳二つ</span> <span class="moon">🌓友引</span></div>
+      </div>
     </div>
-    <div class="seconds" id="seconds">:03</div>
+
+    <!-- 時計本体 -->
+    <div class="block clock-block">
+      <div><span id="hour">08</span><span class="colon">:</span><span id="minute">48</span></div>
+      <div class="seconds" id="seconds">:03</div>
+    </div>
+
+    <!-- 縦画面用：その他情報（横画面時は非表示） -->
+    <div class="extra-block-vertical">
+      <div><span class="seikoku">朝四つ</span> <span class="weather">🌤20℃</span></div>
+      <div><span class="jishin">巳二つ</span> <span class="moon">🌓友引</span></div>
+    </div>
   </div>
 
   <script src="main.js"></script>
   <script src="wakelock.js"></script>
   <script src="fullheight.js"></script>
-
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
         .then(reg => console.log('Service Worker registered'))
         .catch(err => console.error('Service Worker failed:', err));
     }
-    </script>
+  </script>
 </body>
 </html>
