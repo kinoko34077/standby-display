@@ -1,11 +1,17 @@
 <!---
 # standby-display
 
-とりあえずテスト
 -->
 # 概要:和風スタンバイ時計
 
-📱 iPhone/iPad のホーム画面から常時表示可能な、**和暦・正刻・時辰・~~六曜~~(今後実装)付きの和風時計**です。
+<p align="center">
+  <img src="./sample.png" alt="関連ノートビューのプレビュー" width="100%">
+</p>
+
+
+📱 iPhone/iPad のホーム画面から常時表示可能な、**和暦･正刻･時辰･~~六曜･天気~~(今後実装)付きの和風時計**です。
+
+[ここ](https://kinoko34077.github.io/standby-display/)で見れます
 
 iPhone14pro以上じゃないとスタンバイ常時表示できないの困っちゃうよね
 
