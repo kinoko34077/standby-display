@@ -83,23 +83,17 @@ async function updateTime() {
     const d = date.getDate().toString().padStart(2, '0');
     const isoDate = `${y}-${m}-${d}`;
   
-    const cache = JSON.parse(localStorage.getItem("rokuyoCache") || "{}");
-    if (cache.date === isoDate) {
-      return cache.rokuyo;
-    }
-  
     try {
-      const res = await fetch(`https://api.mapflight.net/jdate?date=${isoDate}`);
-      const text = await res.text();
-      const json = JSON.parse(text);
-      const rokuyo = json[0]?.rokuyo || "不明";
-      localStorage.setItem("rokuyoCache", JSON.stringify({ date: isoDate, rokuyo }));
-      return rokuyo;
+      const url = `https://rokuyo-proxy.kinoko-sub16.workers.dev/?rokuyo&date=${isoDate}`;
+      const res = await fetch(url);
+      const json = await res.json(); // ← 中継されているのでCORSエラーは出ません
+      return json[0]?.rokuyo || "不明";
     } catch (e) {
       console.error("六曜取得失敗", e);
       return "不明";
     }
   }
+  
   
 
   updateTime();
