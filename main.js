@@ -1,31 +1,47 @@
 //main.js
-function updateTime() {
-    const now = new Date();
-    const h = now.getHours().toString().padStart(2, '0');
-    const m = now.getMinutes().toString().padStart(2, '0');
-    const s = now.getSeconds().toString().padStart(2, '0');
-    document.getElementById("hour").textContent = h;
-    document.getElementById("minute").textContent = m;
-    document.getElementById("seconds").textContent = `:${s}`;
-    document.querySelector(".colon").style.opacity = (parseInt(s) % 2 === 0) ? "1" : "0";
-  
-    const eraYear = now.getFullYear() - 2018;
-    const eraStr = "令和" + toKanjiNum(eraYear) + "年";
-    const jpMonths = ['睦月','如月','弥生','卯月','皐月','水無月','文月','葉月','長月','神無月','霜月','師走'];
-    const jpDays = ['日','月','火','水','木','金','土'];
-    const warekiLine1 = eraStr;
-    const warekiLine2 = `${jpMonths[now.getMonth()]}${toKanjiNum(now.getDate())}日(${jpDays[now.getDay()]})`;
-    document.getElementById("wareki-line1").textContent = warekiLine1;
-    document.getElementById("wareki-line2").textContent = warekiLine2;
-  
-    setTextAll(".seikoku", getSeikoku(now.getHours()));
-    setTextAll(".jishin", getJishin(now.getHours(), now.getMinutes()));
-    setTextAll(".weather", "🌤20℃");
-    setTextAll(".moon", "🌓友引");
+async function updateTime() {
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const s = now.getSeconds().toString().padStart(2, '0');
+  document.getElementById("hour").textContent = h;
+  document.getElementById("minute").textContent = m;
+  document.getElementById("seconds").textContent = `:${s}`;
+  document.querySelector(".colon").style.opacity = (parseInt(s) % 2 === 0) ? "1" : "0";
 
-    const delay = 1000 - (now % 1000); // 次の秒境界までの残りミリ秒
-    setTimeout(updateTime, delay);
-  }
+  const eraYear = now.getFullYear() - 2018;
+  const eraStr = "令和" + toKanjiNum(eraYear) + "年";
+  const jpMonths = ['睦月','如月','弥生','卯月','皐月','水無月','文月','葉月','長月','神無月','霜月','師走'];
+  const jpDays = ['日','月','火','水','木','金','土'];
+
+  const month = jpMonths[now.getMonth()];
+  const day = toKanjiNum(now.getDate());
+  const dayIndex = now.getDay(); // ← これが抜けていた
+  const dayStr = jpDays[dayIndex];
+
+  const warekiLine1 = eraStr;
+  const warekiLine2 = `${month}${day}日<span class="weekday weekday-${dayIndex}">${dayStr}</span>`;
+
+  document.getElementById("wareki-line1").textContent = warekiLine1;
+  document.getElementById("wareki-line2").innerHTML = warekiLine2;
+
+  setTextAll(".seikoku", getSeikoku(now.getHours()));
+  setTextAll(".jishin", getJishin(now.getHours(), now.getMinutes()));
+  setTextAll(".weather", "🌤20℃");
+
+  const [moonMark, rokuyo] = await Promise.all([
+    fetchMoonPhase(),
+    fetchRokuyo(now)
+  ]);
+
+
+  
+  setTextAll(".moon", `${moonMark}${rokuyo}`); // 🌔大安 のように表示
+
+  const delay = 1000 - (now % 1000);
+  setTimeout(updateTime, delay);
+}
+
   
   function setTextAll(selector, value) {
     document.querySelectorAll(selector).forEach(el => el.textContent = value);
@@ -60,7 +76,31 @@ function updateTime() {
     const quarter = Math.floor(mod30 / 30);
     return jikan[jikanIndex] + ["一", "二", "三", "四"][quarter] + "つ";
   }
+
+  async function fetchRokuyo(date = new Date()) {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    const isoDate = `${y}-${m}-${d}`;
   
-  setInterval(updateTime, 1000);
+    const cache = JSON.parse(localStorage.getItem("rokuyoCache") || "{}");
+    if (cache.date === isoDate) {
+      return cache.rokuyo;
+    }
+  
+    try {
+      const res = await fetch(`https://api.mapflight.net/jdate?date=${isoDate}`);
+      const text = await res.text();
+      const json = JSON.parse(text);
+      const rokuyo = json[0]?.rokuyo || "不明";
+      localStorage.setItem("rokuyoCache", JSON.stringify({ date: isoDate, rokuyo }));
+      return rokuyo;
+    } catch (e) {
+      console.error("六曜取得失敗", e);
+      return "不明";
+    }
+  }
+  
+
   updateTime();
   

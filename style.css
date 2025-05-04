@@ -24,6 +24,23 @@ html, body {
   justify-content: center;
 }
 
+
+.weekday {
+  font-weight: bold;
+}
+
+.weekday-0 { color: red; }     /* 日曜 */
+.weekday-6 { color: blue; }    /* 土曜 */
+.weekday-1,
+.weekday-2,
+.weekday-3,
+.weekday-4,
+.weekday-5 {
+  color: gray;                 /* 平日 */
+}
+
+
+
 .main-layout {
   display: flex;
   flex-direction: row;
