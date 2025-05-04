@@ -22,6 +22,9 @@ function updateTime() {
     setTextAll(".jishin", getJishin(now.getHours(), now.getMinutes()));
     setTextAll(".weather", "🌤20℃");
     setTextAll(".moon", "🌓友引");
+
+    const delay = 1000 - (now % 1000); // 次の秒境界までの残りミリ秒
+    setTimeout(updateTime, delay);
   }
   
   function setTextAll(selector, value) {
