@@ -1,6 +1,39 @@
 //main.js
+var clockOffset = 0;
+
+function syncTimeOffset() {
+  var t0 = Date.now();
+  return fetch("https://clock-server.kinoko-sub16.workers.dev/")
+    .then(function(res) { return res.json(); })
+    .then(function(json) {
+      var t1 = Date.now();
+      var serverTime = json.serverTime;
+      var rtt = t1 - t0;
+      clockOffset = serverTime + rtt / 2 - t1;
+      console.log("⏱ clock offset =", clockOffset, "ms");
+    }).catch(function(err) {
+      console.warn("時刻同期失敗", err);
+      clockOffset = 0;
+    });
+}
+
+function nowSynced() {
+  return new Date(Date.now() + clockOffset);
+}
+
+function updateClockOnly() {
+  var now = nowSynced();
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const s = now.getSeconds().toString().padStart(2, '0');
+  document.getElementById("hour").textContent = h;
+  document.getElementById("minute").textContent = m;
+  document.getElementById("seconds").textContent = `:${s}`;
+  document.querySelector(".colon").style.opacity = (parseInt(s) % 2 === 0) ? "1" : "0";
+}
+
 function updateTime() {
-  const now = new Date();
+  var now = nowSynced();
   const h = now.getHours().toString().padStart(2, '0');
   const m = now.getMinutes().toString().padStart(2, '0');
   const s = now.getSeconds().toString().padStart(2, '0');
@@ -44,16 +77,12 @@ function updateTime() {
       setTextAll(".moon", `${moonMark}${rokuyo}`);
     });
   });
-
-  // 次の描畫を1秒後に調整（實秒同期）
-  const delay = 1000 - (Date.now() % 1000);
-  setTimeout(updateTime, delay);
 }
 
   function setTextAll(selector, value) {
     document.querySelectorAll(selector).forEach(el => el.textContent = value);
   }
-  
+
   function toKanjiNum(num) {
     const kanji = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
     if (num <= 10) return kanji[num];
@@ -65,7 +94,7 @@ function updateTime() {
     let ones = num % 10;
     return (tens === 1 ? "十" : kanji[tens] + "十") + (ones === 0 ? "" : kanji[ones]);
   }
-  
+
   function getSeikoku(h) {
     var map = [
       "夜九", "曉八", "曉七", "明六", "朝五", "朝四",
@@ -73,7 +102,7 @@ function updateTime() {
     ];
     return map[Math.floor((h + 1) % 24 / 2)] + "ツ";
   }  
-  
+
   function getJishin(h, m) {
     const jikan = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
     const totalMinutes = h * 60 + m;
@@ -89,7 +118,7 @@ function updateTime() {
     const m = (date.getMonth() + 1).toString().padStart(2, '0');
     const d = date.getDate().toString().padStart(2, '0');
     const isoDate = `${y}-${m}-${d}`;
-  
+
     try {
       const url = `https://rokuyo-proxy.kinoko-sub16.workers.dev/?rokuyo&date=${isoDate}`;
       const res = await fetch(url);
@@ -100,7 +129,7 @@ function updateTime() {
       return "不明";
     }
   }
-  
+
   function fetchWeather(lat, lon) {
     var cache = JSON.parse(localStorage.getItem("weatherCache") || "{}");
     var now = Date.now();
@@ -129,7 +158,10 @@ function updateTime() {
         return "🌫不明";
       });
   }
-  
 
-  updateTime();
-  
+  syncTimeOffset().then(function() {
+    updateTime(); // 初回描画（六曜・天気など全部）
+    updateClockOnly(); // 時刻だけ先に1回描画
+    setInterval(updateClockOnly, 1000); // 毎秒更新
+    setInterval(syncTimeOffset, 3600000); // 1時間ごと再同期（任意）
+  });
