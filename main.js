@@ -1,5 +1,5 @@
 //main.js
-async function updateTime() {
+function updateTime() {
   const now = new Date();
   const h = now.getHours().toString().padStart(2, '0');
   const m = now.getMinutes().toString().padStart(2, '0');
@@ -16,7 +16,7 @@ async function updateTime() {
 
   const month = jpMonths[now.getMonth()];
   const day = toKanjiNum(now.getDate());
-  const dayIndex = now.getDay(); // ← これが抜けていた
+  const dayIndex = now.getDay();
   const dayStr = jpDays[dayIndex];
 
   const warekiLine1 = eraStr;
@@ -29,18 +29,18 @@ async function updateTime() {
   setTextAll(".jishin", getJishin(now.getHours(), now.getMinutes()));
   setTextAll(".weather", "🌤20℃");
 
-  const [moonMark, rokuyo] = await Promise.all([
-    fetchMoonPhase(),
-    fetchRokuyo(now)
-  ]);
+  // 月齢・六曜は非同期で取得・表示
+  fetchMoonPhase().then(moonMark => {
+    fetchRokuyo(now).then(rokuyo => {
+      setTextAll(".moon", `${moonMark}${rokuyo}`);
+    });
+  });
 
-
-  
-  setTextAll(".moon", `${moonMark}${rokuyo}`); // 🌔大安 のように表示
-
-  const delay = 1000 - (now % 1000);
+  // 次の描画を1秒後に調整（実秒同期）
+  const delay = 1000 - (Date.now() % 1000);
   setTimeout(updateTime, delay);
 }
+
 
   
   function setTextAll(selector, value) {
