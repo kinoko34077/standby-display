@@ -11,7 +11,7 @@ function updateTime() {
 
   const eraYear = now.getFullYear() - 2018;
   const eraStr = "令和" + toKanjiNum(eraYear) + "年";
-  const jpMonths = ['睦月','如月','弥生','卯月','皐月','水無月','文月','葉月','長月','神無月','霜月','師走'];
+  const jpMonths = ['睦月','如月','彌生','卯月','皐月','水無月','文月','葉月','長月','神無月','霜月','師走'];
   const jpDays = ['日','月','火','水','木','金','土'];
 
   const month = jpMonths[now.getMonth()];
@@ -27,22 +27,29 @@ function updateTime() {
 
   setTextAll(".seikoku", getSeikoku(now.getHours()));
   setTextAll(".jishin", getJishin(now.getHours(), now.getMinutes()));
-  setTextAll(".weather", "🌤20℃");
-
-  // 月齢・六曜は非同期で取得・表示
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var lat = pos.coords.latitude;
+    var lon = pos.coords.longitude;
+    fetchWeather(lat, lon).then(function(text) {
+      setTextAll(".weather", text);
+    });
+  }, function(err) {
+    console.error("位置情報取得失敗", err);
+    setTextAll(".weather", "🌫不明");
+  });
+  
+  // 月齡・六曜は非同期で取得・表示
   fetchMoonPhase().then(moonMark => {
     fetchRokuyo(now).then(rokuyo => {
       setTextAll(".moon", `${moonMark}${rokuyo}`);
     });
   });
 
-  // 次の描画を1秒後に調整（実秒同期）
+  // 次の描畫を1秒後に調整（實秒同期）
   const delay = 1000 - (Date.now() % 1000);
   setTimeout(updateTime, delay);
 }
 
-
-  
   function setTextAll(selector, value) {
     document.querySelectorAll(selector).forEach(el => el.textContent = value);
   }
@@ -60,12 +67,12 @@ function updateTime() {
   }
   
   function getSeikoku(h) {
-    const map = [
-      "夜九つ", "暁八つ", "暁七つ", "明六つ", "朝五つ", "朝四つ",
-      "昼九つ", "昼八つ", "夕七つ", "暮六つ", "宵五つ", "暮四つ"
+    var map = [
+      "夜九", "曉八", "曉七", "明六", "朝五", "朝四",
+      "晝九", "晝八", "夕七", "暮六", "宵五", "暮四"
     ];
-    return map[Math.floor((h + 1) % 24 / 2)];
-  }
+    return map[Math.floor((h + 1) % 24 / 2)] + "ツ";
+  }  
   
   function getJishin(h, m) {
     const jikan = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
@@ -74,7 +81,7 @@ function updateTime() {
     const jikanIndex = Math.floor(adjustedMinutes / 120) % 12;
     const mod30 = adjustedMinutes % 120;
     const quarter = Math.floor(mod30 / 30);
-    return jikan[jikanIndex] + ["一", "二", "三", "四"][quarter] + "つ";
+    return jikan[jikanIndex] + ["一", "二", "三", "四"][quarter] + "ツ";
   }
 
   async function fetchRokuyo(date = new Date()) {
@@ -86,7 +93,7 @@ function updateTime() {
     try {
       const url = `https://rokuyo-proxy.kinoko-sub16.workers.dev/?rokuyo&date=${isoDate}`;
       const res = await fetch(url);
-      const json = await res.json(); // ← 中継されているのでCORSエラーは出ません
+      const json = await res.json(); // ← 中繼されているのでCORSエラーは出ません
       return json[0]?.rokuyo || "不明";
     } catch (e) {
       console.error("六曜取得失敗", e);
@@ -94,6 +101,34 @@ function updateTime() {
     }
   }
   
+  function fetchWeather(lat, lon) {
+    var cache = JSON.parse(localStorage.getItem("weatherCache") || "{}");
+    var now = Date.now();
+  
+    if (cache.timestamp && now - cache.timestamp < 15 * 60 * 1000) {
+      return Promise.resolve(cache.data);
+    }
+  
+    return fetch(`https://weather-proxy.kinoko-sub16.workers.dev/?lat=${lat}&lon=${lon}`)
+      .then(res => res.json())
+      .then(json => {
+        var iconMap = {
+          "Clear": "☀", "Clouds": "☁", "Rain": "🌧", "Snow": "❄",
+          "Thunderstorm": "⚡", "Drizzle": "🌦", "Mist": "🌫"
+        };
+        var mark = iconMap[json.weather] || "❓";
+        var temp = Math.round(json.temp) + "℃";
+        var display = `${mark}${temp}`;
+        localStorage.setItem("weatherCache", JSON.stringify({
+          timestamp: now, data: display
+        }));
+        return display;
+      })
+      .catch(err => {
+        console.error("天氣取得失敗", err);
+        return "🌫不明";
+      });
+  }
   
 
   updateTime();
