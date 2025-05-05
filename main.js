@@ -159,9 +159,18 @@ function updateTime() {
       });
   }
 
-  syncTimeOffset().then(function() {
-    updateTime(); // 初回描画（六曜・天気など全部）
-    updateClockOnly(); // 時刻だけ先に1回描画
-    setInterval(updateClockOnly, 1000); // 毎秒更新
-    setInterval(syncTimeOffset, 3600000); // 1時間ごと再同期（任意）
-  });
+  syncTimeOffset().then(startClock);
+
+  function startClock() {
+    updateTime(); // 六曜・天気・月齢などの初回取得
+  
+    var now = nowSynced();
+    var delay = 1000 - now.getMilliseconds();
+  
+    setTimeout(function() {
+      updateClockOnly(); // 秒境界に合わせて1回描画
+      setInterval(updateClockOnly, 1000); // 以後、1秒毎に同期描画
+    }, delay);
+  
+    setInterval(syncTimeOffset, 3600000); // 任意：1時間ごとに時刻再同期
+  }
