@@ -93,7 +93,7 @@ function setTextAll(selector, value) {
 
 function toKanjiNum(num) {
   const kanji = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
-  if (num <= 10) return kanji[num];
+  if (num < 10) return kanji[num];
   if (num < 20) return "十" + (num % 10 === 0 ? "" : kanji[num % 10]);
   if (num < 30) return "廿" + (num % 10 === 0 ? "" : kanji[num % 10]);
   if (num < 40) return "丗" + (num % 10 === 0 ? "" : kanji[num % 10]);
