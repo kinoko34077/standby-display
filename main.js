@@ -1,5 +1,4 @@
 //main.js
-//main.js
 var clockOffset = 0;
 var geoPosition = null; // 位置情報キャッシュ
 var clockInterval = null;
@@ -212,24 +211,33 @@ function startClock() {
     };
     updateTime();
     waitForSecondBoundaryThenStart();
+    
+    // ⏱ 1時間ごとの時刻再同期＋正確な秒リスタート
+    setInterval(() => {
+      syncTimeOffset().then(() => {
+        clearInterval(clockInterval);
+        waitForSecondBoundaryThenStart();
+      });
+    }, 3600000);
 
-    // 初回3回だけ秒ズレチェック
-    driftCheckCount = 0;
-    driftCheckTimer = setInterval(watchDrift, 5000);
+    // 📆 1時間ごとの暦・天気などの再描画
+    setInterval(updateTime, 3600000);
 
-    // 1時間ごとの時刻再同期（ズレ検知はしない）
-    setInterval(syncTimeOffset, 3600000);
   }, function(err) {
     console.error("位置情報取得失敗", err);
     updateTime();
     waitForSecondBoundaryThenStart();
 
-    // 初回3回だけ秒ズレチェック
-    driftCheckCount = 0;
-    driftCheckTimer = setInterval(watchDrift, 5000);
+    setInterval(() => {
+      syncTimeOffset().then(() => {
+        clearInterval(clockInterval);
+        waitForSecondBoundaryThenStart();
+      });
+    }, 3600000);
 
-    setInterval(syncTimeOffset, 3600000);
+    setInterval(updateTime, 3600000);
   });
 }
+
 
 syncTimeOffset().then(startClock);
