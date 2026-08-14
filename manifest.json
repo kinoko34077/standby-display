@@ -1,13 +1,16 @@
 {
   "name": "Standby Display",
   "short_name": "Standby",
-  "start_url": "index.html",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
+  "description": "和暦表示、正刻、時辰、天気、月齢、六曜をまとめて表示する和風スタンバイ時計です。",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     }

@@ -4,68 +4,288 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>和風スタンバイ時計</title>
-    <meta name="mobile-web-app-capable" content="yes">
-  
-    <!-- OGP -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="和風スタンバイ時計" />
-    <meta property="og:description" content="和暦･正刻･時辰･六曜･月齢付｡ｽﾏﾎでPWA常時表示対応のスタンバイ時計｡" />
-    <meta property="og:url" content="https://kinoko34077.github.io/standby-display/" />
-    <meta property="og:image" content="https://kinoko34077.github.io/standby-display/icon-192.png" />
-  
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="和風スタンバイ時計" />
-    <meta name="twitter:description" content="和暦･正刻･時辰･六曜･月齢付｡ｽﾏﾎでPWA常時表示対応のスタンバイ時計｡" />
-    <meta name="twitter:image" content="https://kinoko34077.github.io/standby-display/icon-192.png" />
-  
-    <!-- PWA & style -->
-    <link rel="manifest" href="manifest.json" />
+    <meta
+      name="description"
+      content="和暦表示、正刻、時辰、天気、月齢、六曜をまとめて表示する和風スタンバイ時計です。"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#000000" />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="和風スタンバイ時計" />
+    <meta
+      property="og:description"
+      content="和暦表示、正刻、時辰、天気、月齢、六曜をまとめて表示する和風スタンバイ時計です。"
+    />
+    <meta
+      property="og:url"
+      content="https://kinoko34077.github.io/standby-display/"
+    />
+    <meta
+      property="og:image"
+      content="https://kinoko34077.github.io/standby-display/icon-192.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="和風スタンバイ時計" />
+    <meta
+      name="twitter:description"
+      content="和暦表示、正刻、時辰、天気、月齢、六曜をまとめて表示する和風スタンバイ時計です。"
+    />
+    <meta
+      name="twitter:image"
+      content="https://kinoko34077.github.io/standby-display/icon-192.png"
+    />
+    <link rel="manifest" href="./manifest.json" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Rajdhani:wght@500;700&display=swap"
+    />
+    <link rel="stylesheet" href="./style.css" />
   </head>
-  
-<body>
-  <div class="main-layout">
-    <!-- 左側：日付と（横画面用）その他情報 -->
-    <div class="left-area">
-      <div class="container">
+  <body data-writing-mode="horizontal" data-settings-open="false">
+    <main class="main-layout">
+      <section class="date-panel">
         <div class="block date-block">
-          <div id="wareki-line1">令和七年</div>
-          <div id="wareki-line2">卯月廿日土</div>
+          <div id="wareki-line1">令和八年</div>
+          <div id="wareki-line2">
+            葉月十四日<span class="weekday weekday-5">金</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="clock-panel" aria-label="現在時刻">
+        <div class="block clock-block">
+          <div class="time-line">
+            <span id="hour">08</span><span class="colon">:</span
+            ><span id="minute">48</span>
+          </div>
+          <div class="seconds" id="seconds">:03</div>
+        </div>
+      </section>
+
+      <section class="extra-panel">
+        <div class="info-line">
+          <span class="seikoku">朝五つ</span>
+          <span class="weather" id="weather">⛅--℃</span>
+        </div>
+        <div class="info-line">
+          <span class="jishin">辰四つ</span>
+          <span class="supplemental-pair">
+            <span class="moon-phase" id="moon-phase">◐</span><span class="rokuyo" id="rokuyo">未取得</span>
+          </span>
+        </div>
+      </section>
+    </main>
+
+    <div class="settings-trigger-layer">
+      <button
+        id="settings-open"
+        class="settings-trigger"
+        type="button"
+        aria-label="設定"
+        title="設定"
+      >
+        <img
+          src="./assets/settings-trigger.png"
+          class="settings-trigger-image"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+        />
+      </button>
+    </div>
+
+    <div
+      id="settings-overlay"
+      class="settings-overlay"
+      data-view="fullscreen"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-title"
+      hidden
+    >
+      <div class="settings-shell">
+        <header class="settings-toolbar">
+          <div class="settings-toolbar-title">
+            <h1 id="settings-title">設定</h1>
+            <p id="settings-status" class="settings-status" role="status" aria-live="polite"></p>
+          </div>
+          <div class="settings-toolbar-actions">
+            <button
+              id="settings-view-toggle"
+              class="toolbar-button"
+              type="button"
+              aria-label="部分表示へ切替"
+            >
+              部分
+            </button>
+            <button
+              id="settings-close"
+              class="toolbar-icon-button"
+              type="button"
+              aria-label="閉じる"
+              title="閉じる"
+            >
+              <span aria-hidden="true">✕</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="settings-grid">
+          <section class="settings-section">
+            <h2>時計設定</h2>
+
+            <label class="control-row">
+              <span class="control-label">秒表示</span>
+              <span class="switch">
+                <input id="setting-clock-seconds" type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+
+            <div class="control-row">
+              <span class="control-label">時間形式</span>
+              <div class="segmented-control" role="radiogroup" aria-label="時間形式">
+                <label class="segment">
+                  <input type="radio" name="hour-format" value="24" />
+                  <span>24時間</span>
+                </label>
+                <label class="segment">
+                  <input type="radio" name="hour-format" value="12" />
+                  <span>12時間</span>
+                </label>
+              </div>
+            </div>
+
+            <label class="control-row control-row-select">
+              <span class="control-label">時計フォント</span>
+              <select id="setting-clock-font" class="select-control" aria-label="時計フォント"></select>
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h2>表記設定</h2>
+
+            <div class="control-row">
+              <span class="control-label">年表示</span>
+              <div class="segmented-control" role="radiogroup" aria-label="年表示">
+                <label class="segment">
+                  <input type="radio" name="year-system" value="wareki" />
+                  <span>和暦</span>
+                </label>
+                <label class="segment">
+                  <input type="radio" name="year-system" value="western" />
+                  <span>西暦</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <span class="control-label">字体</span>
+              <div class="segmented-control" role="radiogroup" aria-label="字体">
+                <label class="segment">
+                  <input type="radio" name="character-style" value="new" />
+                  <span>新字体</span>
+                </label>
+                <label class="segment">
+                  <input type="radio" name="character-style" value="old" />
+                  <span>旧字体</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <span class="control-label">書字方向</span>
+              <div class="segmented-control" role="radiogroup" aria-label="書字方向">
+                <label class="segment">
+                  <input type="radio" name="writing-mode" value="horizontal" />
+                  <span>横書き</span>
+                </label>
+                <label class="segment">
+                  <input type="radio" name="writing-mode" value="vertical" />
+                  <span>縦書き</span>
+                </label>
+              </div>
+            </div>
+
+            <label class="control-row control-row-select">
+              <span class="control-label">日本語フォント</span>
+              <select id="setting-text-font" class="select-control" aria-label="日本語フォント"></select>
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h2>表示情報</h2>
+
+            <label class="control-row">
+              <span class="control-label">天気</span>
+              <span class="switch">
+                <input id="setting-visibility-weather" type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+
+            <label class="control-row">
+              <span class="control-label">月齢</span>
+              <span class="switch">
+                <input id="setting-visibility-moon" type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+
+            <label class="control-row">
+              <span class="control-label">六曜</span>
+              <span class="switch">
+                <input id="setting-visibility-rokuyo" type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h2>色設定</h2>
+
+            <label class="control-row color-row">
+              <span class="control-label">背景色</span>
+              <span class="color-control">
+                <input id="setting-color-background" type="color" aria-label="背景色" />
+                <output id="setting-color-background-value" class="color-value">#000000</output>
+              </span>
+            </label>
+
+            <label class="control-row color-row">
+              <span class="control-label">文字色</span>
+              <span class="color-control">
+                <input id="setting-color-text" type="color" aria-label="文字色" />
+                <output id="setting-color-text-value" class="color-value">#ffffff</output>
+              </span>
+            </label>
+
+            <label class="control-row color-row">
+              <span class="control-label">時計色</span>
+              <span class="color-control">
+                <input id="setting-color-clock" type="color" aria-label="時計色" />
+                <output id="setting-color-clock-value" class="color-value">#70b8ff</output>
+              </span>
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h2>その他</h2>
+
+            <div class="action-column">
+              <button id="settings-copy-url" class="action-button" type="button">
+                URLコピー
+              </button>
+              <button id="settings-reset" class="action-button action-button-danger" type="button">
+                初期化
+              </button>
+            </div>
+          </section>
         </div>
       </div>
-      <div class="extra-block-horizontal">
-        <div><span class="seikoku">朝四つ</span> <span class="weather">🌤20℃</span></div>
-        <div><span class="jishin">巳二つ</span> <span class="moon">🌓友引</span></div>
-      </div>
     </div>
 
-    <!-- 時計本体 -->
-    <div class="block clock-block">
-      <div><span id="hour">08</span><span class="colon">:</span><span id="minute">48</span></div>
-      <div class="seconds" id="seconds">:03</div>
-    </div>
-
-    <!-- 縦画面用：その他情報（横画面時は非表示） -->
-    <div class="extra-block-vertical">
-      <div><span class="seikoku">朝四つ</span> <span class="weather">🌤20℃</span></div>
-      <div><span class="jishin">巳二つ</span> <span class="moon">🌓友引</span></div>
-    </div>
-  </div>
-
-  <script src="moon.js"></script>
-  <script src="main.js"></script>
-  <script src="wakelock.js"></script>
-  <script src="fullheight.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(reg => console.log('Service Worker registered'))
-        .catch(err => console.error('Service Worker failed:', err));
-    }
-  </script>
-</body>
+    <script type="module" src="./app.mjs"></script>
+  </body>
 </html>
