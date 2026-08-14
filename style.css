@@ -189,17 +189,29 @@ body[data-writing-mode="vertical"] .info-line {
   justify-content: center;
   width: var(--corner-control-size);
   height: var(--corner-control-size);
+  min-width: var(--corner-control-size);
+  min-height: var(--corner-control-size);
+  flex: 0 0 var(--corner-control-size);
+  overflow: hidden;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--app-text);
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .settings-trigger-image {
   display: block;
   width: 32px;
   height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  flex: 0 0 32px;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
 }
 
