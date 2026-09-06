@@ -12,7 +12,7 @@ export function createTimeSyncService(fetchImpl) {
       const requestStartedAt = Date.now();
       const response = await fetchJson(
         fetchImpl,
-        "https://clock-server.kinoko-sub16.workers.dev/",
+        "https://clock-server.kinotch.workers.dev/",
       );
       const responseReceivedAt = Date.now();
       const serverTime = Number(response.serverTime);
@@ -83,7 +83,7 @@ export function createWeatherService(fetchImpl, storage) {
       try {
         const weather = await fetchJson(
           fetchImpl,
-          `https://weather-proxy.kinoko-sub16.workers.dev/?lat=${location.lat}&lon=${location.lon}`,
+          `https://weather-proxy.kinotch.workers.dev/?lat=${location.lat}&lon=${location.lon}`,
         );
         const icon = WEATHER_ICON_MAP[weather.weather] || "？";
         const temperature = `${Math.round(weather.temp)}℃`;
@@ -111,7 +111,7 @@ export function createCalendarService(fetchImpl) {
       try {
         const response = await fetchJson(
           fetchImpl,
-          `https://rokuyo-proxy.kinoko-sub16.workers.dev/?rokuyo&date=${isoDate}`,
+          `https://rokuyo-proxy.kinotch.workers.dev/?rokuyo&date=${isoDate}`,
         );
         return response[0]?.rokuyo || DEFAULT_SUPPLEMENTAL_DATA.rokuyoText;
       } catch (error) {
@@ -124,7 +124,7 @@ export function createCalendarService(fetchImpl) {
       try {
         const response = await fetchJson(
           fetchImpl,
-          `https://rokuyo-proxy.kinoko-sub16.workers.dev/?moon&lat=${location.lat.toFixed(4)}&lon=${location.lon.toFixed(4)}`,
+          `https://rokuyo-proxy.kinotch.workers.dev/?moon&lat=${location.lat.toFixed(4)}&lon=${location.lon.toFixed(4)}`,
         );
         const moonAge = Number.parseFloat(
           response.result?.[0]?.age ?? Number.NaN,
