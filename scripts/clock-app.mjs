@@ -7,6 +7,7 @@ import {
 } from "./constants.mjs";
 import { buildViewModel } from "./formatters.mjs";
 import { createRenderer } from "./render.mjs";
+import { getDailyRandomColors } from "./random-colors.mjs";
 import {
   createCalendarService,
   createLocationService,
@@ -43,7 +44,7 @@ export function createClockApp({
     onSettingChange: handleSettingChange,
     onCopyUrl: copyCurrentSettingsUrl,
     onReset: resetSettings,
-  });
+  }, globalThis.iro);
   const locationService = createLocationService(navigator.geolocation);
   const timeSyncService = createTimeSyncService(fetchImpl);
   const weatherService = createWeatherService(fetchImpl, storage);
@@ -136,13 +137,17 @@ const state = {
   }
 
   function renderClockView(now = getNow()) {
+    const renderSettings = {
+      ...state.settings,
+      colors: getDailyRandomColors(state.settings, now),
+    };
     renderer.render(
       buildViewModel({
         now,
-        settings: state.settings,
+        settings: renderSettings,
         supplemental: state.supplemental,
       }),
-      state.settings,
+      renderSettings,
     );
     state.lastMinuteKey = getMinuteKey(now);
     state.lastDayKey = getDayKey(now);
@@ -320,7 +325,7 @@ const state = {
     }
   }
 
-  function handleSettingChange({ group, key, value }) {
+  function handleSettingChange({ group, key, field, value }) {
     const shouldRefreshCalendar =
       group === "visibility" && key === "rokuyo" && value === true;
     const shouldRefreshLocation =
@@ -330,6 +335,10 @@ const state = {
 
     updateSettings(
       (draft) => {
+        if (field) {
+          draft[group][key][field] = value;
+          return;
+        }
         draft[group][key] = value;
       },
       {

@@ -471,6 +471,76 @@ body[data-settings-open="true"] .settings-trigger-layer {
   justify-content: flex-end;
 }
 
+.color-picker {
+  width: 136px;
+  min-height: 158px;
+  overflow: hidden;
+  border-radius: 8px;
+  touch-action: none;
+}
+
+.color-picker[hidden],
+.native-color-input[hidden] {
+  display: none;
+}
+
+.settings-help {
+  margin: -2px 0 14px;
+  color: var(--overlay-subtle);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.random-color-targets {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.random-color-target {
+  padding: 10px;
+  border: 1px solid var(--overlay-border);
+  border-radius: 8px;
+  background: rgba(5, 10, 16, 0.3);
+}
+
+.random-color-target h3 {
+  margin: 0 0 9px;
+  color: var(--overlay-text);
+  font-size: 0.85rem;
+}
+
+.range-pair {
+  margin-top: 8px;
+}
+
+.range-pair label {
+  display: flex;
+  justify-content: space-between;
+  color: var(--overlay-subtle);
+  font-size: 0.78rem;
+}
+
+.range-pair output {
+  color: var(--overlay-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.range-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.range-row input[type="range"] {
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  accent-color: var(--app-clock);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
 .color-row input[type="color"] {
   width: 32px;
   height: 32px;
@@ -526,6 +596,21 @@ body[data-settings-open="true"] .settings-trigger-layer {
 @media (max-width: 980px) {
   .settings-grid {
     grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .color-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .color-row .color-control {
+    justify-content: flex-start;
+  }
+
+  .color-row .color-value {
+    text-align: left;
   }
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "wafu-clock-v3";
+const CACHE_NAME = "wafu-clock-v4";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -11,6 +11,7 @@ const PRECACHE_URLS = [
   "./scripts/constants.mjs",
   "./scripts/formatters.mjs",
   "./scripts/render.mjs",
+  "./scripts/random-colors.mjs",
   "./scripts/services.mjs",
   "./scripts/settings.mjs",
   "./scripts/settings-ui.mjs",

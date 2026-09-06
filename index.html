@@ -248,7 +248,8 @@
             <label class="control-row color-row">
               <span class="control-label">背景色</span>
               <span class="color-control">
-                <input id="setting-color-background" type="color" aria-label="背景色" />
+                <div id="color-picker-background" class="color-picker" aria-label="背景色を選択"></div>
+                <input id="setting-color-background" class="native-color-input" type="color" aria-label="背景色" />
                 <output id="setting-color-background-value" class="color-value">#000000</output>
               </span>
             </label>
@@ -256,7 +257,8 @@
             <label class="control-row color-row">
               <span class="control-label">文字色</span>
               <span class="color-control">
-                <input id="setting-color-text" type="color" aria-label="文字色" />
+                <div id="color-picker-text" class="color-picker" aria-label="文字色を選択"></div>
+                <input id="setting-color-text" class="native-color-input" type="color" aria-label="文字色" />
                 <output id="setting-color-text-value" class="color-value">#ffffff</output>
               </span>
             </label>
@@ -264,10 +266,90 @@
             <label class="control-row color-row">
               <span class="control-label">時計色</span>
               <span class="color-control">
-                <input id="setting-color-clock" type="color" aria-label="時計色" />
+                <div id="color-picker-clock" class="color-picker" aria-label="時計色を選択"></div>
+                <input id="setting-color-clock" class="native-color-input" type="color" aria-label="時計色" />
                 <output id="setting-color-clock-value" class="color-value">#70b8ff</output>
               </span>
             </label>
+          </section>
+
+          <section class="settings-section random-colors-section">
+            <h2>毎日のランダム色</h2>
+            <p class="settings-help">
+              有効にすると、日付ごとに時計色と文字色を安定したランダム値へ変更します。背景色は別スイッチで変更できます。
+            </p>
+
+            <label class="control-row">
+              <span class="control-label">毎日ランダム</span>
+              <span class="switch">
+                <input id="setting-random-colors" type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+
+            <label class="control-row">
+              <span class="control-label">背景色も変更</span>
+              <span class="switch">
+                <input id="setting-random-background" type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+
+            <div class="random-color-targets">
+              <div class="random-color-target">
+                <h3>時計色</h3>
+                <div class="range-pair">
+                  <label>色相 <output id="setting-random-clock-hue-value"></output></label>
+                  <div class="range-row">
+                    <input id="setting-random-clock-hue-min" type="range" min="0" max="360" step="1" aria-label="時計色の色相下限" />
+                    <input id="setting-random-clock-hue-max" type="range" min="0" max="360" step="1" aria-label="時計色の色相上限" />
+                  </div>
+                </div>
+                <div class="range-pair">
+                  <label>明度 <output id="setting-random-clock-lightness-value"></output></label>
+                  <div class="range-row">
+                    <input id="setting-random-clock-lightness-min" type="range" min="0" max="100" step="1" aria-label="時計色の明度下限" />
+                    <input id="setting-random-clock-lightness-max" type="range" min="0" max="100" step="1" aria-label="時計色の明度上限" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="random-color-target">
+                <h3>文字色</h3>
+                <div class="range-pair">
+                  <label>色相 <output id="setting-random-text-hue-value"></output></label>
+                  <div class="range-row">
+                    <input id="setting-random-text-hue-min" type="range" min="0" max="360" step="1" aria-label="文字色の色相下限" />
+                    <input id="setting-random-text-hue-max" type="range" min="0" max="360" step="1" aria-label="文字色の色相上限" />
+                  </div>
+                </div>
+                <div class="range-pair">
+                  <label>明度 <output id="setting-random-text-lightness-value"></output></label>
+                  <div class="range-row">
+                    <input id="setting-random-text-lightness-min" type="range" min="0" max="100" step="1" aria-label="文字色の明度下限" />
+                    <input id="setting-random-text-lightness-max" type="range" min="0" max="100" step="1" aria-label="文字色の明度上限" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="random-color-target">
+                <h3>背景色</h3>
+                <div class="range-pair">
+                  <label>色相 <output id="setting-random-background-hue-value"></output></label>
+                  <div class="range-row">
+                    <input id="setting-random-background-hue-min" type="range" min="0" max="360" step="1" aria-label="背景色の色相下限" />
+                    <input id="setting-random-background-hue-max" type="range" min="0" max="360" step="1" aria-label="背景色の色相上限" />
+                  </div>
+                </div>
+                <div class="range-pair">
+                  <label>明度 <output id="setting-random-background-lightness-value"></output></label>
+                  <div class="range-row">
+                    <input id="setting-random-background-lightness-min" type="range" min="0" max="100" step="1" aria-label="背景色の明度下限" />
+                    <input id="setting-random-background-lightness-max" type="range" min="0" max="100" step="1" aria-label="背景色の明度上限" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section class="settings-section">
@@ -286,6 +368,7 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5.5.2/dist/iro.min.js"></script>
     <script type="module" src="./app.mjs"></script>
   </body>
 </html>
