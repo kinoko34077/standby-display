@@ -163,6 +163,7 @@ const state = {
     const now = getNow();
     const nextMinuteKey = getMinuteKey(now);
     const nextDayKey = getDayKey(now);
+    const dayChanged = state.lastDayKey !== nextDayKey;
 
     renderer.renderTime(
       buildViewModel({
@@ -176,10 +177,7 @@ const state = {
       renderClockView(now);
     }
 
-    if (
-      state.lastDayKey !== nextDayKey &&
-      state.settings.visibility.rokuyo
-    ) {
+    if (dayChanged && state.settings.visibility.rokuyo) {
       void refreshCalendarData(now);
     }
   }
