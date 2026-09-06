@@ -340,6 +340,9 @@ const state = {
           return;
         }
         draft[group][key] = value;
+        if (group === "randomColors" && key === "enabled") {
+          draft.randomColors.revision += 1;
+        }
       },
       {
         refreshCalendar: shouldRefreshCalendar,

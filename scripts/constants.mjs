@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   randomColors: {
     enabled: false,
     background: false,
+    revision: 0,
     clock: {
       hueMin: 190,
       hueMax: 220,

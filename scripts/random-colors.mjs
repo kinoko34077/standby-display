@@ -10,6 +10,9 @@ export function getDailyRandomColors(settings, now) {
   }
 
   const dayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  const revision = Number.isInteger(settings.randomColors.revision)
+    ? settings.randomColors.revision
+    : 0;
   const colors = { ...settings.colors };
 
   for (const [target, rangeKey, saturation] of COLOR_TARGETS) {
@@ -18,9 +21,13 @@ export function getDailyRandomColors(settings, now) {
     }
 
     const range = settings.randomColors[rangeKey];
-    const hue = randomInRange(`${dayKey}:${target}:hue`, range.hueMin, range.hueMax);
+    const hue = randomInRange(
+      `${dayKey}:${revision}:${target}:hue`,
+      range.hueMin,
+      range.hueMax,
+    );
     const lightness = randomInRange(
-      `${dayKey}:${target}:lightness`,
+      `${dayKey}:${revision}:${target}:lightness`,
       range.lightnessMin,
       range.lightnessMax,
     );

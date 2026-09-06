@@ -125,6 +125,10 @@ export function parseSettingsFromSearch(search) {
     assign(partialSettings, "randomColors", "background", params.get("drbg") === "1");
   }
 
+  if (params.has("drn")) {
+    assign(partialSettings, "randomColors", "revision", params.get("drn"));
+  }
+
   parseRandomRange(params, partialSettings, "drc", "clock");
   parseRandomRange(params, partialSettings, "drt", "text");
   parseRandomRange(params, partialSettings, "drb", "backgroundRange");
@@ -160,6 +164,7 @@ export function buildSettingsSearch(settings) {
   appendSetting(params, "clock", current.colors.clock, stripHash);
   appendSetting(params, "dr", current.randomColors.enabled, (value) => (value ? "1" : "0"));
   appendSetting(params, "drbg", current.randomColors.background, (value) => (value ? "1" : "0"));
+  appendSetting(params, "drn", current.randomColors.revision, String);
   appendRandomRange(params, "drc", current.randomColors.clock);
   appendRandomRange(params, "drt", current.randomColors.text);
   appendRandomRange(params, "drb", current.randomColors.backgroundRange);
@@ -214,6 +219,7 @@ export function sanitizeSettings(partialSettings) {
     randomColors: {
       enabled: Boolean(merged.randomColors.enabled),
       background: Boolean(merged.randomColors.background),
+      revision: normalizeRevision(merged.randomColors.revision),
       clock: normalizeRandomColorRange(
         merged.randomColors.clock,
         DEFAULT_SETTINGS.randomColors.clock,
@@ -267,6 +273,14 @@ function appendRandomRange(params, key, range) {
     key,
     [range.hueMin, range.hueMax, range.lightnessMin, range.lightnessMax].join(","),
   );
+}
+
+function normalizeRevision(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return DEFAULT_SETTINGS.randomColors.revision;
+  }
+  return Math.floor(numericValue);
 }
 
 function mergeInto(target, source) {
