@@ -239,6 +239,12 @@ function renderRandomColorControls(controls, settings, documentObject) {
     const range = settings[target];
     for (const [field, input] of Object.entries(fields)) {
       input.value = range[field];
+      input.style.setProperty(
+        "--range-track",
+        field.startsWith("hue")
+          ? HUE_RANGE_GRADIENT
+          : createLightnessGradient(range, target),
+      );
     }
 
     const prefix = target === "backgroundRange" ? "background" : target;
@@ -248,6 +254,15 @@ function renderRandomColorControls(controls, settings, documentObject) {
       `setting-random-${prefix}-lightness-value`,
     ).textContent = `${range.lightnessMin}%〜${range.lightnessMax}%`;
   }
+}
+
+const HUE_RANGE_GRADIENT =
+  "linear-gradient(90deg, #ff0000 0%, #ffff00 16.7%, #00ff00 33.3%, #00ffff 50%, #0000ff 66.7%, #ff00ff 83.3%, #ff0000 100%)";
+
+function createLightnessGradient(range, target) {
+  const hue = Math.round((range.hueMin + range.hueMax) / 2);
+  const saturation = target === "backgroundRange" ? 58 : 72;
+  return `linear-gradient(90deg, hsl(${hue} ${saturation}% 3%), hsl(${hue} ${saturation}% 50%), hsl(${hue} ${saturation}% 97%))`;
 }
 
 function createColorPickers(documentObject, colorPickerLibrary, inputs, callbacks) {
