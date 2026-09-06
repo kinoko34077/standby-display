@@ -50,7 +50,7 @@ export function createClockApp({
   const weatherService = createWeatherService(fetchImpl, storage);
   const calendarService = createCalendarService(fetchImpl);
 
-const state = {
+  const state = {
     settings: sanitizeSettings(
       mergeSettings(DEFAULT_SETTINGS, persistedSettings, urlSettings),
     ),
@@ -101,6 +101,10 @@ const state = {
     return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
   }
 
+  function hasLocationBoundVisibility() {
+    return state.settings.visibility.weather || state.settings.visibility.moon;
+  }
+
   function renderSettingsUi() {
     settingsUi.render(state.settings, state.uiState);
   }
@@ -137,20 +141,25 @@ const state = {
   }
 
   function renderClockView(now = getNow()) {
-    const renderSettings = {
+    const { viewModel, settings } = buildClockView(now);
+    renderer.render(viewModel, settings);
+    state.lastMinuteKey = getMinuteKey(now);
+    state.lastDayKey = getDayKey(now);
+  }
+
+  function buildClockView(now) {
+    const settings = {
       ...state.settings,
       colors: getDailyRandomColors(state.settings, now),
     };
-    renderer.render(
-      buildViewModel({
+    return {
+      settings,
+      viewModel: buildViewModel({
         now,
-        settings: renderSettings,
+        settings,
         supplemental: state.supplemental,
       }),
-      renderSettings,
-    );
-    state.lastMinuteKey = getMinuteKey(now);
-    state.lastDayKey = getDayKey(now);
+    };
   }
 
   function stopSecondLoop() {
@@ -170,13 +179,7 @@ const state = {
     const nextDayKey = getDayKey(now);
     const dayChanged = state.lastDayKey !== nextDayKey;
 
-    renderer.renderTime(
-      buildViewModel({
-        now,
-        settings: state.settings,
-        supplemental: state.supplemental,
-      }).time,
-    );
+    renderer.renderTime(buildClockView(now).viewModel.time);
 
     if (state.lastMinuteKey !== nextMinuteKey) {
       renderClockView(now);
@@ -215,10 +218,7 @@ const state = {
       return state.location;
     }
 
-    if (
-      !state.settings.visibility.weather &&
-      !state.settings.visibility.moon
-    ) {
+    if (!hasLocationBoundVisibility()) {
       return null;
     }
 
@@ -243,10 +243,7 @@ const state = {
   }
 
   async function refreshLocationBoundData(now = getNow()) {
-    if (
-      !state.settings.visibility.weather &&
-      !state.settings.visibility.moon
-    ) {
+    if (!hasLocationBoundVisibility()) {
       renderClockView(now);
       return;
     }
@@ -421,7 +418,7 @@ const state = {
       await refreshCalendarData();
     }
 
-    if (state.settings.visibility.weather || state.settings.visibility.moon) {
+    if (hasLocationBoundVisibility()) {
       await refreshLocationBoundData();
     }
   }

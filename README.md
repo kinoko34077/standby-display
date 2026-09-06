@@ -32,6 +32,7 @@ iPhone / iPad のスタンバイ表示を想定した、和暦・正刻・時辰
 | `scripts/clock-app.mjs` | アプリ状態、同期、設定適用、UI 連携 |
 | `scripts/settings.mjs` | 設定の既定値、URL / localStorage 変換 |
 | `scripts/settings-ui.mjs` | 設定 UI のイベント処理と描画 |
+| `scripts/color-controls.mjs` | タッチ対応カラーピッカーと色範囲UI |
 | `scripts/random-colors.mjs` | 日付固定のランダム色生成と範囲正規化 |
 | `scripts/formatters.mjs` | 時計・日付・付加情報の表示文字列生成 |
 | `scripts/render.mjs` | DOM 反映 |

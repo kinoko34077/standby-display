@@ -15,6 +15,7 @@ const PRECACHE_URLS = [
   "./scripts/services.mjs",
   "./scripts/settings.mjs",
   "./scripts/settings-ui.mjs",
+  "./scripts/color-controls.mjs",
 ];
 
 self.addEventListener("install", (event) => {

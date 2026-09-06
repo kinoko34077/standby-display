@@ -60,6 +60,12 @@ export const WEATHER_CACHE_KEY = "standby-display:weather-cache";
 export const SETTINGS_STORAGE_KEY = "standby-display:settings";
 export const STATUS_MESSAGE_TIMEOUT_MS = 2200;
 
+export const API_ENDPOINTS = Object.freeze({
+  clock: "https://clock-server.kinotch.workers.dev",
+  weather: "https://weather-proxy.kinotch.workers.dev",
+  calendar: "https://rokuyo-proxy.kinotch.workers.dev",
+});
+
 export const WEATHER_ICON_MAP = Object.freeze({
   Clear: "☀",
   Clouds: "☁",
