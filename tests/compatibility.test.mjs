@@ -4,6 +4,7 @@ import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 import { parse } from "acorn";
 import { formatDate, getSeikoku, getJishin } from "../scripts/formatters.mjs";
+import { createKanjiConversionService } from "../scripts/kanji-conversion.mjs";
 const root = new URL("../", import.meta.url);
 const read = file => readFile(new URL(file, root), "utf8");
 const bootstrap = await read("bootstrap.js");
@@ -161,4 +162,38 @@ test("normal entry is gated and PWA precaches both branches", async () => {
   assert.doesNotMatch(html, /type="module" src="\.\/app.mjs"/);
   const worker = await read("service-worker.js");
   for (const file of ["bootstrap.js", "modern-entry.mjs", "shared/config.js", "legacy/clock.js", "legacy/style.css", "legacy/index.html"]) assert.ok(worker.includes(file));
+});
+
+test("modern kanji conversion adopts the API map and keeps local fallback", async () => {
+  let requestedUrl;
+  const service = createKanjiConversionService(async (url, init) => {
+    requestedUrl = url;
+    assert.equal(init.method, "POST");
+    const request = JSON.parse(init.body);
+    assert.deepEqual(request.profile, [
+      "legacy-kanji",
+      "general-character-replacements",
+    ]);
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { text: "亞佛會體價圓寫效國圖聲變學實對歸廣當惡舊晝曉曆歷氣澤濱瀧縣畫眞邊鐵讀假壽與螢覺說齊樣龜臺" };
+      },
+    };
+  }, "https://api.example.test");
+
+  assert.equal(service.convertNewToOld("亜仏"), "亞佛");
+  assert.equal(await service.initialize(), true);
+  assert.equal(requestedUrl, "https://api.example.test/v1/transform");
+  assert.equal(service.convertNewToOld("国と亀"), "國と龜");
+
+  const offlineService = createKanjiConversionService(
+    async () => {
+      throw new Error("offline");
+    },
+    "https://api.example.test",
+  );
+  assert.equal(await offlineService.initialize(), false);
+  assert.equal(offlineService.convertNewToOld("学校"), "學校");
 });

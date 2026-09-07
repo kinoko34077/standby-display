@@ -9,26 +9,34 @@ import {
 } from "./constants.mjs";
 import { convertNewToOld } from "./kanji-conversion.mjs";
 
-export function buildViewModel({ now, settings, supplemental }) {
+export function buildViewModel({
+  now,
+  settings,
+  supplemental,
+  characterConverter = convertNewToOld,
+}) {
   const characterStyle = settings.calendar.characterStyle;
 
   return {
     time: formatTime(now, settings.clock),
-    date: formatDate(now, settings.calendar),
+    date: formatDate(now, settings.calendar, characterConverter),
     info: {
       seikokuText: applyCharacterStyle(
         getSeikoku(now.getHours()),
         characterStyle,
+        characterConverter,
       ),
       jishinText: applyCharacterStyle(
         getJishin(now.getHours(), now.getMinutes()),
         characterStyle,
+        characterConverter,
       ),
       weatherText: supplemental.weatherText,
       moonText: supplemental.moonEmoji,
       rokuyoText: applyCharacterStyle(
         supplemental.rokuyoText,
         characterStyle,
+        characterConverter,
       ),
       showWeather: settings.visibility.weather,
       showMoon: settings.visibility.moon,
@@ -53,16 +61,22 @@ export function formatTime(now, clockSettings) {
   };
 }
 
-export function formatDate(now, calendarSettings) {
+export function formatDate(
+  now,
+  calendarSettings,
+  characterConverter = convertNewToOld,
+) {
   const weekdayIndex = now.getDay();
   const characterStyle = calendarSettings.characterStyle;
   const monthName = applyCharacterStyle(
     JAPANESE_MONTHS[now.getMonth()],
     characterStyle,
+    characterConverter,
   );
   const weekdayText = applyCharacterStyle(
     JAPANESE_WEEKDAYS[weekdayIndex],
     characterStyle,
+    characterConverter,
   );
   const yearLineText =
     calendarSettings.yearSystem === "wareki"
@@ -70,10 +84,15 @@ export function formatDate(now, calendarSettings) {
       : `${now.getFullYear()}年`;
 
   return {
-    line1Text: applyCharacterStyle(yearLineText, characterStyle),
+    line1Text: applyCharacterStyle(
+      yearLineText,
+      characterStyle,
+      characterConverter,
+    ),
     line2Html: `${monthName}${applyCharacterStyle(
       `${toKanjiNumber(now.getDate())}日`,
       characterStyle,
+      characterConverter,
     )}<span class="weekday weekday-${weekdayIndex}">${weekdayText}</span>`,
   };
 }
@@ -105,10 +124,14 @@ export function getJishin(hours, minutes) {
   return `${JISHIN_NAMES[jishinIndex]}${["一", "二", "三", "四"][quarter]}つ`;
 }
 
-export function applyCharacterStyle(text, style) {
+export function applyCharacterStyle(
+  text,
+  style,
+  characterConverter = convertNewToOld,
+) {
   if (style !== "old" || !text) {
     return text;
   }
 
-  return convertNewToOld(text);
+  return characterConverter(text);
 }

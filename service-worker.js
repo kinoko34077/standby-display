@@ -18,6 +18,7 @@ const PRECACHE_URLS = [
   "./scripts/constants.mjs",
   "./scripts/formatters.mjs",
   "./scripts/kanji-conversion.mjs",
+  "./scripts/text-transform-client.mjs",
   "./scripts/render.mjs",
   "./scripts/random-colors.mjs",
   "./scripts/services.mjs",

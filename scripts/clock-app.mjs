@@ -6,6 +6,7 @@ import {
   STATUS_MESSAGE_TIMEOUT_MS,
 } from "./constants.mjs";
 import { buildViewModel } from "./formatters.mjs";
+import { createKanjiConversionService } from "./kanji-conversion.mjs";
 import { createRenderer } from "./render.mjs";
 import { getDailyRandomColors } from "./random-colors.mjs";
 import {
@@ -49,6 +50,10 @@ export function createClockApp({
   const timeSyncService = createTimeSyncService(fetchImpl);
   const weatherService = createWeatherService(fetchImpl, storage);
   const calendarService = createCalendarService(fetchImpl);
+  const characterStyleService = createKanjiConversionService(
+    fetchImpl,
+    globalThis.StandbyConfig?.api?.textTransform,
+  );
 
   const state = {
     settings: sanitizeSettings(
@@ -164,6 +169,7 @@ export function createClockApp({
         now,
         settings,
         supplemental: state.supplemental,
+        characterConverter: characterStyleService.convertNewToOld,
       }),
     };
   }
@@ -413,6 +419,9 @@ export function createClockApp({
       passive: true,
     });
     renderClockView();
+    void characterStyleService.initialize().then(() => {
+      renderClockView();
+    });
     renderSettingsUi();
     scheduleTriggerHide();
     startSecondLoop();

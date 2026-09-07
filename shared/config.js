@@ -6,7 +6,8 @@
       clock: "https://api.kinotch.workers.dev/v1/time",
       weather: "https://api.kinotch.workers.dev/v1/weather",
       calendar: "https://api.kinotch.workers.dev/v1/calendar/rokuyo",
-      moon: "https://api.kinotch.workers.dev/v1/astronomy/moon"
+      moon: "https://api.kinotch.workers.dev/v1/astronomy/moon",
+      textTransform: "https://api.kinotch.workers.dev"
     },
     settingsKey: "standby-display:settings"
   };
