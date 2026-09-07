@@ -119,6 +119,7 @@ Cloudflareに残る独立`legacy-clock`と旧QR用リダイレクトは、この
 本リポジトリは時計画面そのものを管理するため、GitHubの`main`更新を起点に
 Workers Buildsで自動デプロイする対象です。設定値はbuild=`npm run build`、
 deploy=`npx wrangler deploy`、root=`/`とします。
+現在、Cloudflare Workers Buildsは`kinoko34077/standby-display`の`main`へ接続済みです。
 
 一方、共通API（`api.kinotch.workers.dev`）は機能を切り分けた別管理対象です。
 APIは自動デプロイせず、変更時にテスト・`npx wrangler deploy --dry-run`・本番疎通確認を
