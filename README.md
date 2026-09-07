@@ -114,7 +114,23 @@ Wrangler設定は`wrangler.jsonc`に一本化し、公開先は新KiNoTchアカ�
 既存のclock-server/weather-proxy/rokuyo-proxyへService Bindingで中継します。
 
 Cloudflareに残る独立`legacy-clock`と旧QR用リダイレクトは、この統合だけでは変更・削除しません。
-Workers Buildsを接続する場合: build=`npm run build`、deploy=`npx wrangler deploy`、root=`/`。
+## デプロイ責任境界
+
+本リポジトリは時計画面そのものを管理するため、GitHubの`main`更新を起点に
+Workers Buildsで自動デプロイする対象です。設定値はbuild=`npm run build`、
+deploy=`npx wrangler deploy`、root=`/`とします。
+
+一方、共通API（`api.kinotch.workers.dev`）は機能を切り分けた別管理対象です。
+APIは自動デプロイせず、変更時にテスト・`npx wrangler deploy --dry-run`・本番疎通確認を
+行ったうえで手動デプロイします。時計画面の修正だけでAPIを再デプロイする必要はありません。
+
+API変更時の注意点:
+
+- 時計画面が利用するv1レスポンス形式とクエリ仕様は後方互換を維持する
+- APIのルートやレスポンスを変更する場合は、先に`standby-display`側の利用箇所を確認する
+- Service Binding名やAPIホストを変更した場合は、APIと時計画面の両方を個別に検証する
+- APIの本番デプロイ後は、時刻・天気・六曜・月情報の全ルートを疎通確認する
+- APIのデプロイVersion IDは、変更履歴や作業記録に残す
 
 この変更では本ディレクトリのソースを基準とし、別作業フォルダの新しいGitHub版は上書き統合していません。
 機能判定の参考: [MDN noModule](https://developer.mozilla.org/en-US/docs/Web/API/HTMLScriptElement/noModule)、
