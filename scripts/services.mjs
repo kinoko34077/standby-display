@@ -2,6 +2,7 @@ import "../shared/config.js";
 const API_ENDPOINTS = (typeof window !== "undefined" ? window : globalThis).StandbyConfig.api;
 
 import {
+  API_ENDPOINTS,
   DEFAULT_SUPPLEMENTAL_DATA,
   MOON_PHASE_EMOJIS,
   WEATHER_CACHE_KEY,

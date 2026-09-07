@@ -22,6 +22,29 @@ export const DEFAULT_SETTINGS = Object.freeze({
     text: "#f1ede4",
     clock: "#70b8ff",
   },
+  randomColors: {
+    enabled: false,
+    background: false,
+    revision: 0,
+    clock: {
+      hueMin: 190,
+      hueMax: 220,
+      lightnessMin: 62,
+      lightnessMax: 82,
+    },
+    text: {
+      hueMin: 28,
+      hueMax: 58,
+      lightnessMin: 82,
+      lightnessMax: 96,
+    },
+    backgroundRange: {
+      hueMin: 205,
+      hueMax: 245,
+      lightnessMin: 3,
+      lightnessMax: 9,
+    },
+  },
 });
 
 export const DEFAULT_SUPPLEMENTAL_DATA = Object.freeze({
@@ -36,6 +59,12 @@ export const WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
 export const WEATHER_CACHE_KEY = "standby-display:weather-cache";
 export const SETTINGS_STORAGE_KEY = "standby-display:settings";
 export const STATUS_MESSAGE_TIMEOUT_MS = 2200;
+
+export const API_ENDPOINTS = Object.freeze({
+  clock: "https://clock-server.kinotch.workers.dev",
+  weather: "https://weather-proxy.kinotch.workers.dev",
+  calendar: "https://rokuyo-proxy.kinotch.workers.dev",
+});
 
 export const WEATHER_ICON_MAP = Object.freeze({
   Clear: "☀",

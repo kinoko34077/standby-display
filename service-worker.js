@@ -19,9 +19,11 @@ const PRECACHE_URLS = [
   "./scripts/formatters.mjs",
   "./scripts/kanji-conversion.mjs",
   "./scripts/render.mjs",
+  "./scripts/random-colors.mjs",
   "./scripts/services.mjs",
   "./scripts/settings.mjs",
   "./scripts/settings-ui.mjs",
+  "./scripts/color-controls.mjs",
 ];
 
 self.addEventListener("install", (event) => {

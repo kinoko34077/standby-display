@@ -7,6 +7,7 @@ import {
 } from "./constants.mjs";
 import { buildViewModel } from "./formatters.mjs";
 import { createRenderer } from "./render.mjs";
+import { getDailyRandomColors } from "./random-colors.mjs";
 import {
   createCalendarService,
   createLocationService,
@@ -43,13 +44,13 @@ export function createClockApp({
     onSettingChange: handleSettingChange,
     onCopyUrl: copyCurrentSettingsUrl,
     onReset: resetSettings,
-  });
+  }, globalThis.iro);
   const locationService = createLocationService(navigator.geolocation);
   const timeSyncService = createTimeSyncService(fetchImpl);
   const weatherService = createWeatherService(fetchImpl, storage);
   const calendarService = createCalendarService(fetchImpl);
 
-const state = {
+  const state = {
     settings: sanitizeSettings(
       mergeSettings(DEFAULT_SETTINGS, persistedSettings, urlSettings),
     ),
@@ -100,6 +101,10 @@ const state = {
     return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
   }
 
+  function hasLocationBoundVisibility() {
+    return state.settings.visibility.weather || state.settings.visibility.moon;
+  }
+
   function renderSettingsUi() {
     settingsUi.render(state.settings, state.uiState);
     const legacyLink = document.getElementById("settings-legacy");
@@ -142,16 +147,25 @@ const state = {
   }
 
   function renderClockView(now = getNow()) {
-    renderer.render(
-      buildViewModel({
-        now,
-        settings: state.settings,
-        supplemental: state.supplemental,
-      }),
-      state.settings,
-    );
+    const { viewModel, settings } = buildClockView(now);
+    renderer.render(viewModel, settings);
     state.lastMinuteKey = getMinuteKey(now);
     state.lastDayKey = getDayKey(now);
+  }
+
+  function buildClockView(now) {
+    const settings = {
+      ...state.settings,
+      colors: getDailyRandomColors(state.settings, now),
+    };
+    return {
+      settings,
+      viewModel: buildViewModel({
+        now,
+        settings,
+        supplemental: state.supplemental,
+      }),
+    };
   }
 
   function stopSecondLoop() {
@@ -169,23 +183,15 @@ const state = {
     const now = getNow();
     const nextMinuteKey = getMinuteKey(now);
     const nextDayKey = getDayKey(now);
+    const dayChanged = state.lastDayKey !== nextDayKey;
 
-    renderer.renderTime(
-      buildViewModel({
-        now,
-        settings: state.settings,
-        supplemental: state.supplemental,
-      }).time,
-    );
+    renderer.renderTime(buildClockView(now).viewModel.time);
 
     if (state.lastMinuteKey !== nextMinuteKey) {
       renderClockView(now);
     }
 
-    if (
-      state.lastDayKey !== nextDayKey &&
-      state.settings.visibility.rokuyo
-    ) {
+    if (dayChanged && state.settings.visibility.rokuyo) {
       void refreshCalendarData(now);
     }
   }
@@ -218,10 +224,7 @@ const state = {
       return state.location;
     }
 
-    if (
-      !state.settings.visibility.weather &&
-      !state.settings.visibility.moon
-    ) {
+    if (!hasLocationBoundVisibility()) {
       return null;
     }
 
@@ -246,10 +249,7 @@ const state = {
   }
 
   async function refreshLocationBoundData(now = getNow()) {
-    if (
-      !state.settings.visibility.weather &&
-      !state.settings.visibility.moon
-    ) {
+    if (!hasLocationBoundVisibility()) {
       renderClockView(now);
       return;
     }
@@ -328,7 +328,7 @@ const state = {
     }
   }
 
-  function handleSettingChange({ group, key, value }) {
+  function handleSettingChange({ group, key, field, value }) {
     const shouldRefreshCalendar =
       group === "visibility" && key === "rokuyo" && value === true;
     const shouldRefreshLocation =
@@ -338,7 +338,14 @@ const state = {
 
     updateSettings(
       (draft) => {
+        if (field) {
+          draft[group][key][field] = value;
+          return;
+        }
         draft[group][key] = value;
+        if (group === "randomColors" && key === "enabled") {
+          draft.randomColors.revision += 1;
+        }
       },
       {
         refreshCalendar: shouldRefreshCalendar,
@@ -419,7 +426,7 @@ const state = {
       await refreshCalendarData();
     }
 
-    if (state.settings.visibility.weather || state.settings.visibility.moon) {
+    if (hasLocationBoundVisibility()) {
       await refreshLocationBoundData();
     }
   }

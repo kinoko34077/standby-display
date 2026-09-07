@@ -4,6 +4,7 @@ import {
   SETTINGS_STORAGE_KEY,
   TEXT_FONT_OPTIONS,
 } from "./constants.mjs";
+import { normalizeRandomColorRange } from "./random-colors.mjs";
 
 const CLOCK_FONT_IDS = new Set(CLOCK_FONT_OPTIONS.map((option) => option.id));
 const TEXT_FONT_IDS = new Set(TEXT_FONT_OPTIONS.map((option) => option.id));
@@ -116,6 +117,22 @@ export function parseSettingsFromSearch(search) {
     assign(partialSettings, "colors", "clock", `#${params.get("clock")}`);
   }
 
+  if (params.has("dr")) {
+    assign(partialSettings, "randomColors", "enabled", params.get("dr") === "1");
+  }
+
+  if (params.has("drbg")) {
+    assign(partialSettings, "randomColors", "background", params.get("drbg") === "1");
+  }
+
+  if (params.has("drn")) {
+    assign(partialSettings, "randomColors", "revision", params.get("drn"));
+  }
+
+  parseRandomRange(params, partialSettings, "drc", "clock");
+  parseRandomRange(params, partialSettings, "drt", "text");
+  parseRandomRange(params, partialSettings, "drb", "backgroundRange");
+
   if (Object.keys(partialSettings).length === 0) {
     return null;
   }
@@ -145,6 +162,12 @@ export function buildSettingsSearch(settings) {
   appendSetting(params, "bg", current.colors.background, stripHash);
   appendSetting(params, "text", current.colors.text, stripHash);
   appendSetting(params, "clock", current.colors.clock, stripHash);
+  appendSetting(params, "dr", current.randomColors.enabled, (value) => (value ? "1" : "0"));
+  appendSetting(params, "drbg", current.randomColors.background, (value) => (value ? "1" : "0"));
+  appendSetting(params, "drn", current.randomColors.revision, String);
+  appendRandomRange(params, "drc", current.randomColors.clock);
+  appendRandomRange(params, "drt", current.randomColors.text);
+  appendRandomRange(params, "drb", current.randomColors.backgroundRange);
 
   return params.toString();
 }
@@ -193,6 +216,23 @@ export function sanitizeSettings(partialSettings) {
       text: normalizeColor(merged.colors.text, DEFAULT_SETTINGS.colors.text),
       clock: normalizeColor(merged.colors.clock, DEFAULT_SETTINGS.colors.clock),
     },
+    randomColors: {
+      enabled: Boolean(merged.randomColors.enabled),
+      background: Boolean(merged.randomColors.background),
+      revision: normalizeRevision(merged.randomColors.revision),
+      clock: normalizeRandomColorRange(
+        merged.randomColors.clock,
+        DEFAULT_SETTINGS.randomColors.clock,
+      ),
+      text: normalizeRandomColorRange(
+        merged.randomColors.text,
+        DEFAULT_SETTINGS.randomColors.text,
+      ),
+      backgroundRange: normalizeRandomColorRange(
+        merged.randomColors.backgroundRange,
+        DEFAULT_SETTINGS.randomColors.backgroundRange,
+      ),
+    },
   };
 }
 
@@ -205,6 +245,42 @@ function assign(target, group, key, value) {
 
 function appendSetting(params, key, currentValue, formatValue) {
   params.set(key, formatValue(currentValue));
+}
+
+function parseRandomRange(params, target, key, targetKey) {
+  if (!params.has(key)) {
+    return;
+  }
+
+  const values = params.get(key).split(",").map((value) => Number(value));
+  if (values.length !== 4 || values.some((value) => !Number.isFinite(value))) {
+    return;
+  }
+
+  if (!target.randomColors) {
+    target.randomColors = {};
+  }
+  target.randomColors[targetKey] = {
+    hueMin: values[0],
+    hueMax: values[1],
+    lightnessMin: values[2],
+    lightnessMax: values[3],
+  };
+}
+
+function appendRandomRange(params, key, range) {
+  params.set(
+    key,
+    [range.hueMin, range.hueMax, range.lightnessMin, range.lightnessMax].join(","),
+  );
+}
+
+function normalizeRevision(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return DEFAULT_SETTINGS.randomColors.revision;
+  }
+  return Math.floor(numericValue);
 }
 
 function mergeInto(target, source) {

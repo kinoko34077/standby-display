@@ -1,6 +1,12 @@
 import { CLOCK_FONT_OPTIONS, TEXT_FONT_OPTIONS } from "./constants.mjs";
+import {
+  createColorPickers,
+  createRandomColorControls,
+  renderColorPickers,
+  renderRandomColorControls,
+} from "./color-controls.mjs";
 
-export function createSettingsUi(documentObject, callbacks) {
+export function createSettingsUi(documentObject, callbacks, colorPickerLibrary = globalThis.iro) {
   const overlay = documentObject.getElementById("settings-overlay");
   const triggerLayer = documentObject.querySelector(".settings-trigger-layer");
   const triggerButton = documentObject.getElementById("settings-open");
@@ -26,7 +32,16 @@ export function createSettingsUi(documentObject, callbacks) {
     textColorValue: documentObject.getElementById("setting-color-text-value"),
     clockColor: documentObject.getElementById("setting-color-clock"),
     clockColorValue: documentObject.getElementById("setting-color-clock-value"),
+    dailyRandomColors: documentObject.getElementById("setting-random-colors"),
+    randomBackground: documentObject.getElementById("setting-random-background"),
   };
+
+  const randomControls = createRandomColorControls(documentObject);
+  const colorPickers = createColorPickers(documentObject, colorPickerLibrary, {
+    background: controls.backgroundColor,
+    text: controls.textColor,
+    clock: controls.clockColor,
+  }, callbacks);
 
   populateFontSelect(controls.clockFont, CLOCK_FONT_OPTIONS);
   populateFontSelect(controls.textFont, TEXT_FONT_OPTIONS);
@@ -117,27 +132,34 @@ export function createSettingsUi(documentObject, callbacks) {
     });
   });
 
-  bindColorControl(controls.backgroundColor, (value) => {
+  controls.dailyRandomColors.addEventListener("change", (event) => {
     callbacks.onSettingChange({
-      group: "colors",
+      group: "randomColors",
+      key: "enabled",
+      value: event.target.checked,
+    });
+  });
+
+  controls.randomBackground.addEventListener("change", (event) => {
+    callbacks.onSettingChange({
+      group: "randomColors",
       key: "background",
-      value,
+      value: event.target.checked,
     });
   });
-  bindColorControl(controls.textColor, (value) => {
-    callbacks.onSettingChange({
-      group: "colors",
-      key: "text",
-      value,
-    });
-  });
-  bindColorControl(controls.clockColor, (value) => {
-    callbacks.onSettingChange({
-      group: "colors",
-      key: "clock",
-      value,
-    });
-  });
+
+  for (const [target, fields] of Object.entries(randomControls)) {
+    for (const [field, input] of Object.entries(fields)) {
+      input.addEventListener("input", (event) => {
+        callbacks.onSettingChange({
+          group: "randomColors",
+          key: target,
+          field,
+          value: Number(event.target.value),
+        });
+      });
+    }
+  }
 
   let wasOpen = false;
 
@@ -168,6 +190,11 @@ export function createSettingsUi(documentObject, callbacks) {
     controls.backgroundColorValue.textContent = settings.colors.background;
     controls.textColorValue.textContent = settings.colors.text;
     controls.clockColorValue.textContent = settings.colors.clock;
+    controls.dailyRandomColors.checked = settings.randomColors.enabled;
+    controls.randomBackground.checked = settings.randomColors.background;
+
+    renderColorPickers(colorPickers, settings.colors);
+    renderRandomColorControls(randomControls, settings.randomColors, documentObject);
 
     setRadioValue(documentObject, "hour-format", settings.clock.hourFormat);
     setRadioValue(documentObject, "year-system", settings.calendar.yearSystem);
@@ -192,14 +219,6 @@ export function createSettingsUi(documentObject, callbacks) {
   }
 
   return { render };
-}
-
-function bindColorControl(element, onChange) {
-  const handler = (event) => {
-    onChange(event.target.value);
-  };
-  element.addEventListener("input", handler);
-  element.addEventListener("change", handler);
 }
 
 function bindRadioGroup(documentObject, name, onChange) {
