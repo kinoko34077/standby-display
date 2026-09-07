@@ -102,6 +102,12 @@ const state = {
 
   function renderSettingsUi() {
     settingsUi.render(state.settings, state.uiState);
+    const legacyLink = document.getElementById("settings-legacy");
+    if (legacyLink) {
+      const legacyUrl = new URL(buildShareUrl(state.settings, locationObject));
+      legacyUrl.searchParams.set("mode", "legacy");
+      legacyLink.href = legacyUrl.toString();
+    }
   }
 
   function clearTriggerHideTimer() {
@@ -395,7 +401,7 @@ const state = {
     setStatusMessage("既定値へ戻しました");
   }
 
-  async function start() {
+  async function start(onReady = () => {}) {
     document.addEventListener("pointerdown", revealTriggerTemporarily, {
       passive: true,
     });
@@ -404,6 +410,8 @@ const state = {
     scheduleTriggerHide();
     startSecondLoop();
     scheduleRecurringWork();
+    // A slow/offline API must not be mistaken for an incompatible browser.
+    onReady();
 
     await syncClockOffset();
 

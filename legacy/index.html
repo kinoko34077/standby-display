@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja" data-clock-mode="legacy">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
+  <title>和風スタンバイ時計・軽量版</title>
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="main-layout">
+    <div class="date-block">
+      <div id="wareki-line1">--年</div>
+      <div id="wareki-line2">--月--日</div>
+    </div>
+    <div class="clock-block" aria-label="現在時刻">
+      <span id="hour">--</span><span>:</span><span id="minute">--</span>
+      <div class="seconds" id="seconds">:--</div>
+    </div>
+    <div class="extra-block">
+      <div><span id="seikoku"></span> <span id="weather">⛅--℃</span></div>
+      <div><span id="jishin"></span> <span id="moon">◐</span><span id="rokuyo">未取得</span></div>
+    </div>
+  </div>
+  <a id="automatic-mode" href="../?mode=auto">標準表示を試す</a>
+  <noscript>時計を動かすにはJavaScriptを有効にしてください。</noscript>
+  <script src="../shared/config.js"></script>
+  <script src="./clock.js"></script>
+</body>
+</html>

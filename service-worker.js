@@ -1,15 +1,23 @@
-const CACHE_NAME = "wafu-clock-v3";
+const CACHE_NAME = "wafu-clock-compat-v1";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./style.css",
   "./app.mjs",
+  "./bootstrap.js",
+  "./modern-entry.mjs",
+  "./shared/config.js",
+  "./legacy/",
+  "./legacy/index.html",
+  "./legacy/style.css",
+  "./legacy/clock.js",
   "./manifest.json",
   "./icon-192.png",
   "./scripts/browser-features.mjs",
   "./scripts/clock-app.mjs",
   "./scripts/constants.mjs",
   "./scripts/formatters.mjs",
+  "./scripts/kanji-conversion.mjs",
   "./scripts/render.mjs",
   "./scripts/services.mjs",
   "./scripts/settings.mjs",
@@ -36,7 +44,7 @@ self.addEventListener("activate", (event) => {
       .then((cacheNames) =>
         Promise.all(
           cacheNames
-            .filter((cacheName) => cacheName !== CACHE_NAME)
+            .filter((cacheName) => cacheName.startsWith("wafu-clock-") && cacheName !== CACHE_NAME)
             .map((cacheName) => caches.delete(cacheName)),
         ),
       )
@@ -55,7 +63,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(event.request, { ignoreSearch: event.request.mode === "navigate" }).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }

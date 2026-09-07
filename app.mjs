@@ -18,4 +18,7 @@ const app = createClockApp({
   timers: window,
 });
 
-void app.start();
+void app.start(() => window.StandbyBoot?.ready()).catch((error) => {
+  console.error("Clock startup failed", error);
+  window.StandbyBoot?.fallback();
+});

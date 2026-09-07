@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>和風スタンバイ時計</title>
+    <script src="./bootstrap.js"></script>
     <meta
       name="description"
       content="和暦表示、正刻、時辰、天気、月齢、六曜をまとめて表示する和風スタンバイ時計です。"
@@ -280,12 +281,13 @@
               <button id="settings-reset" class="action-button action-button-danger" type="button">
                 初期化
               </button>
+              <a id="settings-legacy" class="action-button" href="?mode=legacy">軽量版を開く</a>
             </div>
           </section>
         </div>
       </div>
     </div>
 
-    <script type="module" src="./app.mjs"></script>
+    <noscript>時計を動かすにはJavaScriptを有効にしてください。</noscript>
   </body>
 </html>

@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "standby-display",
+  "account_id": "fb59b3c4a3fb2cda44dad80638390309",
+  "compatibility_date": "2026-09-07",
+  "workers_dev": true,
+  "assets": { "directory": "./dist" }
+}

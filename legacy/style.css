@@ -1,0 +1,25 @@
+/* Derived from legacy-clock Worker. No CSS variables, Grid, min() or flex gap. */
+@font-face {
+  font-family: D7;
+  src: url("https://exis9.github.io/tradingviews/fonts/digital-7.ttf");
+}
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: #000; color: #fff; overflow: hidden;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+.main-layout { position: relative; width: 100%; height: 100%; }
+.date-block { position: absolute; top: 2%; left: 2%; font-size: 4vh; line-height: 1.6; z-index: 2; }
+.clock-block {
+  position: absolute; top: 50%; left: 0; width: 100%;
+  -webkit-transform: translateY(-50%); transform: translateY(-50%);
+  font-family: D7, monospace; font-size: 30vw; color: #70b8ff;
+  text-align: center; line-height: 1; white-space: nowrap;
+}
+.seconds { font-size: 5vw; opacity: 0.4; padding-right: 5%; text-align: right; }
+.extra-block { position: absolute; bottom: 3%; left: 2%; font-size: 4vh; line-height: 1.8; z-index: 2; }
+#automatic-mode { position: absolute; bottom: 1%; right: 2%; font-size: 12px; color: #aaa; }
+@media (orientation: portrait) {
+  .date-block, .extra-block { font-size: 5vw; }
+  .clock-block { font-size: 30vw; }
+}

@@ -49,3 +49,63 @@ iPhone / iPad のスタンバイ表示を想定した、和暦・正刻・時辰
 - 旧字体変換辞書を内部モジュールとして拡張
 - 実機での Wake Lock / PWA / Service Worker 更新確認
 - フォント配信の完全ローカル化
+
+## 通常版と旧端末用の統合
+
+通常版と軽量版は同じブランチで管理し、旧端末用を`legacy/`に配置しています。
+入口の`bootstrap.js`はES5で動き、モジュール・fetch・Pointer Events・CSS変数・Grid・min()等の対応を確認します。
+通常版の構文解析/起動に失敗した場合や、15秒以内に画面が起動しない場合も軽量版へ移動します。
+時計描画の起動完了はAPI通信完了と分離しているため、天気取得の遅さだけでは切り替わりません。
+
+- 通常の入口: `/`（対応機能で自動判定）
+- 軽量版を指定: `/?mode=legacy` または `/legacy/`
+- 通常版を試す: `/?mode=modern`（起動失敗時の退避は有効）
+- 通常版の設定画面に「軽量版を開く」を追加。現在の設定をURLで渡します。
+- 軽量版の「標準表示を試す」で自動判定へ戻ります。
+
+GitHub Pagesの`/standby-display/`配下でも同じ相対パスで動作します。
+判定はUser-Agentの機種名に依存しません。iPad第3世代相当（申告型番MC705J/A）/iOS 9では、
+モジュール等の未対応により通常版を読み込む前に軽量版へ切り替わる設計です。
+
+### 軽量版の機能
+
+旧Cloudflare `legacy-clock` のHTML/CSS構成を元に、ES5 + XMLHttpRequestで実装しています。
+元コードの固定日付・固定天気を廃止し、現在時刻・和暦/西暦・正刻・時辰を更新します。
+時刻同期、六曜、位置情報による天気/月齢取得を行い、通信失敗時も時計を動かし続けます。
+位置情報が使えない場合は天気/月齢を未取得表示にします。
+
+同一オリジンの保存設定とURL設定から、秒・12/24時間・和暦/西暦・表示項目・色を引き継ぎます。
+旧字変換、縦書き、フォント選択、通常版の設定パネルは軽量版の対象外です。
+iOS 9ではPWA Service Worker/Wake Lockには依存しません。OS側の画面自動ロック設定は別途必要です。
+現行ブラウザのPWAキャッシュには通常版・軽量版両方のファイルを含めています。
+
+| ファイル | 役割 |
+| --- | --- |
+| `bootstrap.js` | ES5の機能判定と起動監視 |
+| `modern-entry.mjs` | 現行構文を解析し、通常版を起動 |
+| `legacy/index.html`, `legacy/style.css`, `legacy/clock.js` | 旧端末向けの画面・時計・通信 |
+| `shared/config.js` | 両版で共有するAPI URL |
+| `docs/legacy-worker-original.mjs` | 取得したCloudflare旧端末用Workerの元コード（配信対象外） |
+| `tests/compatibility.test.mjs` | ES5構文、機能不足/起動失敗、日付・設定・通信の検証 |
+
+## 開発・Cloudflare公開
+
+```sh
+npm ci
+npm test
+npm run dev
+npm run build
+npx wrangler deploy --dry-run
+npm run deploy
+```
+
+Wrangler設定は`wrangler.jsonc`に一本化し、公開先は新KiNoTchアカウントの
+`standby-display.kinotch.workers.dev`です。`tools/build-assets.mjs`はブラウザ向けファイルだけを`dist/`へコピーします。
+元Worker資料・テスト・設定・Git履歴は配信しません。APIは新アカウントの既存Workerを利用します。
+
+Cloudflareに残る独立`legacy-clock`と旧QR用リダイレクトは、この統合だけでは変更・削除しません。
+Workers Buildsを接続する場合: build=`npm run build`、deploy=`npx wrangler deploy`、root=`/`。
+
+この変更では本ディレクトリのソースを基準とし、別作業フォルダの新しいGitHub版は上書き統合していません。
+機能判定の参考: [MDN noModule](https://developer.mozilla.org/en-US/docs/Web/API/HTMLScriptElement/noModule)、
+[CSS feature queries](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Conditional_rules/Using_feature_queries)。
