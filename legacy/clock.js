@@ -79,7 +79,7 @@
   function refreshRokuyo() {
     if (!showRokuyo) return;
     var requestedDay = lastDay;
-    request(api.calendar + "/?rokuyo&date=" + requestedDay, function (data) {
+    request(api.calendar + "?date=" + requestedDay, function (data) {
       if (requestedDay === lastDay && data[0] && typeof data[0].rokuyo === "string") text("rokuyo", data[0].rokuyo);
     });
   }
@@ -97,7 +97,7 @@
     if (showWeather) request(api.weather + "/?" + query, function (data) {
       if (typeof data.temp === "number" && isFinite(data.temp)) text("weather", (weatherIcons[data.weather] || "？") + Math.round(data.temp) + "℃");
     });
-    if (showMoon) request(api.calendar + "/?moon&" + query, function (data) {
+    if (showMoon) request(api.moon + "?" + query, function (data) {
       var age = data.result && data.result[0] ? parseFloat(data.result[0].age) : NaN;
       if (!isFinite(age)) return;
       var icon = moons[0];

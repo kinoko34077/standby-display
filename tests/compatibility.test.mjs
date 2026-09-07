@@ -130,9 +130,9 @@ test("shared URL options override stored settings in the legacy page", () => {
 });
 test("API failures leave the legacy clock running; good responses fill supplemental fields", () => {
   const state = legacyPage({ locate: true });
-  const rokuyo = state.requests.find(x => x.url.includes("?rokuyo"));
-  const weather = state.requests.find(x => x.url.includes("weather-proxy"));
-  const moon = state.requests.find(x => x.url.includes("?moon"));
+  const rokuyo = state.requests.find(x => x.url.includes("calendar/rokuyo"));
+  const weather = state.requests.find(x => x.url.includes("api.kinotch.workers.dev/v1/weather"));
+  const moon = state.requests.find(x => x.url.includes("astronomy/moon"));
   state.respond(rokuyo, [{ rokuyo: "友引" }]);
   state.respond(weather, { temp: 24.4, weather: "Rain" });
   state.respond(moon, { result: [{ age: 15 }] });
@@ -145,7 +145,7 @@ test("API failures leave the legacy clock running; good responses fill supplemen
 });
 test("midnight replaces yesterday's rokuyo and ignores late stale responses", () => {
   const state = legacyPage({ when: new Date(2026, 8, 7, 23, 59, 59) });
-  const yesterday = state.requests.find(x => x.url.includes("?rokuyo"));
+  const yesterday = state.requests.find(x => x.url.includes("calendar/rokuyo"));
   state.tick(new Date(2026, 8, 8, 0, 0, 0));
   state.respond(yesterday, [{ rokuyo: "昨日" }]);
   assert.equal(state.element("rokuyo").textContent, "未取得");

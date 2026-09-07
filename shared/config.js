@@ -3,9 +3,10 @@
   "use strict";
   root.StandbyConfig = {
     api: {
-      clock: "https://clock-server.kinotch.workers.dev",
-      weather: "https://weather-proxy.kinotch.workers.dev",
-      calendar: "https://rokuyo-proxy.kinotch.workers.dev"
+      clock: "https://api.kinotch.workers.dev/v1/time",
+      weather: "https://api.kinotch.workers.dev/v1/weather",
+      calendar: "https://api.kinotch.workers.dev/v1/calendar/rokuyo",
+      moon: "https://api.kinotch.workers.dev/v1/astronomy/moon"
     },
     settingsKey: "standby-display:settings"
   };

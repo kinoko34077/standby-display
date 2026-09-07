@@ -109,7 +109,9 @@ npm run deploy
 
 Wrangler設定は`wrangler.jsonc`に一本化し、公開先は新KiNoTchアカウントの
 `standby-display.kinotch.workers.dev`です。`tools/build-assets.mjs`はブラウザ向けファイルだけを`dist/`へコピーします。
-元Worker資料・テスト・設定・Git履歴は配信しません。APIは新アカウントの既存Workerを利用します。
+元Worker資料・テスト・設定・Git履歴は配信しません。通常版・軽量版とも、共通API
+`https://api.kinotch.workers.dev` のv1ルートを利用します。API WorkerはHono Gatewayとして、
+既存のclock-server/weather-proxy/rokuyo-proxyへService Bindingで中継します。
 
 Cloudflareに残る独立`legacy-clock`と旧QR用リダイレクトは、この統合だけでは変更・削除しません。
 Workers Buildsを接続する場合: build=`npm run build`、deploy=`npx wrangler deploy`、root=`/`。
