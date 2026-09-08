@@ -118,6 +118,30 @@ test("legacy current date and traditional time match the modern formatter", () =
   assert.equal(state.element("jishin").textContent, getJishin(13, 5));
   assert.equal(state.element("wareki-line2").textContent, "長月七日 月");
 });
+test("legacy and modern formatters agree across calendar and time boundaries", () => {
+  const cases = [
+    new Date(2019, 4, 1, 0, 0, 0),
+    new Date(2026, 0, 31, 5, 59, 0),
+    new Date(2026, 1, 3, 6, 0, 0),
+    new Date(2026, 8, 30, 11, 59, 0),
+    new Date(2026, 9, 1, 12, 0, 0),
+    new Date(2026, 11, 31, 23, 59, 0),
+  ];
+
+  for (const when of cases) {
+    const state = legacyPage({ when, blockedStorage: true });
+    const expectedDate = formatDate(when, { yearSystem: "wareki", characterStyle: "new" });
+    assert.equal(state.element("wareki-line1").textContent, expectedDate.line1Text);
+    assert.equal(
+      state.element("wareki-line2").textContent,
+      expectedDate.line2Html
+        .replace(/<span[^>]*>/g, " ")
+        .replace(/<\/span>/g, ""),
+    );
+    assert.equal(state.element("seikoku").textContent, getSeikoku(when.getHours()));
+    assert.equal(state.element("jishin").textContent, getJishin(when.getHours(), when.getMinutes()));
+  }
+});
 test("shared URL options override stored settings in the legacy page", () => {
   const state = legacyPage({ search: "?hour=12&sec=0&cal=western&weather=0&moon=0&rokuyo=0&bg=112233&text=abcdef&clock=123456",
     storage: JSON.stringify({ clock: { showSeconds: true }, colors: { background: "#ffffff" } }) });
@@ -144,6 +168,15 @@ test("API failures leave the legacy clock running; good responses fill supplemen
   state.tick(new Date(2026, 8, 7, 13, 5, 10));
   assert.equal(state.element("seconds").textContent, ":10");
 });
+test("legacy API requests use canonical time and weather URL boundaries", () => {
+  const state = legacyPage({ locate: true });
+  const time = state.requests.find(x => x.url.includes("/v1/time"));
+  const weather = state.requests.find(x => x.url.includes("/v1/weather"));
+  assert.equal(time.url, "https://api.kinotch.workers.dev/v1/time");
+  const weatherUrl = new URL(weather.url);
+  assert.equal(weatherUrl.pathname, "/v1/weather");
+  assert.equal(weatherUrl.search, "?lat=35.6812&lon=139.7671");
+});
 test("midnight replaces yesterday's rokuyo and ignores late stale responses", () => {
   const state = legacyPage({ when: new Date(2026, 8, 7, 23, 59, 59) });
   const yesterday = state.requests.find(x => x.url.includes("calendar/rokuyo"));
@@ -161,7 +194,7 @@ test("normal entry is gated and PWA precaches both branches", async () => {
   assert.match(html, /src="\.\/bootstrap.js"><\/script>/);
   assert.doesNotMatch(html, /type="module" src="\.\/app.mjs"/);
   const worker = await read("service-worker.js");
-  for (const file of ["bootstrap.js", "modern-entry.mjs", "shared/config.js", "legacy/clock.js", "legacy/style.css", "legacy/index.html"]) assert.ok(worker.includes(file));
+  for (const file of ["bootstrap.js", "modern-entry.mjs", "shared/config.js", "legacy/clock.js", "legacy/style.css", "legacy/index.html", "vendor/text-transform.mjs"]) assert.ok(worker.includes(file));
 });
 
 test("modern kanji conversion adopts the API map and keeps local fallback", async () => {
@@ -196,4 +229,17 @@ test("modern kanji conversion adopts the API map and keeps local fallback", asyn
   );
   assert.equal(await offlineService.initialize(), false);
   assert.equal(offlineService.convertNewToOld("学校"), "學校");
+});
+
+test("kanji conversion rejects an incompatible canonical probe and keeps local fallback", async () => {
+  const service = createKanjiConversionService(async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      text: "亞佛會體價圓寫效國圖聲變學實對歸廣當惡舊晝曉曆歷気澤濱瀧縣畫眞邊鐵讀假壽與螢覺說齊樣龜臺",
+    }),
+  }), "https://api.example.test");
+
+  assert.equal(await service.initialize(), false);
+  assert.equal(service.convertNewToOld("国亀気旧暦体"), "國龜氣舊曆體");
 });

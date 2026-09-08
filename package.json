@@ -3,10 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node tools/build-assets.mjs",
+    "build:assets": "node tools/build-assets.mjs",
+    "verify": "npm test && npm run build:assets",
+    "build": "npm run verify",
+    "sync:text-client": "node scripts/tools/sync-text-client.mjs",
+    "check:text-client": "node scripts/tools/sync-text-client.mjs --check",
+    "pretest": "npm run check:text-client",
     "test": "node --test tests/*.test.mjs",
     "dev": "npm run build && wrangler dev",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run verify && wrangler deploy"
   },
   "devDependencies": {
     "acorn": "8.15.0",

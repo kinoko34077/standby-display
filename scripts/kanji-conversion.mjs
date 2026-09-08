@@ -1,4 +1,7 @@
-import { createTextTransformClient } from "./text-transform-client.mjs";
+import { createTextTransformClient } from "../vendor/text-transform.mjs";
+
+const CANONICAL_PROBE_INPUT = "国亀気旧暦体";
+const CANONICAL_PROBE_OUTPUT = "國龜氣舊曆體";
 
 const KANJI_VARIANT_PAIRS = Object.freeze([
   ["亜", "亞"],
@@ -119,7 +122,13 @@ async function loadCanonicalMap(client) {
     throw new Error("Canonical kanji map changed character count");
   }
 
-  return new Map(
+  const canonicalMap = new Map(
     sourceCharacters.map((character, index) => [character, transformed[index]]),
   );
+  const probeOutput = convertCharacters(CANONICAL_PROBE_INPUT, canonicalMap);
+  if (probeOutput !== CANONICAL_PROBE_OUTPUT) {
+    throw new Error("Canonical kanji map failed compatibility probe");
+  }
+
+  return canonicalMap;
 }

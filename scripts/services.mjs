@@ -5,6 +5,7 @@ import {
   DEFAULT_SUPPLEMENTAL_DATA,
   MOON_PHASE_EMOJIS,
   WEATHER_CACHE_KEY,
+  WEATHER_CACHE_LOCATION_TOLERANCE,
   WEATHER_CACHE_TTL_MS,
   WEATHER_ICON_MAP,
 } from "./constants.mjs";
@@ -79,7 +80,11 @@ export function createWeatherService(fetchImpl, storage) {
       const cachedWeather = readWeatherCache(storage);
       const now = Date.now();
 
-      if (cachedWeather && now - cachedWeather.timestamp < WEATHER_CACHE_TTL_MS) {
+      if (
+        cachedWeather &&
+        now - cachedWeather.timestamp < WEATHER_CACHE_TTL_MS &&
+        isNearbyLocation(cachedWeather, location)
+      ) {
         return cachedWeather.data;
       }
 
@@ -94,6 +99,8 @@ export function createWeatherService(fetchImpl, storage) {
 
         writeWeatherCache(storage, {
           timestamp: now,
+          lat: location.lat,
+          lon: location.lon,
           data: displayText,
         });
 
@@ -183,6 +190,8 @@ function readWeatherCache(storage) {
     const parsedCache = JSON.parse(rawCache);
     if (
       typeof parsedCache?.timestamp !== "number" ||
+      typeof parsedCache?.lat !== "number" ||
+      typeof parsedCache?.lon !== "number" ||
       typeof parsedCache?.data !== "string"
     ) {
       return null;
@@ -193,6 +202,20 @@ function readWeatherCache(storage) {
     console.warn("Weather cache read failed", error);
     return null;
   }
+}
+
+function isNearbyLocation(cachedLocation, currentLocation) {
+  if (
+    typeof currentLocation?.lat !== "number" ||
+    typeof currentLocation?.lon !== "number"
+  ) {
+    return false;
+  }
+
+  return (
+    Math.abs(cachedLocation.lat - currentLocation.lat) <= WEATHER_CACHE_LOCATION_TOLERANCE &&
+    Math.abs(cachedLocation.lon - currentLocation.lon) <= WEATHER_CACHE_LOCATION_TOLERANCE
+  );
 }
 
 function writeWeatherCache(storage, value) {

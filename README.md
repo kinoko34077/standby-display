@@ -7,7 +7,9 @@
 iPhone / iPad のスタンバイ表示を想定した、和暦・正刻・時辰・天気・月齢・六曜付きの時計です。
 設定レイヤーを開いても時計本体は背面で描画を続け、実表示を見ながらその場で調整できます。
 
-[公開ページ](https://kinoko34077.github.io/standby-display/)
+[公開ページ（canonical）](https://standby-display.kinotch.workers.dev/)
+
+GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じソースから提供しています。
 
 ## 主な機能
 
@@ -37,6 +39,7 @@ iPhone / iPad のスタンバイ表示を想定した、和暦・正刻・時辰
 | `scripts/formatters.mjs` | 時計・日付・付加情報の表示文字列生成 |
 | `scripts/render.mjs` | DOM 反映 |
 | `scripts/services.mjs` | 時刻同期、位置情報、天気、月齢、六曜取得 |
+| `vendor/text-transform.mjs` | `kinotch-api`から同期する生成済みText Transform client（手編集禁止） |
 | `scripts/browser-features.mjs` | Wake Lock、ビューポート補正、Service Worker 登録 |
 | `manifest.json` | PWA 設定 |
 | `service-worker.js` | キャッシュ制御 |
@@ -54,7 +57,7 @@ iPhone / iPad のスタンバイ表示を想定した、和暦・正刻・時辰
 
 ## 今後の課題
 
-- 旧字体変換辞書を内部モジュールとして拡張
+- canonical Text Transform clientの契約維持と生成同期
 - 実機での Wake Lock / PWA / Service Worker 更新確認
 - フォント配信の完全ローカル化
 
@@ -100,24 +103,36 @@ iOS 9ではPWA Service Worker/Wake Lockには依存しません。OS側の画面
 
 ```sh
 npm ci
-npm test
+npm run sync:text-client
+npm run verify
 npm run dev
 npm run build
 npx wrangler deploy --dry-run
 npm run deploy
 ```
 
-Wrangler設定は`wrangler.jsonc`に一本化し、公開先は新KiNoTchアカウントの
+Wrangler設定は`wrangler.jsonc`に一本化し、canonical公開先は新KiNoTchアカウントの
 `standby-display.kinotch.workers.dev`です。`tools/build-assets.mjs`はブラウザ向けファイルだけを`dist/`へコピーします。
 元Worker資料・テスト・設定・Git履歴は配信しません。通常版・軽量版とも、共通API
 `https://api.kinotch.workers.dev` のv1ルートを利用します。API WorkerはHono Gatewayとして、
 既存のclock-server/weather-proxy/rokuyo-proxyへService Bindingで中継します。
 
+### Text Transform clientの同期
+
+旧字体変換clientの正本は兄弟リポジトリ `../kinotch-api/src/client/text-transform.js` です。
+`npm run sync:text-client` が正本側のESM生成物を作成し、`vendor/text-transform.mjs`へ同期します。
+生成物は編集せず、`npm test`（または `npm run check:text-client`）でstale状態を検出します。
+正本checkoutが見つかる場合は内容を直接比較し、単独checkoutではコミット済みの
+`vendor/text-transform.mjs.sha256`と生成物hashを照合します。正本を明示した場合に
+見つからなければ検査を失敗させます。別のcheckoutを使う場合は `KINOTCH_API_DIR` または
+`npm run sync:text-client -- --source <path>` を指定します。
+API取得に失敗した場合、時計はローカル旧字体mapで起動・継続します。
+
 Cloudflareに残る独立`legacy-clock`と旧QR用リダイレクトは、この統合だけでは変更・削除しません。
 ## デプロイ責任境界
 
 本リポジトリは時計画面そのものを管理するため、GitHubの`main`更新を起点に
-Workers Buildsで自動デプロイする対象です。設定値はbuild=`npm run build`、
+Workers Buildsで自動デプロイする対象です。設定値はbuild=`npm run verify`、
 deploy=`npx wrangler deploy`、root=`/`とします。
 現在、Cloudflare Workers Buildsは`kinoko34077/standby-display`の`main`へ接続済みです。
 
@@ -133,6 +148,7 @@ API変更時の注意点:
 - APIの本番デプロイ後は、時刻・天気・六曜・月情報の全ルートを疎通確認する
 - APIのデプロイVersion IDは、変更履歴や作業記録に残す
 
+`npm run verify` はテストと配信用asset生成を連続して実行し、release gateとして機能します。
 この変更では本ディレクトリのソースを基準とし、別作業フォルダの新しいGitHub版は上書き統合していません。
 機能判定の参考: [MDN noModule](https://developer.mozilla.org/en-US/docs/Web/API/HTMLScriptElement/noModule)、
 [CSS feature queries](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Conditional_rules/Using_feature_queries)。

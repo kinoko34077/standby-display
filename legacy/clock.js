@@ -85,7 +85,7 @@
   }
   function syncTime() {
     var started = new Date().getTime();
-    request(api.clock + "/", function (data) {
+    request(api.clock, function (data) {
       if (typeof data.serverTime !== "number" || !isFinite(data.serverTime)) return;
       var received = new Date().getTime();
       offset = data.serverTime + (received - started) / 2 - received;
@@ -94,7 +94,7 @@
   }
   function refreshForLocation() {
     var query = "lat=" + location.lat + "&lon=" + location.lon;
-    if (showWeather) request(api.weather + "/?" + query, function (data) {
+    if (showWeather) request(api.weather + "?" + query, function (data) {
       if (typeof data.temp === "number" && isFinite(data.temp)) text("weather", (weatherIcons[data.weather] || "？") + Math.round(data.temp) + "℃");
     });
     if (showMoon) request(api.moon + "?" + query, function (data) {

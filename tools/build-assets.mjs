@@ -12,7 +12,7 @@ for (const entry of await readdir(output)) {
   await rm(stale, { recursive: true, force: true });
 }
 for (const file of ["index.html", "style.css", "app.mjs", "bootstrap.js", "modern-entry.mjs",
-  "manifest.json", "service-worker.js", "icon-192.png", "assets", "scripts", "shared", "legacy"]) {
+  "manifest.json", "service-worker.js", "icon-192.png", "assets", "scripts", "vendor", "shared", "legacy"]) {
   await cp(path.join(root, file), path.join(output, file), { recursive: true });
 }
 console.log(`Static Assets ready: ${output}`);

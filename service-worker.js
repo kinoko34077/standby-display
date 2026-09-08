@@ -1,4 +1,4 @@
-const CACHE_NAME = "wafu-clock-compat-v1";
+const CACHE_NAME = "wafu-clock-compat-v2";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -18,7 +18,7 @@ const PRECACHE_URLS = [
   "./scripts/constants.mjs",
   "./scripts/formatters.mjs",
   "./scripts/kanji-conversion.mjs",
-  "./scripts/text-transform-client.mjs",
+  "./vendor/text-transform.mjs",
   "./scripts/render.mjs",
   "./scripts/random-colors.mjs",
   "./scripts/services.mjs",
@@ -65,24 +65,37 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request, { ignoreSearch: event.request.mode === "navigate" }).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
+  const isNetworkFirst = event.request.mode === "navigate" ||
+    ["document", "script", "style"].includes(event.request.destination) ||
+    /\.(?:html?|css|m?js)$/i.test(requestUrl.pathname);
+  const matchOptions = { ignoreSearch: event.request.mode === "navigate" };
+  const cacheNetworkResponse = (networkResponse) => {
+    if (networkResponse && networkResponse.status === 200) {
+      const responseToCache = networkResponse.clone();
+      const cacheUpdate = caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+      if (typeof event.waitUntil === "function") {
+        event.waitUntil(cacheUpdate);
       }
+    }
+    return networkResponse;
+  };
 
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200) {
-          return networkResponse;
-        }
+  if (isNetworkFirst) {
+    event.respondWith(
+      fetch(event.request)
+        .then(cacheNetworkResponse)
+        .catch(() => caches.match(event.request, matchOptions).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          throw new Error("Network unavailable and no cached response");
+        })),
+    );
+    return;
+  }
 
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
-        return networkResponse;
-      });
+  event.respondWith(
+    caches.match(event.request, matchOptions).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+      return fetch(event.request).then(cacheNetworkResponse);
     }),
   );
 });

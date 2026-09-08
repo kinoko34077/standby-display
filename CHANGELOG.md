@@ -24,7 +24,8 @@
 | 2026-09-07 00:59:01 | 2026-09-07 00:59:07 | [`7dc0a71`](https://github.com/kinoko34077/standby-display/commit/7dc0a71e69a9a5a1c5daa8f4dd967b046826e54e) | ランダム色スイッチの切り替えごとに再抽選する仕組みを追加。再抽選番号を設定として保存・URL共有。 |
 | 2026-09-07 01:08:02 | 2026-09-07 01:08:07 | [`f7bf162`](https://github.com/kinoko34077/standby-display/commit/f7bf16299218119d149d0b54050f9af96482ff29) | 時刻・天気・六曜・月齢APIのホストを旧Cloudflareアカウントから `kinotch.workers.dev` へ切り替え。 |
 | 2026-09-07 01:21:06 | 2026-09-07 01:21:14 | [`e880d07`](https://github.com/kinoko34077/standby-display/commit/e880d07dd3948383736e0a36b164b1fbbef8f10d) | 色設定UIを独立モジュールへ分離。APIエンドポイントを定数へ集約し、時計表示モデル生成と位置情報表示判定の重複を整理。Service Workerの事前キャッシュ対象も更新。 |
-| 2026-09-07 23:08:15 | 未実施（リモートpush承認待ち） | [`0adb979`](https://github.com/kinoko34077/standby-display/commit/0adb979058ed888342560acec8caf6295ad9cb22) | 旧字体変換を共通Text Transform APIの正本マップへ移行。起動時に一度だけAPIを呼び、初期表示・通信障害時はローカルfallbackを使用。API clientをService Workerの事前キャッシュへ追加。 |
+| 2026-09-07 23:08:15 | 不明（後続の `24b7fa0` が `main` に存在） | [`0adb979`](https://github.com/kinoko34077/standby-display/commit/0adb979058ed888342560acec8caf6295ad9cb22) | 旧字体変換を共通Text Transform APIの正本マップへ移行。起動時に一度だけAPIを呼び、初期表示・通信障害時はローカルfallbackを使用。API clientをService Workerの事前キャッシュへ追加。 |
+| 2026-09-07 23:09:10 | 不明 | [`24b7fa0`](https://github.com/kinoko34077/standby-display/commit/24b7fa001b5b8851199821608754d66bff9620a5) | Text Transform API移行の運用・変更履歴を文書化。 |
 
 ## 補足
 
