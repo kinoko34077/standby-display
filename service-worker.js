@@ -13,12 +13,18 @@ const PRECACHE_URLS = [
   "./legacy/clock.js",
   "./manifest.json",
   "./icon-192.png",
+  "./assets/vendor/iro.min.js",
+  "./assets/fonts/digital-7.ttf",
+  "./assets/fonts/rajdhani-latin-500-normal.woff2",
+  "./assets/fonts/rajdhani-latin-700-normal.woff2",
+  "./assets/fonts/noto-sans-jp-japanese-400-normal.woff2",
   "./scripts/browser-features.mjs",
   "./scripts/clock-app.mjs",
   "./scripts/constants.mjs",
   "./scripts/formatters.mjs",
   "./scripts/kanji-conversion.mjs",
   "./vendor/text-transform.mjs",
+  "./vendor/kanji-fallback.mjs",
   "./scripts/render.mjs",
   "./scripts/random-colors.mjs",
   "./scripts/services.mjs",
@@ -83,7 +89,10 @@ self.addEventListener("fetch", (event) => {
   if (isNetworkFirst) {
     event.respondWith(
       fetch(event.request)
-        .then(cacheNetworkResponse)
+        .then((networkResponse) => {
+          if (networkResponse.ok) return cacheNetworkResponse(networkResponse);
+          return caches.match(event.request, matchOptions).then((cachedResponse) => cachedResponse || networkResponse);
+        })
         .catch(() => caches.match(event.request, matchOptions).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
           throw new Error("Network unavailable and no cached response");

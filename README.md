@@ -40,6 +40,7 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 | `scripts/render.mjs` | DOM 反映 |
 | `scripts/services.mjs` | 時刻同期、位置情報、天気、月齢、六曜取得 |
 | `vendor/text-transform.mjs` | `kinotch-api`から同期する生成済みText Transform client（手編集禁止） |
+| `vendor/kanji-fallback.mjs` | `kinotch-api/src/text-core`から同期する生成済み旧字体fallback（手編集禁止） |
 | `scripts/browser-features.mjs` | Wake Lock、ビューポート補正、Service Worker 登録 |
 | `manifest.json` | PWA 設定 |
 | `service-worker.js` | キャッシュ制御 |
@@ -53,13 +54,13 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 - URL は共有 / 復元用、`localStorage` は常用設定用として使用
 - 「毎日のランダム色」は日付ごとに同じ色を再現し、時計色・文字色を対象にする。背景色は別スイッチで有効化する。
 
-色選択には、タッチスクリーン対応・依存なし・HSL/HSV 対応の [iro.js](https://iro.js.org/) 5.5.2 を使用しています。CDN が利用できない場合は既存の標準カラーピッカーへ戻ります。
+色選択には、タッチスクリーン対応・HSL/HSV 対応の [iro.js](https://iro.js.org/) 5.5.2 を
+`assets/vendor/iro.min.js`へ同梱して使用します。読み込み失敗時は標準カラーピッカーへ戻ります。
+Digital-7、Rajdhani、Noto Sans JPも`assets/fonts/`へ同梱し、時計画面の実行時外部asset依存をなくしています。
 
 ## 今後の課題
 
-- canonical Text Transform clientの契約維持と生成同期
 - 実機での Wake Lock / PWA / Service Worker 更新確認
-- フォント配信の完全ローカル化
 
 ## 通常版と旧端末用の統合
 
@@ -121,6 +122,7 @@ Wrangler設定は`wrangler.jsonc`に一本化し、canonical公開先は新KiNoT
 
 旧字体変換clientの正本は兄弟リポジトリ `../kinotch-api/src/client/text-transform.js` です。
 `npm run sync:text-client` が正本側のESM生成物を作成し、`vendor/text-transform.mjs`へ同期します。
+同じコマンドで旧字体fallbackも`vendor/kanji-fallback.mjs`へ同期します。
 生成物は編集せず、`npm test`（または `npm run check:text-client`）でstale状態を検出します。
 正本checkoutが見つかる場合は内容を直接比較し、単独checkoutではコミット済みの
 `vendor/text-transform.mjs.sha256`と生成物hashを照合します。正本を明示した場合に

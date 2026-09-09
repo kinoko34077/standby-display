@@ -1,6 +1,30 @@
 @font-face {
   font-family: "D7";
-  src: url("https://exis9.github.io/tradingviews/fonts/digital-7.ttf");
+  src: url("assets/fonts/digital-7.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rajdhani";
+  src: url("assets/fonts/rajdhani-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rajdhani";
+  src: url("assets/fonts/rajdhani-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans JP";
+  src: url("assets/fonts/noto-sans-jp-japanese-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
   font-display: swap;
 }
 

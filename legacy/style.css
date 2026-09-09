@@ -1,7 +1,7 @@
 /* Derived from legacy-clock Worker. No CSS variables, Grid, min() or flex gap. */
 @font-face {
   font-family: D7;
-  src: url("https://exis9.github.io/tradingviews/fonts/digital-7.ttf");
+  src: url("../assets/fonts/digital-7.ttf") format("truetype");
 }
 html, body {
   margin: 0; padding: 0; width: 100%; height: 100%;

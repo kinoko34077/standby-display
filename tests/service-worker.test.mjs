@@ -150,6 +150,17 @@ test("HTML and CSS refresh cached responses from the network", async () => {
   assert.match(workerSource, /wafu-clock-compat-v2/);
 });
 
+test("network-first falls back to a cached asset on HTTP server errors", async () => {
+  const worker = createWorker({
+    cached: [["https://example.test/app.mjs", new Response("cached-js", { status: 200 })]],
+    fetchImpl: async () => new Response("temporary failure", { status: 503 }),
+  });
+
+  const response = await worker.dispatch("fetch", request("/app.mjs"));
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "cached-js");
+});
+
 test("activation removes the previous versioned cache", async () => {
   const worker = createWorker({ fetchImpl: async () => new Response("ok") });
 

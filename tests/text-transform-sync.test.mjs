@@ -10,6 +10,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("generated text client is present and the sync check command is available", async () => {
   await access(path.join(root, "vendor", "text-transform.mjs"));
+  await access(path.join(root, "vendor", "kanji-fallback.mjs"));
+  await access(path.join(root, "vendor", "kanji-fallback.mjs.sha256"));
   const result = await runNode(["scripts/tools/sync-text-client.mjs", "--check"]);
   assert.equal(result.code, 0, result.stderr || result.stdout);
 });
@@ -22,6 +24,8 @@ test("standalone checkout can verify the vendored client without the source repo
     await cp(path.join(root, "scripts", "tools", "sync-text-client.mjs"), path.join(checkout, "scripts", "tools", "sync-text-client.mjs"));
     await cp(path.join(root, "vendor", "text-transform.mjs"), path.join(checkout, "vendor", "text-transform.mjs"));
     await cp(path.join(root, "vendor", "text-transform.mjs.sha256"), path.join(checkout, "vendor", "text-transform.mjs.sha256"));
+    await cp(path.join(root, "vendor", "kanji-fallback.mjs"), path.join(checkout, "vendor", "kanji-fallback.mjs"));
+    await cp(path.join(root, "vendor", "kanji-fallback.mjs.sha256"), path.join(checkout, "vendor", "kanji-fallback.mjs.sha256"));
     const result = await runNode(["scripts/tools/sync-text-client.mjs", "--check"], { cwd: checkout });
     assert.equal(result.code, 0, result.stderr || result.stdout);
     assert.match(`${result.stdout}${result.stderr}`, /canonical source unavailable/i);

@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { parse } from "acorn";
 import { formatDate, getSeikoku, getJishin } from "../scripts/formatters.mjs";
 import { createKanjiConversionService } from "../scripts/kanji-conversion.mjs";
+import { KANJI_VARIANT_PAIRS } from "../vendor/kanji-fallback.mjs";
 const root = new URL("../", import.meta.url);
 const read = file => readFile(new URL(file, root), "utf8");
 const bootstrap = await read("bootstrap.js");
@@ -194,10 +195,11 @@ test("normal entry is gated and PWA precaches both branches", async () => {
   assert.match(html, /src="\.\/bootstrap.js"><\/script>/);
   assert.doesNotMatch(html, /type="module" src="\.\/app.mjs"/);
   const worker = await read("service-worker.js");
-  for (const file of ["bootstrap.js", "modern-entry.mjs", "shared/config.js", "legacy/clock.js", "legacy/style.css", "legacy/index.html", "vendor/text-transform.mjs"]) assert.ok(worker.includes(file));
+  for (const file of ["bootstrap.js", "modern-entry.mjs", "shared/config.js", "legacy/clock.js", "legacy/style.css", "legacy/index.html", "vendor/text-transform.mjs", "assets/vendor/iro.min.js", "assets/fonts/digital-7.ttf"]) assert.ok(worker.includes(file));
 });
 
 test("modern kanji conversion adopts the API map and keeps local fallback", async () => {
+  const canonicalText = KANJI_VARIANT_PAIRS.map(([, legacyCharacter]) => legacyCharacter).join("");
   let requestedUrl;
   const service = createKanjiConversionService(async (url, init) => {
     requestedUrl = url;
@@ -211,7 +213,7 @@ test("modern kanji conversion adopts the API map and keeps local fallback", asyn
       ok: true,
       status: 200,
       async json() {
-        return { text: "亞佛會體價圓寫效國圖聲變學實對歸廣當惡舊晝曉曆歷氣澤濱瀧縣畫眞邊鐵讀假壽與螢覺說齊樣龜臺" };
+        return { text: canonicalText };
       },
     };
   }, "https://api.example.test");
@@ -232,11 +234,12 @@ test("modern kanji conversion adopts the API map and keeps local fallback", asyn
 });
 
 test("kanji conversion rejects an incompatible canonical probe and keeps local fallback", async () => {
+  const incompatibleText = KANJI_VARIANT_PAIRS.map(([, legacyCharacter]) => legacyCharacter).join("").replace("氣", "気");
   const service = createKanjiConversionService(async () => ({
     ok: true,
     status: 200,
     json: async () => ({
-      text: "亞佛會體價圓寫效國圖聲變學實對歸廣當惡舊晝曉曆歷気澤濱瀧縣畫眞邊鐵讀假壽與螢覺說齊樣龜臺",
+      text: incompatibleText,
     }),
   }), "https://api.example.test");
 
