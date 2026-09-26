@@ -56,14 +56,19 @@ test("Wake Lock rejection is observable and can be retried successfully", async 
   assert.equal(attempts, 2);
 });
 
-test("settings UI exposes Wake Lock and location diagnostics with retries", async () => {
-  const source = await read("app.mjs");
+test("runtime settings UI exposes Wake Lock and location diagnostics with retries", async () => {
+  const [appSource, uiSource] = await Promise.all([
+    read("app.mjs"),
+    read("scripts/settings-ui.mjs"),
+  ]);
 
-  assert.match(source, /wake-lock-status/);
-  assert.match(source, /wake-lock-retry/);
-  assert.match(source, /location-status/);
-  assert.match(source, /location-retry/);
-  assert.match(source, /端末状態/);
+  assert.match(appSource, /wake-lock-status/);
+  assert.match(appSource, /wake-lock-retry/);
+  assert.match(appSource, /wakeLockController\.retry/);
+  assert.match(appSource, /location-status/);
+  assert.match(appSource, /location-retry/);
+  assert.match(uiSource, /location-status/);
+  assert.match(uiSource, /location-retry/);
 });
 
 test("settings reset requires explicit confirmation", async () => {
