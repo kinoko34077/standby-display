@@ -5,6 +5,55 @@ import {
   registerServiceWorker,
 } from "./scripts/browser-features.mjs";
 
+function ensureCapabilityStatusUi() {
+  if (document.getElementById("wake-lock-status")) {
+    return;
+  }
+
+  const settingsGrid = document.querySelector(".settings-grid");
+  if (!settingsGrid) {
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.className = "settings-section capability-status-section";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "端末状態";
+
+  const wakeStatus = document.createElement("p");
+  wakeStatus.id = "wake-lock-status";
+  wakeStatus.className = "settings-help";
+  wakeStatus.setAttribute("role", "status");
+  wakeStatus.setAttribute("aria-live", "polite");
+  wakeStatus.textContent = "画面スリープ防止: 状態を確認中…";
+
+  const wakeRetry = document.createElement("button");
+  wakeRetry.id = "wake-lock-retry";
+  wakeRetry.className = "action-button";
+  wakeRetry.type = "button";
+  wakeRetry.textContent = "画面スリープ防止を再試行";
+  wakeRetry.hidden = true;
+
+  const locationStatus = document.createElement("p");
+  locationStatus.id = "location-status";
+  locationStatus.className = "settings-help";
+  locationStatus.setAttribute("role", "status");
+  locationStatus.setAttribute("aria-live", "polite");
+  locationStatus.textContent = "位置情報: 天気・月齢を有効にすると現在地を取得します。";
+
+  const locationRetry = document.createElement("button");
+  locationRetry.id = "location-retry";
+  locationRetry.className = "action-button";
+  locationRetry.type = "button";
+  locationRetry.textContent = "位置情報を再試行";
+  locationRetry.hidden = true;
+
+  section.append(heading, wakeStatus, wakeRetry, locationStatus, locationRetry);
+  settingsGrid.appendChild(section);
+}
+
+ensureCapabilityStatusUi();
 installViewportHeightVar(window, document);
 
 const wakeLockStatus = document.getElementById("wake-lock-status");
