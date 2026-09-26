@@ -45,6 +45,7 @@ export function createClockApp({
     onSettingChange: handleSettingChange,
     onCopyUrl: copyCurrentSettingsUrl,
     onReset: resetSettings,
+    onRetryLocation: retryLocation,
   }, globalThis.iro);
   const locationService = createLocationService(navigator.geolocation);
   const timeSyncService = createTimeSyncService(fetchImpl);
@@ -120,6 +121,25 @@ export function createClockApp({
     }
   }
 
+  function setLocationStatus(status, message) {
+    state.uiState.locationStatus = status;
+    state.uiState.locationStatusMessage = message;
+    renderSettingsUi();
+  }
+
+  function describeLocationError(error) {
+    if (!navigator.geolocation) {
+      return "位置情報: このブラウザでは利用できません。天気・月齢は取得せず時計表示を続けます。";
+    }
+    if (error?.code === 1) {
+      return "位置情報: 許可されていません。ブラウザまたはOSの位置情報権限を許可して再試行してください。";
+    }
+    if (error?.code === 3) {
+      return "位置情報: 取得がタイムアウトしました。通信・現在地を確認して再試行してください。";
+    }
+    return "位置情報: 取得できませんでした。通信・端末設定・権限を確認して再試行してください。";
+  }
+
   function clearTriggerHideTimer() {
     if (state.timers.triggerVisibility !== null) {
       timers.clearTimeout(state.timers.triggerVisibility);
@@ -135,6 +155,11 @@ export function createClockApp({
     }
 
     state.timers.triggerVisibility = timers.setTimeout(() => {
+      const settingsTrigger = document.getElementById("settings-open");
+      if (document.activeElement === settingsTrigger) {
+        scheduleTriggerHide();
+        return;
+      }
       state.uiState.triggerVisible = false;
       state.timers.triggerVisibility = null;
       renderSettingsUi();
@@ -226,22 +251,36 @@ export function createClockApp({
   }
 
   async function ensureLocation() {
-    if (state.location) {
-      return state.location;
-    }
-
     if (!hasLocationBoundVisibility()) {
+      setLocationStatus(
+        "idle",
+        "位置情報: 天気・月齢が無効のため取得していません。",
+      );
       return null;
     }
 
+    if (state.location) {
+      setLocationStatus("active", "位置情報: 取得済みです。");
+      return state.location;
+    }
+
+    setLocationStatus("loading", "位置情報: 取得中…");
+
     try {
       state.location = await locationService.getCurrentPosition();
+      setLocationStatus("active", "位置情報: 取得済みです。");
     } catch (error) {
       console.warn("Location lookup failed", error);
       state.location = null;
+      setLocationStatus("error", describeLocationError(error));
     }
 
     return state.location;
+  }
+
+  async function retryLocation() {
+    state.location = null;
+    await refreshLocationBoundData();
   }
 
   async function refreshCalendarData(now = getNow()) {
@@ -256,6 +295,10 @@ export function createClockApp({
 
   async function refreshLocationBoundData(now = getNow()) {
     if (!hasLocationBoundVisibility()) {
+      setLocationStatus(
+        "idle",
+        "位置情報: 天気・月齢が無効のため取得していません。",
+      );
       renderClockView(now);
       return;
     }
@@ -332,15 +375,18 @@ export function createClockApp({
     if (options.refreshLocation) {
       void refreshLocationBoundData();
     }
+
+    if (options.refreshLocationStatus) {
+      void refreshLocationBoundData();
+    }
   }
 
   function handleSettingChange({ group, key, field, value }) {
     const shouldRefreshCalendar =
       group === "visibility" && key === "rokuyo" && value === true;
-    const shouldRefreshLocation =
-      group === "visibility" &&
-      (key === "weather" || key === "moon") &&
-      value === true;
+    const locationVisibilityChanged =
+      group === "visibility" && (key === "weather" || key === "moon");
+    const shouldRefreshLocation = locationVisibilityChanged && value === true;
 
     updateSettings(
       (draft) => {
@@ -356,6 +402,7 @@ export function createClockApp({
       {
         refreshCalendar: shouldRefreshCalendar,
         refreshLocation: shouldRefreshLocation,
+        refreshLocationStatus: locationVisibilityChanged && !value,
       },
     );
   }
@@ -418,11 +465,13 @@ export function createClockApp({
     document.addEventListener("pointerdown", revealTriggerTemporarily, {
       passive: true,
     });
+    document.addEventListener("keydown", revealTriggerTemporarily);
     renderClockView();
     void characterStyleService.initialize().then(() => {
       renderClockView();
     });
     renderSettingsUi();
+    void refreshLocationBoundData();
     scheduleTriggerHide();
     startSecondLoop();
     scheduleRecurringWork();
