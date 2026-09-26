@@ -15,6 +15,8 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   const copyUrlButton = documentObject.getElementById("settings-copy-url");
   const resetButton = documentObject.getElementById("settings-reset");
   const statusElement = documentObject.getElementById("settings-status");
+  const locationStatusElement = documentObject.getElementById("location-status");
+  const locationRetryButton = documentObject.getElementById("location-retry");
   const rootElement = documentObject.body;
 
   const controls = {
@@ -46,11 +48,27 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   populateFontSelect(controls.clockFont, CLOCK_FONT_OPTIONS);
   populateFontSelect(controls.textFont, TEXT_FONT_OPTIONS);
 
+  const confirmReset = () => {
+    const confirmFunction = documentObject.defaultView?.confirm;
+    if (typeof confirmFunction !== "function") {
+      return false;
+    }
+    return confirmFunction.call(
+      documentObject.defaultView,
+      "設定を初期化して既定値へ戻します。よろしいですか？",
+    );
+  };
+
   triggerButton.addEventListener("click", callbacks.onOpen);
   closeButton.addEventListener("click", callbacks.onClose);
   viewToggleButton.addEventListener("click", callbacks.onToggleView);
   copyUrlButton.addEventListener("click", callbacks.onCopyUrl);
-  resetButton.addEventListener("click", callbacks.onReset);
+  resetButton.addEventListener("click", () => {
+    if (confirmReset()) {
+      callbacks.onReset();
+    }
+  });
+  locationRetryButton?.addEventListener("click", callbacks.onRetryLocation);
 
   overlay.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
@@ -177,6 +195,15 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
       uiState.settingsView === "fullscreen" ? "部分表示へ切替" : "全画面表示へ切替",
     );
     statusElement.textContent = uiState.statusMessage;
+
+    if (locationStatusElement) {
+      locationStatusElement.textContent = uiState.locationStatusMessage ?? "";
+      locationStatusElement.dataset.status = uiState.locationStatus ?? "idle";
+    }
+    if (locationRetryButton) {
+      locationRetryButton.hidden = uiState.locationStatus !== "error";
+      locationRetryButton.disabled = uiState.locationStatus === "loading";
+    }
 
     controls.showSeconds.checked = settings.clock.showSeconds;
     controls.clockFont.value = settings.clock.font;
