@@ -19,6 +19,8 @@ export function createDefaultUiState() {
     settingsView: "fullscreen",
     triggerVisible: true,
     statusMessage: "",
+    locationStatus: "idle",
+    locationStatusMessage: "位置情報: 天気・月齢を有効にすると現在地を取得します。",
   };
 }
 
