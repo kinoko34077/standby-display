@@ -8,29 +8,66 @@ export function installViewportHeightVar(windowObject, documentObject) {
   windowObject.addEventListener("resize", updateViewportHeight, { passive: true });
 }
 
-export function installWakeLock(navigatorObject, documentObject) {
+export function installWakeLock(
+  navigatorObject,
+  documentObject,
+  onStateChange = () => {},
+) {
+  const emitState = (status, error = null) => {
+    onStateChange({ status, error });
+  };
+
   if (!("wakeLock" in navigatorObject)) {
-    return;
+    emitState("unsupported");
+    return {
+      retry: async () => {
+        emitState("unsupported");
+        return false;
+      },
+    };
   }
 
   let wakeLock = null;
+  let requestPending = null;
 
   const requestWakeLock = async () => {
-    if (documentObject.visibilityState !== "visible" || wakeLock) {
-      return;
+    if (documentObject.visibilityState !== "visible") {
+      return false;
     }
 
-    try {
-      wakeLock = await navigatorObject.wakeLock.request("screen");
-      wakeLock.addEventListener("release", () => {
-        wakeLock = null;
-        if (documentObject.visibilityState === "visible") {
-          void requestWakeLock();
-        }
-      });
-    } catch (error) {
-      console.warn("Wake Lock request failed", error);
+    if (wakeLock) {
+      emitState("active");
+      return true;
     }
+
+    if (requestPending) {
+      return requestPending;
+    }
+
+    emitState("requesting");
+    requestPending = (async () => {
+      try {
+        const sentinel = await navigatorObject.wakeLock.request("screen");
+        wakeLock = sentinel;
+        sentinel.addEventListener("release", () => {
+          wakeLock = null;
+          emitState("released");
+          if (documentObject.visibilityState === "visible") {
+            void requestWakeLock();
+          }
+        });
+        emitState("active");
+        return true;
+      } catch (error) {
+        console.warn("Wake Lock request failed", error);
+        emitState("error", error);
+        return false;
+      } finally {
+        requestPending = null;
+      }
+    })();
+
+    return requestPending;
   };
 
   documentObject.addEventListener("visibilitychange", () => {
@@ -40,6 +77,10 @@ export function installWakeLock(navigatorObject, documentObject) {
   });
 
   void requestWakeLock();
+
+  return {
+    retry: requestWakeLock,
+  };
 }
 
 export function registerServiceWorker(navigatorObject, locationObject) {
