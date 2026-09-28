@@ -20,6 +20,12 @@ function createWorker({ cached = [], fetchImpl } = {}) {
     addAll() {
       return Promise.resolve();
     },
+    keys() {
+      return Promise.resolve([...entries.keys()].map((url) => new Request(url)));
+    },
+    delete(request) {
+      return Promise.resolve(entries.delete(request.url));
+    },
   };
   const caches = {
     match(request) {
@@ -37,7 +43,7 @@ function createWorker({ cached = [], fetchImpl } = {}) {
     },
   };
   const self = {
-    location: { origin: "https://example.test" },
+    location: { origin: "https://example.test", href: "https://example.test/service-worker.js" },
     clients: { claim() { return Promise.resolve(); } },
     skipWaiting() { return Promise.resolve(); },
     addEventListener(type, listener) {
@@ -168,4 +174,30 @@ test("activation removes the previous versioned cache", async () => {
   await worker.waitForBackground();
 
   assert.deepEqual(worker.deletedCaches, ["wafu-clock-compat-v1"]);
+});
+
+test("activation evicts removed same-generation assets before network fallback can resurrect them", async () => {
+  const removedUrl = "https://example.test/removed-script.js";
+  const currentUrl = "https://example.test/app.mjs";
+  const worker = createWorker({
+    cached: [
+      [removedUrl, new Response("obsolete", { status: 200 })],
+      [currentUrl, new Response("current", { status: 200 })],
+    ],
+    fetchImpl: async (request) => {
+      if (request.url === removedUrl) return new Response("not found", { status: 404 });
+      throw new Error("offline");
+    },
+  });
+
+  await worker.dispatch("activate");
+  await worker.waitForBackground();
+
+  assert.equal(worker.entries.has(removedUrl), false);
+  assert.equal(worker.entries.has(currentUrl), true);
+  const current = await worker.dispatch("fetch", request("/app.mjs"));
+  assert.equal(await current.text(), "current");
+  const response = await worker.dispatch("fetch", request("/removed-script.js"));
+  assert.equal(response.status, 404);
+  assert.equal(await response.text(), "not found");
 });
