@@ -90,6 +90,7 @@ GitHub Pagesの`/standby-display/`配下でも同じ相対パスで動作しま�
 旧字変換、縦書き、フォント選択、通常版の設定パネルは軽量版の対象外です。
 iOS 9ではPWA Service Worker/Wake Lockには依存しません。OS側の画面自動ロック設定は別途必要です。
 現行ブラウザのPWAキャッシュには通常版・軽量版両方のファイルを含めています。
+更新時はService Workerのactivateで現行`PRECACHE_URLS`と同名cacheの内容を照合し、現行版から削除された旧asset/scriptをオフラインfallbackから除外します。
 
 | ファイル | 役割 |
 | --- | --- |

@@ -33,6 +33,21 @@ const PRECACHE_URLS = [
   "./scripts/color-controls.mjs",
 ];
 
+const PRECACHE_URL_SET = new Set(
+  PRECACHE_URLS.map((url) => new URL(url, self.location.href).href),
+);
+
+function reconcileActiveCache() {
+  return caches.open(CACHE_NAME).then(async (cache) => {
+    const requests = await cache.keys();
+    await Promise.all(
+      requests
+        .filter((request) => !PRECACHE_URL_SET.has(request.url))
+        .map((request) => cache.delete(request)),
+    );
+  });
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -48,16 +63,16 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((cacheNames) =>
+    Promise.all([
+      caches.keys().then((cacheNames) =>
         Promise.all(
           cacheNames
             .filter((cacheName) => cacheName.startsWith("wafu-clock-") && cacheName !== CACHE_NAME)
             .map((cacheName) => caches.delete(cacheName)),
         ),
-      )
-      .then(() => self.clients.claim()),
+      ),
+      reconcileActiveCache(),
+    ]).then(() => self.clients.claim()),
   );
 });
 
