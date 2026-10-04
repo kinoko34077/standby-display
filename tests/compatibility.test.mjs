@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 import { parse } from "acorn";
+import { createLatestRequestFence } from "../scripts/clock-app.mjs";
 import { formatDate, getSeikoku, getJishin } from "../scripts/formatters.mjs";
 import { createKanjiConversionService } from "../scripts/kanji-conversion.mjs";
 import { KANJI_VARIANT_PAIRS } from "../vendor/kanji-fallback.mjs";
@@ -186,6 +187,42 @@ test("midnight replaces yesterday's rokuyo and ignores late stale responses", ()
   assert.equal(state.element("rokuyo").textContent, "未取得");
   assert.match(state.requests.at(-1).url, /date=2026-09-08/);
 });
+test("modern rokuyo request fence ignores a late previous-day response", async () => {
+  let currentDayKey = "2026-8-7";
+  const fence = createLatestRequestFence(() => currentDayKey);
+  const commits = [];
+
+  function deferred() {
+    let resolve;
+    const promise = new Promise((next) => {
+      resolve = next;
+    });
+    return { promise, resolve };
+  }
+
+  async function guardedCommit(source, dayKey) {
+    const request = fence.begin(dayKey);
+    const value = await source.promise;
+    if (request.isCurrent()) {
+      commits.push(value);
+    }
+  }
+
+  const yesterday = deferred();
+  const today = deferred();
+  const yesterdayTask = guardedCommit(yesterday, "2026-8-7");
+
+  currentDayKey = "2026-8-8";
+  const todayTask = guardedCommit(today, "2026-8-8");
+
+  today.resolve("今日");
+  await todayTask;
+  yesterday.resolve("昨日");
+  await yesterdayTask;
+
+  assert.deepEqual(commits, ["今日"]);
+});
+
 test("legacy return link keeps options but clears forced legacy", () => {
   const state = legacyPage({ search: "?mode=legacy&sec=0" });
   assert.equal(state.element("automatic-mode").href, "../?sec=0#clock");
