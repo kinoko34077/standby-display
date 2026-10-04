@@ -26,6 +26,24 @@ import {
 } from "./settings.mjs";
 import { createSettingsUi } from "./settings-ui.mjs";
 
+export function createLatestRequestFence(getCurrentKey) {
+  let latestGeneration = 0;
+
+  return {
+    begin(requestKey) {
+      const generation = ++latestGeneration;
+      return {
+        isCurrent() {
+          return (
+            generation === latestGeneration &&
+            requestKey === getCurrentKey()
+          );
+        },
+      };
+    },
+  };
+}
+
 export function createClockApp({
   document,
   navigator,
@@ -106,6 +124,10 @@ export function createClockApp({
   function getDayKey(date) {
     return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
   }
+
+  const rokuyoRequestFence = createLatestRequestFence(() =>
+    getDayKey(getNow()),
+  );
 
   function hasLocationBoundVisibility() {
     return state.settings.visibility.weather || state.settings.visibility.moon;
@@ -289,7 +311,15 @@ export function createClockApp({
       return;
     }
 
-    state.supplemental.rokuyoText = await calendarService.fetchRokuyo(now);
+    const requestedDayKey = getDayKey(now);
+    const request = rokuyoRequestFence.begin(requestedDayKey);
+    const rokuyoText = await calendarService.fetchRokuyo(now);
+
+    if (!request.isCurrent()) {
+      return;
+    }
+
+    state.supplemental.rokuyoText = rokuyoText;
     renderClockView(now);
   }
 
