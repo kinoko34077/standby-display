@@ -5,6 +5,14 @@
 }
 
 @font-face {
+  font-family: "DSEG7-Classic-MINI";
+  src: url("assets/fonts/dseg7-classic-mini-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Rajdhani";
   src: url("assets/fonts/rajdhani-latin-500-normal.woff2") format("woff2");
   font-weight: 500;

@@ -56,7 +56,7 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 
 色選択には、タッチスクリーン対応・HSL/HSV 対応の [iro.js](https://iro.js.org/) 5.5.2 を
 `assets/vendor/iro.min.js`へ同梱して使用します。読み込み失敗時は標準カラーピッカーへ戻ります。
-Digital-7、Rajdhani、Noto Sans JPも`assets/fonts/`へ同梱し、時計画面の実行時外部asset依存をなくしています。
+Digital-7、DSEG7 Classic Mini Bold、Rajdhani、Noto Sans JPも`assets/fonts/`へ同梱し、時計画面の実行時外部asset依存をなくしています。DSEG7 Classic Mini BoldはDSEG v0.46（Copyright (c) keshikan、SIL Open Font License 1.1）を使用し、`assets/fonts/DSEG-LICENSE.txt`を同梱しています。
 
 ## 今後の課題
 

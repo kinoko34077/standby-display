@@ -89,6 +89,11 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     family: "\"D7\", \"Rajdhani\", sans-serif",
   },
   {
+    id: "dseg7-classic-mini-bold",
+    label: "DSEG7 Classic Mini Bold",
+    family: "\"DSEG7-Classic-MINI\", \"D7\", \"Rajdhani\", sans-serif",
+  },
+  {
     id: "rajdhani",
     label: "Rajdhani",
     family: "\"Rajdhani\", sans-serif",
