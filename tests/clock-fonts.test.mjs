@@ -27,6 +27,37 @@ test("clock fonts carry Digital-7-relative normalization metadata", () => {
   });
 });
 
+test("normalized source metrics stay close to the Digital-7 reference", () => {
+  const sourceMetrics = {
+    d7: { height: 0.654545, digitAdvance: 0.472727, colonAdvance: 0.163636 },
+    "dseg7-classic-mini-bold": { height: 1, digitAdvance: 0.816, colonAdvance: 0.2 },
+    rajdhani: { height: 0.643, digitAdvance: 0.526, colonAdvance: 0.194 },
+    mono: { height: 0.722, digitAdvance: 0.6, colonAdvance: 0.6 },
+  };
+  const reference = sourceMetrics.d7;
+  const referenceHeight = reference.height;
+  const referenceWidth = 4 * reference.digitAdvance + reference.colonAdvance;
+
+  for (const option of CLOCK_FONT_OPTIONS) {
+    const source = sourceMetrics[option.id];
+    const normalizedHeight = source.height * option.normalization.sizeScale;
+    const normalizedWidth = (
+      4 * source.digitAdvance +
+      source.colonAdvance +
+      4 * option.normalization.trackingEm
+    ) * option.normalization.sizeScale;
+
+    assert.ok(
+      Math.abs(normalizedHeight - referenceHeight) <= 0.001,
+      `${option.id} normalized height drifted`,
+    );
+    assert.ok(
+      Math.abs(normalizedWidth - referenceWidth) <= 0.005,
+      `${option.id} normalized 88:88 width drifted`,
+    );
+  }
+});
+
 test("DSEG7 Classic Mini Bold remains a selectable bundled clock font", async () => {
   const option = CLOCK_FONT_OPTIONS.find(
     (candidate) => candidate.id === "dseg7-classic-mini-bold",
@@ -50,6 +81,7 @@ test("DSEG7 Classic Mini Bold remains a selectable bundled clock font", async ()
 
   const worker = await readFile(new URL("service-worker.js", root), "utf8");
   assert.match(worker, /assets\/fonts\/dseg7-classic-mini-bold\.woff2/);
+  assert.match(worker, /assets\/fonts\/ibm-plex-mono-latin-400-normal\.woff2/);
 
   const license = await readFile(
     new URL("assets/fonts/DSEG-LICENSE.txt", root),
