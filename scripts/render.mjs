@@ -1,11 +1,30 @@
 import { CLOCK_FONT_OPTIONS, TEXT_FONT_OPTIONS } from "./constants.mjs";
 
 const CLOCK_FONT_MAP = new Map(
-  CLOCK_FONT_OPTIONS.map((option) => [option.id, option.family]),
+  CLOCK_FONT_OPTIONS.map((option) => [option.id, option]),
 );
 const TEXT_FONT_MAP = new Map(
   TEXT_FONT_OPTIONS.map((option) => [option.id, option.family]),
 );
+
+export function resolveClockTypography(settings) {
+  const option = CLOCK_FONT_MAP.get(settings.clock.font) || CLOCK_FONT_MAP.get("d7");
+  const userScale = settings.clock.sizePercent / 100;
+  return {
+    family: option.family,
+    weight: option.weight,
+    sizeScale: roundMetric(option.normalization.sizeScale * userScale, 4),
+    letterSpacingEm: roundMetric(
+      option.normalization.trackingEm + settings.clock.letterSpacingEm,
+      3,
+    ),
+  };
+}
+
+function roundMetric(value, decimals) {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
 
 export function createRenderer(documentObject) {
   const rootElement = documentObject.body;
@@ -45,9 +64,19 @@ export function createRenderer(documentObject) {
     rootElement.style.setProperty("--app-background", settings.colors.background);
     rootElement.style.setProperty("--app-text", settings.colors.text);
     rootElement.style.setProperty("--app-clock", settings.colors.clock);
+    const clockTypography = resolveClockTypography(settings);
+    rootElement.style.setProperty("--app-clock-font", clockTypography.family);
     rootElement.style.setProperty(
-      "--app-clock-font",
-      CLOCK_FONT_MAP.get(settings.clock.font) || CLOCK_FONT_MAP.get("d7"),
+      "--app-clock-font-weight",
+      String(clockTypography.weight),
+    );
+    rootElement.style.setProperty(
+      "--app-clock-size-scale",
+      String(clockTypography.sizeScale),
+    );
+    rootElement.style.setProperty(
+      "--app-clock-letter-spacing",
+      `${clockTypography.letterSpacingEm}em`,
     );
     rootElement.style.setProperty(
       "--app-text-font",

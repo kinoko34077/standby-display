@@ -1,4 +1,9 @@
-import { CLOCK_FONT_OPTIONS, TEXT_FONT_OPTIONS } from "./constants.mjs";
+import {
+  CLOCK_FONT_OPTIONS,
+  CLOCK_LETTER_SPACING_CONTROL,
+  CLOCK_SIZE_CONTROL,
+  TEXT_FONT_OPTIONS,
+} from "./constants.mjs";
 import {
   createColorPickers,
   createRandomColorControls,
@@ -22,6 +27,10 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   const controls = {
     showSeconds: documentObject.getElementById("setting-clock-seconds"),
     clockFont: documentObject.getElementById("setting-clock-font"),
+    clockSize: documentObject.getElementById("setting-clock-size"),
+    clockSizeValue: documentObject.getElementById("setting-clock-size-value"),
+    clockLetterSpacing: documentObject.getElementById("setting-clock-letter-spacing"),
+    clockLetterSpacingValue: documentObject.getElementById("setting-clock-letter-spacing-value"),
     textFont: documentObject.getElementById("setting-text-font"),
     weather: documentObject.getElementById("setting-visibility-weather"),
     moon: documentObject.getElementById("setting-visibility-moon"),
@@ -47,6 +56,8 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
 
   populateFontSelect(controls.clockFont, CLOCK_FONT_OPTIONS);
   populateFontSelect(controls.textFont, TEXT_FONT_OPTIONS);
+  configureRangeControl(controls.clockSize, CLOCK_SIZE_CONTROL);
+  configureRangeControl(controls.clockLetterSpacing, CLOCK_LETTER_SPACING_CONTROL);
 
   const confirmReset = () => {
     const confirmFunction = documentObject.defaultView?.confirm;
@@ -94,6 +105,22 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
       group: "clock",
       key: "font",
       value: event.target.value,
+    });
+  });
+
+  controls.clockSize.addEventListener("input", (event) => {
+    callbacks.onSettingChange({
+      group: "clock",
+      key: "sizePercent",
+      value: Number(event.target.value),
+    });
+  });
+
+  controls.clockLetterSpacing.addEventListener("input", (event) => {
+    callbacks.onSettingChange({
+      group: "clock",
+      key: "letterSpacingEm",
+      value: Number(event.target.value),
     });
   });
 
@@ -207,6 +234,10 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
 
     controls.showSeconds.checked = settings.clock.showSeconds;
     controls.clockFont.value = settings.clock.font;
+    controls.clockSize.value = String(settings.clock.sizePercent);
+    controls.clockSizeValue.textContent = `${settings.clock.sizePercent}%`;
+    controls.clockLetterSpacing.value = String(settings.clock.letterSpacingEm);
+    controls.clockLetterSpacingValue.textContent = formatLetterSpacing(settings.clock.letterSpacingEm);
     controls.textFont.value = settings.typography.font;
     controls.weather.checked = settings.visibility.weather;
     controls.moon.checked = settings.visibility.moon;
@@ -257,6 +288,18 @@ function bindRadioGroup(documentObject, name, onChange) {
       }
     });
   }
+}
+
+function configureRangeControl(input, config) {
+  input.min = String(config.min);
+  input.max = String(config.max);
+  input.step = String(config.step);
+}
+
+function formatLetterSpacing(value) {
+  const numericValue = Number(value);
+  const prefix = numericValue > 0 ? "+" : "";
+  return `${prefix}${numericValue.toFixed(2)}em`;
 }
 
 function populateFontSelect(selectElement, options) {

@@ -21,6 +21,14 @@
 }
 
 @font-face {
+  font-family: "IBM Plex Mono";
+  src: url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Rajdhani";
   src: url("assets/fonts/rajdhani-latin-700-normal.woff2") format("woff2");
   font-weight: 700;
@@ -42,6 +50,9 @@
   --app-text: #f1ede4;
   --app-clock: #70b8ff;
   --app-clock-font: "D7", "Rajdhani", sans-serif;
+  --app-clock-font-weight: 400;
+  --app-clock-size-scale: 1;
+  --app-clock-letter-spacing: 0em;
   --app-text-font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --color-weekday: #8b8b8b;
   --color-weekday-sunday: #ff7878;
@@ -149,11 +160,15 @@ body {
 .clock-block {
   position: relative;
   font-family: var(--app-clock-font);
+  font-weight: var(--app-clock-font-weight);
   font-size: var(--clock-size);
   color: var(--app-clock);
   line-height: 1;
+  letter-spacing: var(--app-clock-letter-spacing);
   text-align: center;
   white-space: nowrap;
+  transform: scale(var(--app-clock-size-scale));
+  transform-origin: center center;
 }
 
 .seconds {
@@ -494,6 +509,27 @@ body[data-settings-open="true"] .settings-trigger-layer {
 .select-control option {
   color: #111827;
   background: #f8fafc;
+}
+
+.slider-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.25em;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-control input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--app-clock);
+}
+
+.slider-value {
+  color: var(--overlay-subtle);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .color-row .color-control {
