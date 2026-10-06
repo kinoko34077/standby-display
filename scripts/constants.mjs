@@ -103,24 +103,28 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     id: "d7",
     label: "Digital-7",
     family: "\"D7\", \"Rajdhani\", sans-serif",
+    weight: 400,
     normalization: Object.freeze({ sizeScale: 1, trackingEm: 0 }),
   },
   {
     id: "dseg7-classic-mini-bold",
     label: "DSEG7 Classic Mini Bold",
     family: "\"DSEG7-Classic-MINI\", \"D7\", \"Rajdhani\", sans-serif",
+    weight: 700,
     normalization: Object.freeze({ sizeScale: 0.655, trackingEm: -0.081 }),
   },
   {
     id: "rajdhani",
     label: "Rajdhani",
     family: "\"Rajdhani\", sans-serif",
+    weight: 500,
     normalization: Object.freeze({ sizeScale: 1.018, trackingEm: -0.07 }),
   },
   {
     id: "mono",
     label: "Monospace",
     family: "\"IBM Plex Mono\", Consolas, monospace",
+    weight: 400,
     normalization: Object.freeze({ sizeScale: 0.907, trackingEm: -0.183 }),
   },
 ]);

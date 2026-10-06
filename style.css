@@ -42,6 +42,7 @@
   --app-text: #f1ede4;
   --app-clock: #70b8ff;
   --app-clock-font: "D7", "Rajdhani", sans-serif;
+  --app-clock-font-weight: 400;
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
   --app-text-font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
@@ -151,6 +152,7 @@ body {
 .clock-block {
   position: relative;
   font-family: var(--app-clock-font);
+  font-weight: var(--app-clock-font-weight);
   font-size: var(--clock-size);
   color: var(--app-clock);
   line-height: 1;

@@ -33,6 +33,7 @@ test("DSEG7 Classic Mini Bold remains a selectable bundled clock font", async ()
   );
   assert.equal(option?.label, "DSEG7 Classic Mini Bold");
   assert.match(option?.family ?? "", /DSEG7-Classic-MINI/);
+  assert.equal(option?.weight, 700);
 
   const parsed = parseSettingsFromSearch("?clockfont=dseg7-classic-mini-bold");
   assert.equal(parsed.clock.font, "dseg7-classic-mini-bold");
@@ -102,6 +103,7 @@ test("font normalization and user adjustment compose in one render calculation",
 
   assert.deepEqual(resolveClockTypography(settings), {
     family: "\"DSEG7-Classic-MINI\", \"D7\", \"Rajdhani\", sans-serif",
+    weight: 700,
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
   });

@@ -12,6 +12,7 @@ export function resolveClockTypography(settings) {
   const userScale = settings.clock.sizePercent / 100;
   return {
     family: option.family,
+    weight: option.weight,
     sizeScale: roundMetric(option.normalization.sizeScale * userScale, 4),
     letterSpacingEm: roundMetric(
       option.normalization.trackingEm + settings.clock.letterSpacingEm,
@@ -65,6 +66,10 @@ export function createRenderer(documentObject) {
     rootElement.style.setProperty("--app-clock", settings.colors.clock);
     const clockTypography = resolveClockTypography(settings);
     rootElement.style.setProperty("--app-clock-font", clockTypography.family);
+    rootElement.style.setProperty(
+      "--app-clock-font-weight",
+      String(clockTypography.weight),
+    );
     rootElement.style.setProperty(
       "--app-clock-size-scale",
       String(clockTypography.sizeScale),
