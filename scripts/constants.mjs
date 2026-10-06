@@ -3,6 +3,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
     showSeconds: true,
     hourFormat: "24",
     font: "d7",
+    sizePercent: 100,
+    letterSpacingEm: 0,
   },
   calendar: {
     yearSystem: "wareki",
@@ -61,6 +63,18 @@ export const WEATHER_CACHE_KEY = "standby-display:weather-cache";
 export const SETTINGS_STORAGE_KEY = "standby-display:settings";
 export const STATUS_MESSAGE_TIMEOUT_MS = 2200;
 
+export const CLOCK_SIZE_CONTROL = Object.freeze({
+  min: 60,
+  max: 140,
+  step: 1,
+});
+
+export const CLOCK_LETTER_SPACING_CONTROL = Object.freeze({
+  min: -0.25,
+  max: 0.25,
+  step: 0.01,
+});
+
 export const WEATHER_ICON_MAP = Object.freeze({
   Clear: "☀",
   Clouds: "☁",
@@ -83,25 +97,31 @@ export const MOON_PHASE_EMOJIS = Object.freeze([
 ]);
 
 export const CLOCK_FONT_OPTIONS = Object.freeze([
+  // Normalization basis: original glyph outlines with Digital-7 as reference.
+  // sizeScale aligns maximum digit ink height; trackingEm aligns representative 88:88 width.
   {
     id: "d7",
     label: "Digital-7",
     family: "\"D7\", \"Rajdhani\", sans-serif",
+    normalization: Object.freeze({ sizeScale: 1, trackingEm: 0 }),
   },
   {
     id: "dseg7-classic-mini-bold",
     label: "DSEG7 Classic Mini Bold",
     family: "\"DSEG7-Classic-MINI\", \"D7\", \"Rajdhani\", sans-serif",
+    normalization: Object.freeze({ sizeScale: 0.655, trackingEm: -0.081 }),
   },
   {
     id: "rajdhani",
     label: "Rajdhani",
     family: "\"Rajdhani\", sans-serif",
+    normalization: Object.freeze({ sizeScale: 1.018, trackingEm: -0.07 }),
   },
   {
     id: "mono",
     label: "Monospace",
     family: "\"IBM Plex Mono\", Consolas, monospace",
+    normalization: Object.freeze({ sizeScale: 0.907, trackingEm: -0.183 }),
   },
 ]);
 

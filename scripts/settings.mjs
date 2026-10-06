@@ -1,5 +1,7 @@
 import {
   CLOCK_FONT_OPTIONS,
+  CLOCK_LETTER_SPACING_CONTROL,
+  CLOCK_SIZE_CONTROL,
   DEFAULT_SETTINGS,
   SETTINGS_STORAGE_KEY,
   TEXT_FONT_OPTIONS,
@@ -62,6 +64,14 @@ export function parseSettingsFromSearch(search) {
 
   if (params.has("clockfont")) {
     assign(partialSettings, "clock", "font", params.get("clockfont"));
+  }
+
+  if (params.has("clocksize")) {
+    assign(partialSettings, "clock", "sizePercent", params.get("clocksize"));
+  }
+
+  if (params.has("clockspacing")) {
+    assign(partialSettings, "clock", "letterSpacingEm", params.get("clockspacing"));
   }
 
   if (params.has("cal")) {
@@ -149,6 +159,8 @@ export function buildSettingsSearch(settings) {
   appendSetting(params, "sec", current.clock.showSeconds, (value) => (value ? "1" : "0"));
   appendSetting(params, "hour", current.clock.hourFormat, String);
   appendSetting(params, "clockfont", current.clock.font, String);
+  appendSetting(params, "clocksize", current.clock.sizePercent, String);
+  appendSetting(params, "clockspacing", current.clock.letterSpacingEm, String);
   appendSetting(params, "cal", current.calendar.yearSystem, String);
   appendSetting(params, "char", current.calendar.characterStyle, String);
   appendSetting(
@@ -189,6 +201,20 @@ export function sanitizeSettings(partialSettings) {
       showSeconds: Boolean(merged.clock.showSeconds),
       hourFormat: merged.clock.hourFormat === "12" ? "12" : "24",
       font: CLOCK_FONT_IDS.has(merged.clock.font) ? merged.clock.font : DEFAULT_SETTINGS.clock.font,
+      sizePercent: normalizeBoundedNumber(
+        merged.clock.sizePercent,
+        DEFAULT_SETTINGS.clock.sizePercent,
+        CLOCK_SIZE_CONTROL.min,
+        CLOCK_SIZE_CONTROL.max,
+        0,
+      ),
+      letterSpacingEm: normalizeBoundedNumber(
+        merged.clock.letterSpacingEm,
+        DEFAULT_SETTINGS.clock.letterSpacingEm,
+        CLOCK_LETTER_SPACING_CONTROL.min,
+        CLOCK_LETTER_SPACING_CONTROL.max,
+        2,
+      ),
     },
     calendar: {
       yearSystem:
@@ -275,6 +301,17 @@ function appendRandomRange(params, key, range) {
     key,
     [range.hueMin, range.hueMax, range.lightnessMin, range.lightnessMax].join(","),
   );
+}
+
+function normalizeBoundedNumber(value, fallback, min, max, decimals) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  const clamped = Math.min(max, Math.max(min, numericValue));
+  const factor = 10 ** decimals;
+  return Math.round(clamped * factor) / factor;
 }
 
 function normalizeRevision(value) {

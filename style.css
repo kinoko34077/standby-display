@@ -42,6 +42,8 @@
   --app-text: #f1ede4;
   --app-clock: #70b8ff;
   --app-clock-font: "D7", "Rajdhani", sans-serif;
+  --app-clock-size-scale: 1;
+  --app-clock-letter-spacing: 0em;
   --app-text-font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --color-weekday: #8b8b8b;
   --color-weekday-sunday: #ff7878;
@@ -152,8 +154,11 @@ body {
   font-size: var(--clock-size);
   color: var(--app-clock);
   line-height: 1;
+  letter-spacing: var(--app-clock-letter-spacing);
   text-align: center;
   white-space: nowrap;
+  transform: scale(var(--app-clock-size-scale));
+  transform-origin: center center;
 }
 
 .seconds {
@@ -494,6 +499,27 @@ body[data-settings-open="true"] .settings-trigger-layer {
 .select-control option {
   color: #111827;
   background: #f8fafc;
+}
+
+.slider-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.25em;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-control input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--app-clock);
+}
+
+.slider-value {
+  color: var(--overlay-subtle);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .color-row .color-control {

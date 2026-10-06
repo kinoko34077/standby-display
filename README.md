@@ -17,7 +17,7 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 - 正刻・時辰・天気・月齢・六曜の表示
 - PWA 対応
 - HUD 型の設定オーバーレイ
-- 秒表示、時間形式、書字方向、フォント、色、表示情報の切替
+- 秒表示、時間形式、書字方向、フォント、時計文字サイズ・字間、色、表示情報の切替
 - 日次のランダム色（時計・文字・背景）と色相・明度の範囲指定
 - ランダム色スイッチの切替時の再抽選
 - Android のタッチ操作に対応した色選択（iro.js、読み込み失敗時は標準色選択へフォールバック）
@@ -57,6 +57,7 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 色選択には、タッチスクリーン対応・HSL/HSV 対応の [iro.js](https://iro.js.org/) 5.5.2 を
 `assets/vendor/iro.min.js`へ同梱して使用します。読み込み失敗時は標準カラーピッカーへ戻ります。
 Digital-7、DSEG7 Classic Mini Bold、Rajdhani、Noto Sans JPも`assets/fonts/`へ同梱し、時計画面の実行時外部asset依存をなくしています。DSEG7 Classic Mini BoldはDSEG v0.46（Copyright (c) keshikan、SIL Open Font License 1.1）を使用し、`assets/fonts/DSEG-LICENSE.txt`を同梱しています。
+時計フォントはDigital-7を基準に、元フォントの数字glyph高と`88:88`のadvance幅から既定サイズ・字間を補正します。設定の「時計文字サイズ」「時計字間」はその既定補正へ追加で適用され、URL共有と`localStorage`保存の対象です。
 
 ## 今後の課題
 
