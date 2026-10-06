@@ -110,6 +110,18 @@ test("font normalization and user adjustment compose in one render calculation",
 });
 
 test("settings UI exposes immediate clock size and tracking sliders", async () => {
+  const plexFont = await readFile(
+    new URL("assets/fonts/ibm-plex-mono-latin-400-normal.woff2", root),
+  );
+  assert.equal(plexFont.subarray(0, 4).toString("ascii"), "wOF2");
+
+  const plexLicense = await readFile(
+    new URL("assets/fonts/IBM-PLEX-MONO-LICENSE.txt", root),
+    "utf8",
+  );
+  assert.match(plexLicense, /SIL OPEN FONT LICENSE Version 1\.1/);
+  assert.match(plexLicense, /Reserved Font Name "Plex"/);
+
   const [html, ui, css] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("scripts/settings-ui.mjs", root), "utf8"),
@@ -120,6 +132,8 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(html, /id="setting-clock-letter-spacing" type="range"/);
   assert.match(ui, /key: "sizePercent"/);
   assert.match(ui, /key: "letterSpacingEm"/);
+  assert.match(css, /font-family: "IBM Plex Mono"/);
+  assert.match(css, /assets\/fonts\/ibm-plex-mono-latin-400-normal\.woff2/);
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
   assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);

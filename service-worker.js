@@ -16,6 +16,7 @@ const PRECACHE_URLS = [
   "./assets/vendor/iro.min.js",
   "./assets/fonts/digital-7.ttf",
   "./assets/fonts/dseg7-classic-mini-bold.woff2",
+  "./assets/fonts/ibm-plex-mono-latin-400-normal.woff2",
   "./assets/fonts/rajdhani-latin-500-normal.woff2",
   "./assets/fonts/rajdhani-latin-700-normal.woff2",
   "./assets/fonts/noto-sans-jp-japanese-400-normal.woff2",
