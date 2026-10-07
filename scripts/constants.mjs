@@ -61,6 +61,8 @@ export const DEFAULT_SUPPLEMENTAL_DATA = Object.freeze({
 export const CLOCK_SYNC_INTERVAL_MS = 60 * 60 * 1000;
 export const DATA_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 export const WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
+export const LOCATION_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
+export const API_REQUEST_TIMEOUT_MS = 8000;
 export const WEATHER_CACHE_LOCATION_TOLERANCE = 0.01;
 export const WEATHER_CACHE_KEY = "standby-display:weather-cache";
 export const SETTINGS_STORAGE_KEY = "standby-display:settings";
@@ -100,23 +102,25 @@ export const MOON_PHASE_EMOJIS = Object.freeze([
 ]);
 
 export const CLOCK_FONT_OPTIONS = Object.freeze([
-  // Normalization basis: original glyph outlines with Digital-7 as reference.
-  // sizeScale aligns maximum digit ink height; trackingEm aligns representative 88:88 width.
+  // Normalization basis: the accepted segmented-clock reference box.
+  // The legacy id "d7" is retained for persisted settings/URL compatibility,
+  // but now resolves to the openly licensed DSEG7 Modern family.
   {
     id: "d7",
-    label: "Digital-7",
-    family: "\"D7\", \"Rajdhani\", sans-serif",
+    label: "DSEG7 Modern",
+    family: "\"DSEG7-Modern\", \"DSEG7-Classic-MINI\", \"Rajdhani\", sans-serif",
     weight: 400,
     normalization: Object.freeze({
-      sizeScale: 1,
-      trackingEm: 0,
-      prefixShiftEm: 0.077,
+      sizeScale: 0.655,
+      trackingEm: -0.081,
+      secondaryTrackingEm: 0,
+      prefixShiftEm: 0.015,
     }),
   },
   {
     id: "dseg7-classic-mini-bold",
     label: "DSEG7 Classic Mini Bold",
-    family: "\"DSEG7-Classic-MINI\", \"D7\", \"Rajdhani\", sans-serif",
+    family: "\"DSEG7-Classic-MINI\", \"Rajdhani\", sans-serif",
     weight: 700,
     normalization: Object.freeze({
       sizeScale: 0.655,
