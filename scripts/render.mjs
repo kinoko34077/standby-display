@@ -25,6 +25,7 @@ export function resolveClockTypography(settings) {
       secondaryTracking + settings.clock.letterSpacingEm,
       3,
     ),
+    prefixShiftEm: option.normalization.prefixShiftEm ?? 0,
   };
 }
 
@@ -89,6 +90,10 @@ export function createRenderer(documentObject) {
     rootElement.style.setProperty(
       "--app-clock-secondary-letter-spacing",
       `${clockTypography.secondaryLetterSpacingEm}em`,
+    );
+    rootElement.style.setProperty(
+      "--app-clock-prefix-shift",
+      `${clockTypography.prefixShiftEm}em`,
     );
     rootElement.style.setProperty(
       "--app-text-font",
