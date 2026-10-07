@@ -54,6 +54,7 @@
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
   --app-clock-secondary-letter-spacing: 0em;
+  --app-clock-center-shift: 0em;
   --app-clock-prefix-shift: 0em;
   --app-text-font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --color-weekday: #8b8b8b;
@@ -171,7 +172,7 @@ body {
   text-align: center;
   white-space: nowrap;
   transform: scale(var(--app-clock-size-scale))
-    translateX(calc(var(--app-clock-letter-spacing) / 2));
+    translateX(var(--app-clock-center-shift));
   transform-origin: center center;
 }
 
