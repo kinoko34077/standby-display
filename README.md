@@ -16,7 +16,7 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 - 和暦 / 西暦の切替
 - 正刻・時辰・天気・月齢・六曜の表示
 - PWA 対応
-- HUD 型の設定オーバーレイ
+- 画面幅に適応する設定UI（広い画面は右側の非モーダル・インスペクター、狭い画面は全画面）
 - 現行時計、12進表示、完全12進、フランス十進時法、16進表示、完全16進の切替
 - 各時法の実際の表示境界へ同期する可変tick（ブラウザ遅延後も次境界から再同期）
 - 12/16進の英字桁を小文字/大文字で切替（10進方式では設定無効）
@@ -55,17 +55,19 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 
 ## 設定 UI
 
-- 半透明の全画面オーバーレイとして表示
-- 必要時のみ部分表示へ切替
-- 設定中も背面の時計は更新継続
-- 変更は即時反映
-- URL は共有 / 復元用、`localStorage` は常用設定用として使用
-- 「毎日のランダム色」は日付ごとに同じ色を再現し、時計色・文字色を対象にする。背景色は別スイッチで有効化する。
+- 広い画面では右側の非モーダル・インスペクターとして表示し、背面の時計を確認しながら設定できます。
+- 幅800px以下では全画面の設定画面に切り替わり、カテゴリは横スクロールで選択できます。手動で「部分表示／全画面」を切り替える機能はありません。
+- 設定カテゴリは「時計」「表記」「表示」「色」「システム」の5つです。
+- 開閉時のキーボード操作（Escape・設定ボタンへのフォーカス復帰）に対応します。
+- 設定中も時計は更新され、変更は即時反映・自動保存します。保存に失敗した場合は表示で通知します。
+- URL は共有 / 復元用、`localStorage` は常用設定用として使用します。URLに含まれる項目だけが保存済みの値より優先されます。
+- 「毎日のランダム色」は日付ごとに同じ色を再現し、時計色・文字色を対象にします。背景色は別スイッチで有効化します。詳細な色相・明度の範囲は必要時だけ展開できます。
 
 色選択には、タッチスクリーン対応・HSL/HSV 対応の [iro.js](https://iro.js.org/) 5.5.2 を
 `assets/vendor/iro.min.js`へ同梱して使用します。読み込み失敗時は標準カラーピッカーへ戻ります。
-Digital-7、DSEG7 Classic Mini Bold、Rajdhani、IBM Plex Mono、Noto Sans JPも`assets/fonts/`へ同梱し、時計画面の実行時外部asset依存をなくしています。DSEG7 Classic Mini BoldはDSEG v0.46（Copyright (c) keshikan、SIL Open Font License 1.1）を使用し、`assets/fonts/DSEG-LICENSE.txt`を同梱しています。IBM Plex MonoはSIL Open Font License 1.1に従って使用し、`assets/fonts/IBM-PLEX-MONO-LICENSE.txt`を同梱しています。
-時計フォントはDigital-7を基準に、元フォントの数字glyph高と`88:88`のadvance幅から既定サイズ・字間を補正します。設定の「時計文字サイズ」「時計字間」はその既定補正へ追加で適用され、URL共有と`localStorage`保存の対象です。小型の秒表示は主時計の中心位置を変えず、中央固定された時分表示の直下で右端を揃えて独立配置します。DSEG7では主表示用の幅圧縮trackingをそのまま継承せず、小サイズでsegment glyphが衝突しないsecondary trackingを使います。
+時計フォントの旧`d7`設定IDは互換性のため維持しつつ、表示書体を **DSEG7 Modern（SIL Open Font License 1.1）** に変更しています。旧Digital-7のフォントファイルはリポジトリから除外しました。DSEG7 Modernはバージョン固定の `dseg@0.46.0` を外部CDNから取得し、対応するPWAではService Workerのキャッシュを利用します。新規インストール時には外部取得が必要なため、オンライン接続のない初回起動では代替フォントにフォールバックする可能性があります。
+DSEG7 Classic Mini Bold、Rajdhani、IBM Plex Mono、Noto Sans JPは`assets/fonts/`に同梱しています。SIL Open Font License 1.1の表示・再配布条件は`assets/fonts/`の各LICENSEに記録しています。
+時計のサイズ・字間はフォントごとの補正値とユーザー設定を組み合わせます。旧Digital-7で測定したglyph値を新しいDSEG7 Modernにそのまま当てはめて正当化せず、フォント差替え後は別途ブラウザの実描画検証を必要とします。秒表示は中央基準の時分表示の下・右端に独立配置し、点滅時に数字が移動しない構造を維持します。
 
 ## 今後の課題
 
