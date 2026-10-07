@@ -168,8 +168,8 @@ Subsections:
 #### 診断
 - Wake Lock state
 - Wake Lock retry when failed
-- location state summary
-- location retry when failed
+
+位置情報の主状態・再試行は「表示」に置き、天気・月齢との因果関係を崩さない。システム側へ同じ診断UIを重複表示しない。
 
 #### 互換
 - legacy mode
@@ -185,11 +185,13 @@ Wide layout uses a right-side inspector rather than a full-screen settings grid.
 
 ### 5.1 Shell
 
-Target width:
+Initial target width:
 
-`clamp(480px, 38vw, 620px)`
+`clamp(420px, 34vw, 520px)`
 
-The rest of the viewport continues showing the live clock.
+This is an implementation candidate, not a fixed aesthetic number. The final value is accepted only after checking select/range/color-picker overflow and the remaining live-clock viewport. The inspector must not become so wide that it defeats the purpose of retaining the clock as live context.
+
+The rest of the viewport continues showing the live clock and remains interactive on wide layouts.
 
 The inspector contains:
 
@@ -221,7 +223,7 @@ The close button remains icon-only because it is a known auxiliary action; it ke
 
 ## 6. Narrow/mobile layout
 
-At narrow usable widths the settings surface becomes full viewport.
+At narrow usable widths the settings surface becomes full viewport. The obscured main application becomes inert while settings are open, and inertness is removed on close or when returning to a wide layout.
 
 The change is structural, not a scaled-down desktop inspector.
 
@@ -259,7 +261,9 @@ Use a real navigation/control structure.
 Desktop:
 
 - container: `nav aria-label="設定カテゴリ"`
-- category buttons expose selected/current state.
+- category buttons expose selected/current state;
+- the settings inspector is non-modal: background clock remains visible and usable;
+- no blanket focus trap is used.
 
 Mobile:
 
@@ -270,8 +274,10 @@ Category changes must:
 
 - never discard settings state;
 - not recreate settings from defaults;
-- preserve the current category until settings closes;
+- preserve the active category for the current settings session, including close/reopen within the same page session;
 - preserve per-category scroll position where switching away and back would otherwise create avoidable re-navigation;
+- preserve native disclosure state while the current page session remains alive;
+- keep this browsing state session-local; do not add it to persistent settings/localStorage;
 - avoid unexpected focus movement;
 - keep keyboard navigation predictable.
 
@@ -320,6 +326,8 @@ Use for enumerations with several values, such as clock system and font.
 Keep range controls for size, tracking and random range limits.
 
 Show the current numeric value adjacent to the control.
+
+Compact density is not forced uniformly. Color pickers and paired range controls may use more vertical space than ordinary boolean/select rows when that improves manipulation accuracy and prevents horizontal crowding.
 
 ### 9.6 Helper text
 
@@ -407,9 +415,11 @@ The first implementation should prefer regrouping existing controls over rewriti
 ### Phase B — adaptive shell
 
 - remove manual layout-toggle UX;
-- implement desktop inspector;
+- implement desktop inspector with the initial `clamp(420px, 34vw, 520px)` candidate width;
 - implement narrow fullscreen mode;
-- update settings open/close semantics and focus handling.
+- make the main application inert only in narrow mode;
+- update settings open/close semantics and focus handling;
+- preserve active category and per-category scroll positions as session-only UI state.
 
 ### Phase C — progressive disclosure / system separation
 
