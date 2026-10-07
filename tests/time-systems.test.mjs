@@ -155,6 +155,14 @@ test("clock scheduling follows visible time-system boundaries", () => {
 
   // A French decimal second is exactly 864 ms.
   assert.equal(getClockNextTickDelayMs(midnight, clock("decimal-time")), 864);
+  // Exact decimal boundaries must advance directly to the next unit, not emit a 1 ms retrigger.
+  assert.equal(
+    getClockNextTickDelayMs(
+      new Date(2026, 0, 1, 0, 0, 6, 48),
+      clock("decimal-time"),
+    ),
+    864,
+  );
   // With decimal seconds hidden, the civil colon blink is the earliest visible event.
   assert.equal(
     getClockNextTickDelayMs(midnight, clock("decimal-time", false)),
@@ -168,6 +176,12 @@ test("clock scheduling follows visible time-system boundaries", () => {
     getClockNextTickDelayMs(midnight, clock("hex-day", false)),
     60000,
   );
+
+  const atDecimalBoundary = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 6, 48),
+    clock("decimal-time"),
+  );
+  assert.equal(atDecimalBoundary.secondText, ":07");
 
   const beforeHexBoundary = new Date(2026, 0, 1, 0, 0, 1, 318);
   assert.equal(

@@ -161,7 +161,10 @@ function colonClock({ hourText, minuteText, secondText, now, showSeconds }) {
 
 function partitionNominalDay(now, unitCount) {
   const elapsedMs = elapsedNominalDayMs(now);
-  return Math.min(unitCount - 1, Math.floor((elapsedMs / NOMINAL_DAY_MS) * unitCount));
+  return Math.min(
+    unitCount - 1,
+    Math.floor((elapsedMs * unitCount) / NOMINAL_DAY_MS),
+  );
 }
 
 function nextDecimalTimeBoundaryMs(now, settings) {
@@ -178,7 +181,7 @@ function nextHexDayBoundaryMs(now, settings) {
 
 function nextPartitionBoundaryMs(now, unitCount) {
   const elapsedMs = elapsedNominalDayMs(now);
-  const currentUnit = Math.floor((elapsedMs / NOMINAL_DAY_MS) * unitCount);
+  const currentUnit = Math.floor((elapsedMs * unitCount) / NOMINAL_DAY_MS);
   const nextBoundaryElapsedMs = ((currentUnit + 1) * NOMINAL_DAY_MS) / unitCount;
   return Math.max(1, Math.ceil(nextBoundaryElapsedMs - elapsedMs));
 }
