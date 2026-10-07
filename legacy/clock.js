@@ -7,7 +7,9 @@
   var offset = 0;
   var lastDay = "";
   var location = null;
+  var locationAt = 0;
   var locating = false;
+  var LOCATION_MAX_AGE_MS = 15 * 60 * 1000;
   var months = ["睦月", "如月", "弥生", "卯月", "皐月", "水無月", "文月", "葉月", "長月", "神無月", "霜月", "師走"];
   var weekdays = ["日", "月", "火", "水", "木", "金", "土"];
   var digits = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
@@ -105,9 +107,13 @@
       text("moon", icon);
     });
   }
-  function refreshLocation() {
+  function refreshLocation(force) {
     if (!showWeather && !showMoon) return;
-    if (location) { refreshForLocation(); return; }
+    var nowMs = new Date().getTime();
+    if (location && !force && nowMs - locationAt < LOCATION_MAX_AGE_MS) {
+      refreshForLocation();
+      return;
+    }
     if (!navigator.geolocation || locating) return;
     locating = true;
     navigator.geolocation.getCurrentPosition(function (position) {
@@ -116,8 +122,13 @@
       var lon = position.coords.longitude;
       if (!isFinite(lat) || !isFinite(lon)) return;
       location = { lat: lat.toFixed(4), lon: lon.toFixed(4) };
+      locationAt = new Date().getTime();
       refreshForLocation();
-    }, function () { locating = false; }, { enableHighAccuracy: false, maximumAge: 900000, timeout: 8000 });
+    }, function () { locating = false; }, {
+      enableHighAccuracy: false,
+      maximumAge: force ? 0 : LOCATION_MAX_AGE_MS,
+      timeout: 8000
+    });
   }
   function applyColor(element, property, value) {
     if (/^#[0-9a-f]{6}$/i.test(value)) element.style[property] = value;
