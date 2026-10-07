@@ -15,50 +15,61 @@ const CLOCK_SYSTEMS = new Map([
   ["civil", {
     usesHourFormat: true,
     supportsLetterCase: false,
+    secondPartitionsPerDay: 24 * 60 * 60,
     format: formatCivilDecimal,
     nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
   }],
   ["civil-base12", {
     usesHourFormat: false,
     supportsLetterCase: true,
-    format: (now, settings) => formatCivilRadix(now, settings, 12),
+    secondPartitionsPerDay: 24 * 60 * 60,
+    format: (now, settings, system) => formatCivilRadix(now, settings, 12, system),
     nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
   }],
   ["duodecimal", {
     usesHourFormat: false,
     supportsLetterCase: true,
+    secondPartitionsPerDay: 12 * 12 * 12,
     format: formatDuodecimalDay,
-    nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
+    nextVisibleBoundaryMs: nextDuodecimalBoundaryMs,
   }],
   ["decimal-time", {
     usesHourFormat: false,
     supportsLetterCase: false,
+    secondPartitionsPerDay: 100000,
     format: formatDecimalTime,
     nextVisibleBoundaryMs: nextDecimalTimeBoundaryMs,
   }],
   ["civil-base16", {
     usesHourFormat: false,
     supportsLetterCase: true,
-    format: (now, settings) => formatCivilRadix(now, settings, 16),
+    secondPartitionsPerDay: 24 * 60 * 60,
+    format: (now, settings, system) => formatCivilRadix(now, settings, 16, system),
     nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
   }],
   ["hex-day", {
     usesHourFormat: false,
     supportsLetterCase: true,
+    secondPartitionsPerDay: 16 ** 4,
     format: formatHexDay,
     nextVisibleBoundaryMs: nextHexDayBoundaryMs,
   }],
 ]);
 
 export function formatClockTime(now, clockSettings) {
-  return getSystem(clockSettings.timeSystem).format(now, clockSettings);
+  const system = getSystem(clockSettings.timeSystem);
+  return system.format(now, clockSettings, system);
 }
 
 export function getClockNextTickDelayMs(now, clockSettings) {
   const system = getSystem(clockSettings.timeSystem);
   return Math.min(
     system.nextVisibleBoundaryMs(now, clockSettings),
-    nextBlinkBoundaryMs(now, clockSettings.fastBlink),
+    nextBlinkBoundaryMs(
+      now,
+      system.secondPartitionsPerDay,
+      clockSettings.fastBlink,
+    ),
     nextCivilMinuteBoundaryMs(now),
   );
 }
@@ -75,7 +86,7 @@ function getSystem(systemId) {
   return CLOCK_SYSTEMS.get(systemId) || CLOCK_SYSTEMS.get("civil");
 }
 
-function formatCivilDecimal(now, settings) {
+function formatCivilDecimal(now, settings, system) {
   const rawHour = now.getHours();
   const hour = settings.hourFormat === "12" ? ((rawHour + 11) % 12) + 1 : rawHour;
   return colonClock({
@@ -85,10 +96,11 @@ function formatCivilDecimal(now, settings) {
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
+    secondPartitionsPerDay: system.secondPartitionsPerDay,
   });
 }
 
-function formatCivilRadix(now, settings, radix) {
+function formatCivilRadix(now, settings, radix, system) {
   return colonClock({
     hourText: formatRadixInteger(now.getHours(), radix, {
       minWidth: 2,
@@ -105,10 +117,11 @@ function formatCivilRadix(now, settings, radix) {
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
+    secondPartitionsPerDay: system.secondPartitionsPerDay,
   });
 }
 
-function formatDuodecimalDay(now, settings) {
+function formatDuodecimalDay(now, settings, system) {
   const total = partitionNominalDay(now, 12 * 12 * 12);
   return colonClock({
     hourText: formatRadixInteger(Math.floor(total / 144), 12, {
@@ -123,10 +136,11 @@ function formatDuodecimalDay(now, settings) {
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
+    secondPartitionsPerDay: system.secondPartitionsPerDay,
   });
 }
 
-function formatDecimalTime(now, settings) {
+function formatDecimalTime(now, settings, system) {
   const total = partitionNominalDay(now, 100000);
   return colonClock({
     hourText: String(Math.floor(total / 10000)),
@@ -135,10 +149,11 @@ function formatDecimalTime(now, settings) {
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
+    secondPartitionsPerDay: system.secondPartitionsPerDay,
   });
 }
 
-function formatHexDay(now, settings) {
+function formatHexDay(now, settings, system) {
   const digits = formatRadixInteger(partitionNominalDay(now, 16 ** 4), 16, {
     minWidth: 4,
     uppercase: settings.uppercaseDigits,
@@ -151,7 +166,11 @@ function formatHexDay(now, settings) {
     separatorText: "",
     showSeconds: false,
     showColon: false,
-    showPrefix: isBlinkVisible(now, settings.fastBlink),
+    showPrefix: isBlinkVisible(
+      now,
+      system.secondPartitionsPerDay,
+      settings.fastBlink,
+    ),
   };
 }
 
@@ -162,6 +181,7 @@ function colonClock({
   now,
   showSeconds,
   fastBlink,
+  secondPartitionsPerDay,
 }) {
   return {
     prefixText: "",
@@ -170,7 +190,7 @@ function colonClock({
     secondText: `:${secondText}`,
     separatorText: ":",
     showSeconds,
-    showColon: isBlinkVisible(now, fastBlink),
+    showColon: isBlinkVisible(now, secondPartitionsPerDay, fastBlink),
     showPrefix: false,
   };
 }
@@ -183,12 +203,12 @@ function partitionNominalDay(now, unitCount) {
   );
 }
 
+function nextDuodecimalBoundaryMs(now, settings) {
+  return nextPartitionBoundaryMs(now, settings.showSeconds ? 12 ** 3 : 12 ** 2);
+}
+
 function nextDecimalTimeBoundaryMs(now, settings) {
-  const partitionCount = settings.showSeconds ? 100000 : 1000;
-  return Math.min(
-    nextPartitionBoundaryMs(now, partitionCount),
-    nextCivilSecondBoundaryMs(now),
-  );
+  return nextPartitionBoundaryMs(now, settings.showSeconds ? 100000 : 1000);
 }
 
 function nextHexDayBoundaryMs(now, settings) {
@@ -207,17 +227,14 @@ function nextCivilSecondBoundaryMs(now) {
   return milliseconds === 0 ? 1000 : 1000 - milliseconds;
 }
 
-function nextBlinkBoundaryMs(now, fastBlink) {
-  const quantumMs = fastBlink ? 500 : 1000;
-  const elapsedInMinuteMs = now.getSeconds() * 1000 + now.getMilliseconds();
-  const remainder = elapsedInMinuteMs % quantumMs;
-  return remainder === 0 ? quantumMs : quantumMs - remainder;
+function nextBlinkBoundaryMs(now, secondPartitionsPerDay, fastBlink) {
+  const partitionCount = secondPartitionsPerDay * (fastBlink ? 2 : 1);
+  return nextPartitionBoundaryMs(now, partitionCount);
 }
 
-function isBlinkVisible(now, fastBlink) {
-  const quantumMs = fastBlink ? 500 : 1000;
-  const elapsedInMinuteMs = now.getSeconds() * 1000 + now.getMilliseconds();
-  return Math.floor(elapsedInMinuteMs / quantumMs) % 2 === 0;
+function isBlinkVisible(now, secondPartitionsPerDay, fastBlink) {
+  const partitionCount = secondPartitionsPerDay * (fastBlink ? 2 : 1);
+  return partitionNominalDay(now, partitionCount) % 2 === 0;
 }
 
 function nextCivilMinuteBoundaryMs(now) {

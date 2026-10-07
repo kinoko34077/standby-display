@@ -177,6 +177,11 @@ body {
   min-width: 0.3em;
 }
 
+.clock-prefix[hidden] {
+  display: none;
+  min-width: 0;
+}
+
 .seconds {
   position: absolute;
   right: 2vw;

@@ -151,23 +151,79 @@ test("complete hexadecimal day uses .hhhh day fraction", () => {
   );
 });
 
-test("blink cadence applies to every clock mode", () => {
-  const atStart = new Date(2026, 0, 1, 0, 0, 0, 0);
-  const atHalf = new Date(2026, 0, 1, 0, 0, 0, 500);
-  const atOneSecond = new Date(2026, 0, 1, 0, 0, 1, 0);
+test("blink cadence is phase-locked to each clock system's own seconds", () => {
+  const midnight = new Date(2026, 0, 1, 0, 0, 0, 0);
 
-  for (const id of ["civil", "civil-base12", "duodecimal", "decimal-time", "civil-base16"]) {
-    assert.equal(formatClockTime(atStart, clock(id)).showColon, true, id);
-    assert.equal(formatClockTime(atHalf, clock(id)).showColon, true, id);
-    assert.equal(formatClockTime(atOneSecond, clock(id)).showColon, false, id);
-    assert.equal(formatClockTime(atStart, clock(id, true, "24", false, true)).showColon, true, id);
-    assert.equal(formatClockTime(atHalf, clock(id, true, "24", false, true)).showColon, false, id);
-    assert.equal(formatClockTime(atOneSecond, clock(id, true, "24", false, true)).showColon, true, id);
+  for (const id of ["civil", "civil-base12", "civil-base16"]) {
+    assert.equal(formatClockTime(midnight, clock(id)).showColon, true, id);
+    assert.equal(
+      formatClockTime(new Date(2026, 0, 1, 0, 0, 1, 0), clock(id)).showColon,
+      false,
+      id,
+    );
+    assert.equal(
+      formatClockTime(
+        new Date(2026, 0, 1, 0, 0, 0, 500),
+        clock(id, true, "24", false, true),
+      ).showColon,
+      false,
+      id,
+    );
   }
 
-  assert.equal(formatClockTime(atStart, clock("hex-day")).showPrefix, true);
-  assert.equal(formatClockTime(atOneSecond, clock("hex-day")).showPrefix, false);
-  assert.equal(formatClockTime(atHalf, clock("hex-day", true, "24", false, true)).showPrefix, false);
+  // Complete duodecimal second = 86400000 / 1728 = 50000 ms.
+  assert.equal(formatClockTime(midnight, clock("duodecimal")).showColon, true);
+  assert.equal(
+    formatClockTime(
+      new Date(2026, 0, 1, 0, 0, 49, 999),
+      clock("duodecimal"),
+    ).showColon,
+    true,
+  );
+  assert.equal(
+    formatClockTime(new Date(2026, 0, 1, 0, 0, 50, 0), clock("duodecimal"))
+      .showColon,
+    false,
+  );
+  assert.equal(
+    formatClockTime(
+      new Date(2026, 0, 1, 0, 0, 25, 0),
+      clock("duodecimal", true, "24", false, true),
+    ).showColon,
+    false,
+  );
+
+  // French decimal second = 864 ms.
+  assert.equal(formatClockTime(midnight, clock("decimal-time")).showColon, true);
+  assert.equal(
+    formatClockTime(new Date(2026, 0, 1, 0, 0, 0, 864), clock("decimal-time"))
+      .showColon,
+    false,
+  );
+  assert.equal(
+    formatClockTime(
+      new Date(2026, 0, 1, 0, 0, 0, 432),
+      clock("decimal-time", true, "24", false, true),
+    ).showColon,
+    false,
+  );
+
+  // Complete hexadecimal second = 86400000 / 65536 = 1318.359375 ms.
+  assert.equal(formatClockTime(midnight, clock("hex-day")).showPrefix, true);
+  assert.equal(
+    formatClockTime(
+      new Date(2026, 0, 1, 0, 0, 1, 319),
+      clock("hex-day"),
+    ).showPrefix,
+    false,
+  );
+  assert.equal(
+    formatClockTime(
+      new Date(2026, 0, 1, 0, 0, 0, 660),
+      clock("hex-day", true, "24", false, true),
+    ).showPrefix,
+    false,
+  );
 });
 
 test("clock scheduling follows visible time-system boundaries", () => {
@@ -175,7 +231,17 @@ test("clock scheduling follows visible time-system boundaries", () => {
   const midSecond = new Date(2026, 0, 1, 0, 0, 0, 250);
 
   assert.equal(getClockNextTickDelayMs(midSecond, clock("civil")), 750);
-  assert.equal(getClockNextTickDelayMs(midSecond, clock("duodecimal")), 750);
+  assert.equal(
+    getClockNextTickDelayMs(midnight, clock("duodecimal")),
+    50000,
+  );
+  assert.equal(
+    getClockNextTickDelayMs(
+      midnight,
+      clock("duodecimal", true, "24", false, true),
+    ),
+    25000,
+  );
 
   // A French decimal second is exactly 864 ms.
   assert.equal(getClockNextTickDelayMs(midnight, clock("decimal-time")), 864);
@@ -187,15 +253,22 @@ test("clock scheduling follows visible time-system boundaries", () => {
     ),
     864,
   );
-  // With decimal seconds hidden, the civil colon blink is the earliest visible event.
+  assert.equal(
+    getClockNextTickDelayMs(
+      midnight,
+      clock("decimal-time", true, "24", false, true),
+    ),
+    432,
+  );
+  // With decimal seconds hidden, punctuation still follows decimal seconds.
   assert.equal(
     getClockNextTickDelayMs(midnight, clock("decimal-time", false)),
-    1000,
+    864,
   );
 
-  // Complete hex blinks its leading period, so blink can wake before the
-  // 1318.359375 ms value boundary.
-  assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day")), 1000);
+  // Complete hex period and least-significant value unit share the same
+  // 1/65536-day boundary at normal speed.
+  assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day")), 1319);
   assert.equal(
     getClockNextTickDelayMs(new Date(2026, 0, 1, 0, 0, 1, 0), clock("hex-day")),
     319,
@@ -203,7 +276,7 @@ test("clock scheduling follows visible time-system boundaries", () => {
   assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day", false)), 1000);
   assert.equal(
     getClockNextTickDelayMs(midnight, clock("hex-day", true, "24", false, true)),
-    500,
+    660,
   );
 
   const atDecimalBoundary = formatClockTime(
