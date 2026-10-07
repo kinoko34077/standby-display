@@ -195,7 +195,7 @@ test("blink cadence is phase-locked to each clock system's own seconds", () => {
   );
   assert.equal(
     formatClockTime(
-      new Date(2026, 0, 1, 0, 0, 2, 084),
+      new Date(2026, 0, 1, 0, 0, 2, 84),
       clock("duodecimal", true, "24", false, true),
     ).showColon,
     false,
