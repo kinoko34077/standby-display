@@ -25,7 +25,7 @@ import {
   sanitizeSettings,
 } from "./settings.mjs";
 import { createSettingsUi } from "./settings-ui.mjs";
-import { getClockTickIntervalMs } from "./time-systems.mjs";
+import { getClockNextTickDelayMs } from "./time-systems.mjs";
 
 export function createLatestRequestFence(getCurrentKey) {
   let latestGeneration = 0;
@@ -86,8 +86,7 @@ export function createClockApp({
     lastMinuteKey: null,
     lastDayKey: null,
     timers: {
-      secondAlignment: null,
-      secondTick: null,
+      clockTick: null,
       timeSync: null,
       externalData: null,
       statusMessage: null,
@@ -222,18 +221,14 @@ export function createClockApp({
     };
   }
 
-  function stopSecondLoop() {
-    if (state.timers.secondAlignment !== null) {
-      timers.clearTimeout(state.timers.secondAlignment);
-      state.timers.secondAlignment = null;
-    }
-    if (state.timers.secondTick !== null) {
-      timers.clearInterval(state.timers.secondTick);
-      state.timers.secondTick = null;
+  function stopClockLoop() {
+    if (state.timers.clockTick !== null) {
+      timers.clearTimeout(state.timers.clockTick);
+      state.timers.clockTick = null;
     }
   }
 
-  function handleSecondTick() {
+  function handleClockTick() {
     const now = getNow();
     const nextMinuteKey = getMinuteKey(now);
     const nextDayKey = getDayKey(now);
@@ -250,25 +245,27 @@ export function createClockApp({
     }
   }
 
-  function startSecondLoop() {
-    stopSecondLoop();
-    renderClockView();
+  function scheduleNextClockTick() {
+    const now = getNow();
+    const delay = getClockNextTickDelayMs(now, state.settings.clock);
 
-    const intervalMs = getClockTickIntervalMs(state.settings.clock);
-    const syncedNow = Date.now() + state.clockOffsetMs;
-    const remainder = syncedNow % intervalMs;
-    const delay = remainder === 0 ? intervalMs : intervalMs - remainder;
-
-    state.timers.secondAlignment = timers.setTimeout(() => {
-      handleSecondTick();
-      state.timers.secondTick = timers.setInterval(handleSecondTick, intervalMs);
+    state.timers.clockTick = timers.setTimeout(() => {
+      state.timers.clockTick = null;
+      handleClockTick();
+      scheduleNextClockTick();
     }, delay);
+  }
+
+  function startClockLoop() {
+    stopClockLoop();
+    renderClockView();
+    scheduleNextClockTick();
   }
 
   async function syncClockOffset() {
     try {
       state.clockOffsetMs = await timeSyncService.syncClockOffset();
-      startSecondLoop();
+      startClockLoop();
     } catch (error) {
       console.warn("Clock sync failed", error);
     }
@@ -438,8 +435,11 @@ export function createClockApp({
       },
     );
 
-    if (group === "clock" && key === "timeSystem") {
-      startSecondLoop();
+    if (
+      group === "clock" &&
+      (key === "timeSystem" || key === "showSeconds")
+    ) {
+      startClockLoop();
     }
   }
 
@@ -490,7 +490,7 @@ export function createClockApp({
   function resetSettings() {
     state.settings = cloneSettings(DEFAULT_SETTINGS);
     persistSettings();
-    renderClockView();
+    startClockLoop();
     renderSettingsUi();
     void refreshCalendarData();
     void refreshLocationBoundData();
@@ -509,7 +509,7 @@ export function createClockApp({
     renderSettingsUi();
     void refreshLocationBoundData();
     scheduleTriggerHide();
-    startSecondLoop();
+    startClockLoop();
     scheduleRecurringWork();
     // A slow/offline API must not be mistaken for an incompatible browser.
     onReady();

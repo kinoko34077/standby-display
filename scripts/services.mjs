@@ -25,10 +25,33 @@ export function createTimeSyncService(fetchImpl) {
         throw new Error("Invalid serverTime payload");
       }
 
-      const roundTripTime = responseReceivedAt - requestStartedAt;
-      return serverTime + roundTripTime / 2 - responseReceivedAt;
+      return estimateClockOffset({
+        requestStartedAt,
+        responseReceivedAt,
+        serverTime,
+      });
     },
   };
+}
+
+export function estimateClockOffset({
+  requestStartedAt,
+  responseReceivedAt,
+  serverTime,
+}) {
+  if (
+    !Number.isFinite(requestStartedAt) ||
+    !Number.isFinite(responseReceivedAt) ||
+    !Number.isFinite(serverTime)
+  ) {
+    throw new Error("Clock sync timestamps must be finite");
+  }
+  if (responseReceivedAt < requestStartedAt) {
+    throw new Error("Clock sync response precedes request");
+  }
+
+  const roundTripTime = responseReceivedAt - requestStartedAt;
+  return serverTime + roundTripTime / 2 - responseReceivedAt;
 }
 
 export function createLocationService(geolocation) {
