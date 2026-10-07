@@ -58,14 +58,21 @@ function reconcileActiveCache() {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) =>
-        cache.addAll(
-          PRECACHE_URLS.map((url) => new Request(url, { cache: "reload" })),
-        ),
-      )
-      .then(() => self.skipWaiting()),
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Keep the local app shell install-atomic. The external font is an
+      // enhancement: a transient CDN outage must not prevent PWA updates.
+      const localUrls = PRECACHE_URLS.filter((url) => !REMOTE_FONT_URLS.includes(url));
+      await cache.addAll(
+        localUrls.map((url) => new Request(url, { cache: "reload" })),
+      );
+      await Promise.all(REMOTE_FONT_URLS.map(async (url) => {
+        try {
+          await cache.add(new Request(url, { cache: "reload" }));
+        } catch (error) {
+          console.warn("Optional remote font precache failed", error);
+        }
+      }));
+    }).then(() => self.skipWaiting()),
   );
 });
 
