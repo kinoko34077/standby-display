@@ -244,6 +244,8 @@ Touch targets should approach 44px where practical while preserving compact info
 
 Advanced color ranges remain collapsed by default.
 
+The narrow fullscreen presentation is page-like rather than a nested dialog. While it is open, the obscured application surface must not remain keyboard-reachable; implementation should make the underlying main app region `inert` (or use an equivalent proven mechanism) and restore it on close.
+
 ### 6.3 Breakpoint
 
 Do not canonize a device label.
@@ -269,6 +271,7 @@ Category changes must:
 - never discard settings state;
 - not recreate settings from defaults;
 - preserve the current category until settings closes;
+- preserve per-category scroll position where switching away and back would otherwise create avoidable re-navigation;
 - avoid unexpected focus movement;
 - keep keyboard navigation predictable.
 
