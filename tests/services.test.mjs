@@ -264,6 +264,32 @@ test("fetchJson aborts a request when the application timeout expires", async ()
   assert.equal(aborted, true);
 });
 
+test("fetchJson times out while a response body remains stalled", async () => {
+  let triggerTimeout;
+  let signal;
+  const pendingBody = new Promise(() => {});
+  const request = fetchJson(
+    async (_url, options) => {
+      signal = options.signal;
+      return { ok: true, json: () => pendingBody };
+    },
+    "https://example.test/stalled-body",
+    {
+      timeoutMs: 50,
+      setTimeoutImpl(callback) {
+        triggerTimeout = callback;
+        return 44;
+      },
+      clearTimeoutImpl() {},
+    },
+  );
+
+  await Promise.resolve();
+  triggerTimeout();
+  await assert.rejects(request, /Request timed out after 50ms/);
+  assert.equal(signal.aborted, true);
+});
+
 test("fetchJson clears its timeout after a successful response", async () => {
   let cleared = null;
   const result = await fetchJson(
