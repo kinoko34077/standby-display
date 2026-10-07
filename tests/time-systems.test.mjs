@@ -59,6 +59,9 @@ test("six requested clock presets are registered", () => {
 test("current civil clock preserves existing behavior", () => {
   const now = new Date(2026, 0, 1, 23, 59, 59, 0);
   assert.deepEqual(formatClockTime(now, clock("civil")), {
+    prefixText: "",
+    showPrefix: false,
+    prefixVisible: false,
     hourText: "23",
     minuteText: "59",
     secondText: ":59",
@@ -185,7 +188,15 @@ test("clock scheduling follows visible time-system boundaries", () => {
   );
 
   // A full hexadecimal day digit step is 86400000 / 65536 = 1318.359375 ms.
-  assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day")), 1319);
+  // At 1.000 s, the next digit boundary is 318.359375 ms away, so integer
+  // timer resolution schedules 319 ms; this is earlier than the next blink.
+  assert.equal(
+    getClockNextTickDelayMs(
+      new Date(2026, 0, 1, 0, 0, 1, 0),
+      clock("hex-day"),
+    ),
+    319,
+  );
   // Compact .hh changes every 337500 ms, but its blinking prefix wakes earlier.
   assert.equal(
     getClockNextTickDelayMs(midnight, clock("hex-day", false)),
