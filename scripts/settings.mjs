@@ -7,8 +7,10 @@ import {
   TEXT_FONT_OPTIONS,
 } from "./constants.mjs";
 import { normalizeRandomColorRange } from "./random-colors.mjs";
+import { CLOCK_SYSTEM_OPTIONS } from "./time-systems.mjs";
 
 const CLOCK_FONT_IDS = new Set(CLOCK_FONT_OPTIONS.map((option) => option.id));
+const CLOCK_SYSTEM_IDS = new Set(CLOCK_SYSTEM_OPTIONS.map((option) => option.id));
 const TEXT_FONT_IDS = new Set(TEXT_FONT_OPTIONS.map((option) => option.id));
 
 export function cloneSettings(settings = DEFAULT_SETTINGS) {
@@ -64,6 +66,10 @@ export function parseSettingsFromSearch(search) {
 
   if (params.has("clockfont")) {
     assign(partialSettings, "clock", "font", params.get("clockfont"));
+  }
+
+  if (params.has("timesys")) {
+    assign(partialSettings, "clock", "timeSystem", params.get("timesys"));
   }
 
   if (params.has("clocksize")) {
@@ -159,6 +165,7 @@ export function buildSettingsSearch(settings) {
   appendSetting(params, "sec", current.clock.showSeconds, (value) => (value ? "1" : "0"));
   appendSetting(params, "hour", current.clock.hourFormat, String);
   appendSetting(params, "clockfont", current.clock.font, String);
+  appendSetting(params, "timesys", current.clock.timeSystem, String);
   appendSetting(params, "clocksize", current.clock.sizePercent, String);
   appendSetting(params, "clockspacing", current.clock.letterSpacingEm, String);
   appendSetting(params, "cal", current.calendar.yearSystem, String);
@@ -201,6 +208,9 @@ export function sanitizeSettings(partialSettings) {
       showSeconds: Boolean(merged.clock.showSeconds),
       hourFormat: merged.clock.hourFormat === "12" ? "12" : "24",
       font: CLOCK_FONT_IDS.has(merged.clock.font) ? merged.clock.font : DEFAULT_SETTINGS.clock.font,
+      timeSystem: CLOCK_SYSTEM_IDS.has(merged.clock.timeSystem)
+        ? merged.clock.timeSystem
+        : DEFAULT_SETTINGS.clock.timeSystem,
       sizePercent: normalizeBoundedNumber(
         merged.clock.sizePercent,
         DEFAULT_SETTINGS.clock.sizePercent,

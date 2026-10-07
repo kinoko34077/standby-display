@@ -8,6 +8,7 @@ import {
   SEIKOKU_NAMES,
 } from "./constants.mjs";
 import { convertNewToOld } from "./kanji-conversion.mjs";
+import { formatClockTime } from "./time-systems.mjs";
 
 export function buildViewModel({
   now,
@@ -46,19 +47,7 @@ export function buildViewModel({
 }
 
 export function formatTime(now, clockSettings) {
-  const rawHour = now.getHours();
-  const hour =
-    clockSettings.hourFormat === "12"
-      ? ((rawHour + 11) % 12) + 1
-      : rawHour;
-
-  return {
-    hourText: String(hour).padStart(2, "0"),
-    minuteText: String(now.getMinutes()).padStart(2, "0"),
-    secondText: `:${String(now.getSeconds()).padStart(2, "0")}`,
-    showSeconds: clockSettings.showSeconds,
-    showColon: now.getSeconds() % 2 === 0,
-  };
+  return formatClockTime(now, clockSettings);
 }
 
 export function formatDate(

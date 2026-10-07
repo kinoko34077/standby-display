@@ -89,6 +89,7 @@ export function createRenderer(documentObject) {
     setText(elements.hour, timeView.hourText);
     setText(elements.minute, timeView.minuteText);
     setText(elements.seconds, timeView.secondText);
+    setText(elements.colon, timeView.separatorText);
 
     if (elements.seconds) {
       elements.seconds.hidden = !timeView.showSeconds;
