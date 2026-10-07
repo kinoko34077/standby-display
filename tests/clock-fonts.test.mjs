@@ -212,6 +212,19 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
 });
 
 
+test("portrait clock panel itself is centered in the padded grid", async () => {
+  const css = await readFile(new URL("style.css", root), "utf8");
+
+  assert.match(
+    css,
+    /@media \(max-aspect-ratio: 1 \/ 1\)[\s\S]*?\.clock-panel\s*\{[\s\S]*?align-self:\s*center;[\s\S]*?justify-self:\s*center;/,
+  );
+  assert.doesNotMatch(
+    css,
+    /@media \(max-aspect-ratio: 1 \/ 1\)[\s\S]*?\.clock-panel\s*\{[\s\S]*?justify-self:\s*stretch;/,
+  );
+});
+
 test("secondary seconds align to the centered primary clock without affecting its width", async () => {
   const css = await readFile(new URL("style.css", root), "utf8");
 
