@@ -238,17 +238,19 @@ function png(data) {
 function sampleClock(picture,line) {
   const y0=Math.max(0,Math.floor(line.top)-24);
   const y1=Math.min(picture.height-1,Math.ceil(line.bottom)+24);
-  const xs=[];
+  let left=Infinity,right=-Infinity;
   const pixels=new Set();
   for(let y=y0;y<=y1;y++) for(let x=0;x<picture.width;x++){
     const i=(y*picture.width+x)*4;
     const r=picture.rgba[i],g=picture.rgba[i+1],b=picture.rgba[i+2];
     if(r>=45 && r<190 && g>r+35 && b>g+30 && b>170){
-      xs.push(x); pixels.add(y*picture.width+x);
+      left=Math.min(left,x);
+      right=Math.max(right,x);
+      pixels.add(y*picture.width+x);
     }
   }
-  if(!xs.length) throw new Error("No visible clock ink in screenshot");
-  return {left:Math.min(...xs),right:Math.max(...xs),pixels};
+  if(left===Infinity) throw new Error("No visible clock ink in screenshot");
+  return {left,right,pixels};
 }
 async function sleep(ms) {return new Promise(r=>setTimeout(r,ms));}
 async function waitProbe(client,font) {
