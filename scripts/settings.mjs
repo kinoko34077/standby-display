@@ -17,6 +17,25 @@ export function cloneSettings(settings = DEFAULT_SETTINGS) {
   return JSON.parse(JSON.stringify(settings));
 }
 
+export function mergeSettings(...settingsParts) {
+  const nextSettings = cloneSettings(DEFAULT_SETTINGS);
+  for (const part of settingsParts) {
+    if (!part) {
+      continue;
+    }
+    for (const [groupKey, groupValue] of Object.entries(part)) {
+      if (!groupValue || typeof groupValue !== "object" || Array.isArray(groupValue)) {
+        continue;
+      }
+      nextSettings[groupKey] = {
+        ...nextSettings[groupKey],
+        ...groupValue,
+      };
+    }
+  }
+  return nextSettings;
+}
+
 export function createDefaultUiState() {
   return {
     settingsOpen: false,
@@ -174,7 +193,8 @@ export function parseSettingsFromSearch(search) {
     return null;
   }
 
-  return sanitizeSettings(partialSettings);
+  const sanitized = sanitizeSettings(partialSettings);
+  return projectPresentSettings(partialSettings, sanitized);
 }
 
 export function buildSettingsSearch(settings) {
@@ -305,6 +325,30 @@ export function sanitizeSettings(partialSettings) {
       ),
     },
   };
+}
+
+function projectPresentSettings(shape, sanitized) {
+  const result = {};
+
+  for (const [key, value] of Object.entries(shape)) {
+    if (
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value)
+    ) {
+      const nested = projectPresentSettings(value, sanitized?.[key] ?? {});
+      if (Object.keys(nested).length > 0) {
+        result[key] = nested;
+      }
+      continue;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(sanitized ?? {}, key)) {
+      result[key] = sanitized[key];
+    }
+  }
+
+  return result;
 }
 
 function assign(target, group, key, value) {
