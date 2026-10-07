@@ -14,13 +14,18 @@ import { resolveClockTypography } from "../scripts/render.mjs";
 
 const root = new URL("../", import.meta.url);
 
-test("clock fonts carry Digital-7-relative normalization metadata", () => {
+test("clock fonts carry explicit normalization metadata", () => {
   const metrics = Object.fromEntries(
     CLOCK_FONT_OPTIONS.map((option) => [option.id, option.normalization]),
   );
 
   assert.deepEqual(metrics, {
-    d7: { sizeScale: 1, trackingEm: 0, prefixShiftEm: 0.077 },
+    d7: {
+      sizeScale: 0.655,
+      trackingEm: -0.081,
+      secondaryTrackingEm: 0,
+      prefixShiftEm: 0.015,
+    },
     "dseg7-classic-mini-bold": {
       sizeScale: 0.655,
       trackingEm: -0.081,
@@ -40,35 +45,28 @@ test("clock fonts carry Digital-7-relative normalization metadata", () => {
   });
 });
 
-test("normalized source metrics stay close to the Digital-7 reference", () => {
-  const sourceMetrics = {
-    d7: { height: 0.654545, digitAdvance: 0.472727, colonAdvance: 0.163636 },
-    "dseg7-classic-mini-bold": { height: 1, digitAdvance: 0.816, colonAdvance: 0.2 },
-    rajdhani: { height: 0.643, digitAdvance: 0.526, colonAdvance: 0.194 },
-    mono: { height: 0.722, digitAdvance: 0.6, colonAdvance: 0.6 },
-  };
-  const reference = sourceMetrics.d7;
-  const referenceHeight = reference.height;
-  const referenceWidth = 4 * reference.digitAdvance + reference.colonAdvance;
+test("legacy d7 id now resolves to externally hosted OFL DSEG7 Modern", async () => {
+  const option = CLOCK_FONT_OPTIONS.find((candidate) => candidate.id === "d7");
+  assert.equal(option?.label, "DSEG7 Modern");
+  assert.match(option?.family ?? "", /DSEG7-Modern/);
+  assert.doesNotMatch(option?.family ?? "", /"D7"/);
 
-  for (const option of CLOCK_FONT_OPTIONS) {
-    const source = sourceMetrics[option.id];
-    const normalizedHeight = source.height * option.normalization.sizeScale;
-    const normalizedWidth = (
-      4 * source.digitAdvance +
-      source.colonAdvance +
-      4 * option.normalization.trackingEm
-    ) * option.normalization.sizeScale;
+  const css = await readFile(new URL("style.css", root), "utf8");
+  assert.match(css, /font-family: "DSEG7-Modern"/);
+  assert.match(
+    css,
+    /https:\/\/unpkg\.com\/dseg@0\.46\.0\/fonts\/DSEG7-Modern\/DSEG7Modern-Regular\.woff2/,
+  );
+  assert.doesNotMatch(css, /digital-7\.ttf/);
 
-    assert.ok(
-      Math.abs(normalizedHeight - referenceHeight) <= 0.001,
-      `${option.id} normalized height drifted`,
-    );
-    assert.ok(
-      Math.abs(normalizedWidth - referenceWidth) <= 0.005,
-      `${option.id} normalized 88:88 width drifted`,
-    );
-  }
+  const worker = await readFile(new URL("service-worker.js", root), "utf8");
+  assert.match(worker, /DSEG7Modern-Regular\.woff2/);
+  assert.doesNotMatch(worker, /digital-7\.ttf/);
+
+  await assert.rejects(
+    readFile(new URL("assets/fonts/digital-7.ttf", root)),
+    /ENOENT/,
+  );
 });
 
 test("DSEG7 Classic Mini Bold remains a selectable bundled clock font", async () => {
@@ -147,7 +145,7 @@ test("font normalization and user adjustment compose in one render calculation",
   });
 
   assert.deepEqual(resolveClockTypography(settings), {
-    family: "\"DSEG7-Classic-MINI\", \"D7\", \"Rajdhani\", sans-serif",
+    family: "\"DSEG7-Classic-MINI\", \"Rajdhani\", sans-serif",
     weight: 700,
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
@@ -169,6 +167,15 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   );
   assert.match(plexLicense, /SIL OPEN FONT LICENSE Version 1\.1/);
   assert.match(plexLicense, /Reserved Font Name "Plex"/);
+
+  const [rajdhaniLicense, notoLicense] = await Promise.all([
+    readFile(new URL("assets/fonts/RAJDHANI-LICENSE.txt", root), "utf8"),
+    readFile(new URL("assets/fonts/NOTO-SANS-JP-LICENSE.txt", root), "utf8"),
+  ]);
+  assert.match(rajdhaniLicense, /SIL OPEN FONT LICENSE Version 1\.1/);
+  assert.match(rajdhaniLicense, /Indian Type Foundry/);
+  assert.match(notoLicense, /SIL OPEN FONT LICENSE Version 1\.1/);
+  assert.match(notoLicense, /Copyright 2014-2021 Adobe/);
 
   const [html, ui, css] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
