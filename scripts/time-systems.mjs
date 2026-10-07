@@ -58,6 +58,7 @@ export function getClockNextTickDelayMs(now, clockSettings) {
   const system = getSystem(clockSettings.timeSystem);
   return Math.min(
     system.nextVisibleBoundaryMs(now, clockSettings),
+    nextBlinkBoundaryMs(now, clockSettings.fastBlink),
     nextCivilMinuteBoundaryMs(now),
   );
 }
@@ -83,6 +84,7 @@ function formatCivilDecimal(now, settings) {
     secondText: String(now.getSeconds()).padStart(2, "0"),
     now,
     showSeconds: settings.showSeconds,
+    fastBlink: settings.fastBlink,
   });
 }
 
@@ -139,23 +141,34 @@ function formatHexDay(now, settings) {
     uppercase: settings.uppercaseDigits,
   });
   return {
-    hourText: `.${digits.slice(0, 2)}`,
+    prefixText: ".",
+    hourText: digits.slice(0, 2),
     minuteText: settings.showSeconds ? digits.slice(2) : "",
     secondText: "",
     separatorText: "",
     showSeconds: false,
     showColon: false,
+    showPrefix: isBlinkVisible(now, settings.fastBlink),
   };
 }
 
-function colonClock({ hourText, minuteText, secondText, now, showSeconds }) {
+function colonClock({
+  hourText,
+  minuteText,
+  secondText,
+  now,
+  showSeconds,
+  fastBlink,
+}) {
   return {
+    prefixText: "",
     hourText,
     minuteText,
     secondText: `:${secondText}`,
     separatorText: ":",
     showSeconds,
-    showColon: now.getSeconds() % 2 === 0,
+    showColon: isBlinkVisible(now, fastBlink),
+    showPrefix: false,
   };
 }
 
@@ -189,6 +202,19 @@ function nextPartitionBoundaryMs(now, unitCount) {
 function nextCivilSecondBoundaryMs(now) {
   const milliseconds = now.getMilliseconds();
   return milliseconds === 0 ? 1000 : 1000 - milliseconds;
+}
+
+function nextBlinkBoundaryMs(now, fastBlink) {
+  const quantumMs = fastBlink ? 500 : 1000;
+  const elapsedInMinuteMs = now.getSeconds() * 1000 + now.getMilliseconds();
+  const remainder = elapsedInMinuteMs % quantumMs;
+  return remainder === 0 ? quantumMs : quantumMs - remainder;
+}
+
+function isBlinkVisible(now, fastBlink) {
+  const quantumMs = fastBlink ? 500 : 1000;
+  const elapsedInMinuteMs = now.getSeconds() * 1000 + now.getMilliseconds();
+  return Math.floor(elapsedInMinuteMs / quantumMs) % 2 === 0;
 }
 
 function nextCivilMinuteBoundaryMs(now) {

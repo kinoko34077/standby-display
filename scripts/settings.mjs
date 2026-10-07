@@ -81,6 +81,15 @@ export function parseSettingsFromSearch(search) {
     );
   }
 
+  if (params.has("blinkfast")) {
+    assign(
+      partialSettings,
+      "clock",
+      "fastBlink",
+      params.get("blinkfast") === "1",
+    );
+  }
+
   if (params.has("clocksize")) {
     assign(partialSettings, "clock", "sizePercent", params.get("clocksize"));
   }
@@ -181,6 +190,12 @@ export function buildSettingsSearch(settings) {
     current.clock.uppercaseDigits,
     (value) => (value ? "upper" : "lower"),
   );
+  appendSetting(
+    params,
+    "blinkfast",
+    current.clock.fastBlink,
+    (value) => (value ? "1" : "0"),
+  );
   appendSetting(params, "clocksize", current.clock.sizePercent, String);
   appendSetting(params, "clockspacing", current.clock.letterSpacingEm, String);
   appendSetting(params, "cal", current.calendar.yearSystem, String);
@@ -227,6 +242,7 @@ export function sanitizeSettings(partialSettings) {
         ? merged.clock.timeSystem
         : DEFAULT_SETTINGS.clock.timeSystem,
       uppercaseDigits: Boolean(merged.clock.uppercaseDigits),
+      fastBlink: Boolean(merged.clock.fastBlink),
       sizePercent: normalizeBoundedNumber(
         merged.clock.sizePercent,
         DEFAULT_SETTINGS.clock.sizePercent,
