@@ -95,6 +95,7 @@ function legacyPage({ search = "", storage = "{}", blockedStorage = false, when 
   const requests = [];
   const intervals = [];
   let current = when;
+  let locationCalls = 0;
   class ClockDate extends Date { constructor(value) { super(arguments.length ? value : current); } }
   function XHR() { requests.push(this); }
   XHR.prototype.open = function (method, url) { this.url = url; };
@@ -103,12 +104,34 @@ function legacyPage({ search = "", storage = "{}", blockedStorage = false, when 
     localStorage: { getItem() { if (blockedStorage) throw Error("blocked"); return storage; } },
     setInterval(fn, ms) { intervals.push({ fn, ms }); } };
   const document = { getElementById: element, querySelector: element, body: element("body") };
-  const navigator = locate ? { geolocation: { getCurrentPosition(success) { success({ coords: { latitude: 35.6812, longitude: 139.7671 } }); } } } : {};
+  const navigator = locate ? { geolocation: { getCurrentPosition(success) {
+    locationCalls += 1;
+    success({
+      coords: {
+        latitude: 35.6812 + locationCalls / 100,
+        longitude: 139.7671 + locationCalls / 100,
+      },
+    });
+  } } } : {};
   const context = vm.createContext({ window, document, navigator, Date: ClockDate });
   vm.runInContext(config, context);
   vm.runInContext(legacy, context);
   function respond(request, payload, status = 200) { request.status = status; request.responseText = JSON.stringify(payload); request.onload(); }
-  return { element, requests, intervals, respond, tick(date) { current = date; intervals.find(x => x.ms === 1000).fn(); } };
+  return {
+    element,
+    requests,
+    intervals,
+    respond,
+    locationCalls() { return locationCalls; },
+    tick(date) {
+      current = date;
+      intervals.find(x => x.ms === 1000).fn();
+    },
+    runInterval(ms, date = current) {
+      current = date;
+      intervals.find(x => x.ms === ms).fn();
+    },
+  };
 }
 test("legacy current date and traditional time match the modern formatter", () => {
   const when = new Date(2026, 8, 7, 13, 5, 9);
@@ -177,7 +200,22 @@ test("legacy API requests use canonical time and weather URL boundaries", () => 
   assert.equal(time.url, "https://api.kinotch.workers.dev/v1/time");
   const weatherUrl = new URL(weather.url);
   assert.equal(weatherUrl.pathname, "/v1/weather");
-  assert.equal(weatherUrl.search, "?lat=35.6812&lon=139.7671");
+  assert.equal(weatherUrl.search, "?lat=35.6912&lon=139.7771");
+});
+
+test("legacy location refresh reacquires coordinates after the freshness window", () => {
+  const start = new Date(2026, 8, 7, 13, 5, 9);
+  const state = legacyPage({ locate: true, when: start });
+  assert.equal(state.locationCalls(), 1);
+
+  state.runInterval(900000, new Date(start.getTime() + 15 * 60 * 1000));
+  assert.equal(state.locationCalls(), 2);
+
+  const weatherRequests = state.requests.filter((request) =>
+    request.url.includes("/v1/weather"),
+  );
+  assert.equal(weatherRequests.length, 2);
+  assert.match(weatherRequests.at(-1).url, /lat=35\.7012&lon=139\.7871/);
 });
 test("midnight replaces yesterday's rokuyo and ignores late stale responses", () => {
   const state = legacyPage({ when: new Date(2026, 8, 7, 23, 59, 59) });
@@ -232,7 +270,8 @@ test("normal entry is gated and PWA precaches both branches", async () => {
   assert.match(html, /src="\.\/bootstrap.js"><\/script>/);
   assert.doesNotMatch(html, /type="module" src="\.\/app.mjs"/);
   const worker = await read("service-worker.js");
-  for (const file of ["bootstrap.js", "modern-entry.mjs", "shared/config.js", "legacy/clock.js", "legacy/style.css", "legacy/index.html", "vendor/text-transform.mjs", "assets/vendor/iro.min.js", "assets/fonts/digital-7.ttf"]) assert.ok(worker.includes(file));
+  for (const file of ["bootstrap.js", "modern-entry.mjs", "shared/config.js", "legacy/clock.js", "legacy/style.css", "legacy/index.html", "vendor/text-transform.mjs", "assets/vendor/iro.min.js", "assets/settings-trigger.png", "DSEG7Modern-Regular.woff2"]) assert.ok(worker.includes(file));
+  assert.doesNotMatch(worker, /digital-7\.ttf/);
 });
 
 test("modern kanji conversion adopts the API map and keeps local fallback", async () => {
