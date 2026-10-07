@@ -13,14 +13,16 @@ export function resolveClockTypography(settings) {
   const secondaryTracking =
     option.normalization.secondaryTrackingEm ??
     option.normalization.trackingEm;
+  const letterSpacingEm = roundMetric(
+    option.normalization.trackingEm + settings.clock.letterSpacingEm,
+    3,
+  );
   return {
     family: option.family,
     weight: option.weight,
     sizeScale: roundMetric(option.normalization.sizeScale * userScale, 4),
-    letterSpacingEm: roundMetric(
-      option.normalization.trackingEm + settings.clock.letterSpacingEm,
-      3,
-    ),
+    letterSpacingEm,
+    centerShiftEm: roundMetric(letterSpacingEm / 2, 4),
     secondaryLetterSpacingEm: roundMetric(
       secondaryTracking + settings.clock.letterSpacingEm,
       3,
@@ -90,6 +92,10 @@ export function createRenderer(documentObject) {
     rootElement.style.setProperty(
       "--app-clock-secondary-letter-spacing",
       `${clockTypography.secondaryLetterSpacingEm}em`,
+    );
+    rootElement.style.setProperty(
+      "--app-clock-center-shift",
+      `${clockTypography.centerShiftEm}em`,
     );
     rootElement.style.setProperty(
       "--app-clock-prefix-shift",
