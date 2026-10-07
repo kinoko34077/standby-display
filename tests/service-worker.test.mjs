@@ -13,6 +13,8 @@ function createWorker({ cached = [], fetchImpl } = {}) {
   const listeners = {};
   const entries = new Map(cached.map(([url, response]) => [url, response]));
   const deletedCaches = [];
+  const addedLocal = [];
+  let installed = false;
   const cache = {
     match(request) {
       return Promise.resolve(entries.get(request.url));
@@ -21,8 +23,15 @@ function createWorker({ cached = [], fetchImpl } = {}) {
       entries.set(request.url, response);
       return Promise.resolve();
     },
-    addAll() {
+    addAll(requests) {
+      addedLocal.push(...requests.map((request) => request.url));
       return Promise.resolve();
+    },
+    async add(request) {
+      if (!fetchImpl) throw new Error("Optional font unavailable");
+      const response = await fetchImpl(request);
+      if (!response?.ok) throw new Error("Optional font fetch failed");
+      entries.set(request.url, response.clone());
     },
     keys() {
       return Promise.resolve([...entries.keys()].map((url) => new Request(url)));
@@ -49,7 +58,7 @@ function createWorker({ cached = [], fetchImpl } = {}) {
   const self = {
     location: { origin: "https://example.test", href: "https://example.test/service-worker.js" },
     clients: { claim() { return Promise.resolve(); } },
-    skipWaiting() { return Promise.resolve(); },
+    skipWaiting() { installed = true; return Promise.resolve(); },
     addEventListener(type, listener) {
       listeners[type] = listener;
     },
@@ -66,6 +75,8 @@ function createWorker({ cached = [], fetchImpl } = {}) {
   return {
     entries,
     deletedCaches,
+    addedLocal,
+    wasInstalled() { return installed; },
     waitForBackground() {
       return lastWaitPromise || Promise.resolve();
     },
@@ -227,6 +238,22 @@ test("runtime-critical same-origin shell assets are represented in the precache"
   }
 
   assert.equal(runtimeRefs.includes("assets/settings-trigger.png"), true);
+});
+
+test("external font CDN outage does not block the local PWA install", async () => {
+  const worker = createWorker({
+    fetchImpl: async () => {
+      throw new Error("CDN offline");
+    },
+  });
+
+  await worker.dispatch("install");
+  await worker.waitForBackground();
+
+  assert.equal(worker.wasInstalled(), true);
+  assert.equal(worker.addedLocal.includes("https://example.test/index.html"), true);
+  assert.equal(worker.addedLocal.includes("https://example.test/assets/settings-trigger.png"), true);
+  assert.equal(worker.addedLocal.includes(REMOTE_DSEG_MODERN), false);
 });
 
 test("pinned external DSEG Modern font is allowlisted and cache-first", async () => {
