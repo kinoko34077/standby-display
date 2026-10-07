@@ -82,17 +82,23 @@ test("complete duodecimal day divides the day as 12 x 12 x 12", () => {
   const midnight = formatClockTime(new Date(2026, 0, 1, 0, 0, 0, 0), clock("duodecimal"));
   const noon = formatClockTime(new Date(2026, 0, 1, 12, 0, 0, 0), clock("duodecimal"));
   const end = formatClockTime(new Date(2026, 0, 1, 23, 59, 59, 999), clock("duodecimal"));
-  assert.equal(`${midnight.hourText}:${midnight.minuteText}${midnight.secondText}`, "0:0:0");
-  assert.equal(`${noon.hourText}:${noon.minuteText}${noon.secondText}`, "6:0:0");
-  assert.equal(`${end.hourText}:${end.minuteText}${end.secondText}`, "b:b:b");
+  assert.equal(`${midnight.hourText}:${midnight.minuteText}${midnight.secondText}`, "0:0:0.0");
+  assert.equal(`${noon.hourText}:${noon.minuteText}${noon.secondText}`, "6:0:0.0");
+  assert.equal(`${end.hourText}:${end.minuteText}${end.secondText}`, "b:b:b.b");
   const upperEnd = formatClockTime(
     new Date(2026, 0, 1, 23, 59, 59, 999),
     clock("duodecimal", true, "24", true),
   );
   assert.equal(
     `${upperEnd.hourText}:${upperEnd.minuteText}${upperEnd.secondText}`,
-    "B:B:B",
+    "B:B:B.B",
   );
+
+  const upperFraction = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 45, 834),
+    clock("duodecimal", true, "24", true),
+  );
+  assert.match(upperFraction.secondText, /^:[0-9AB]\.[0-9AB]$/);
 });
 
 test("French decimal time uses 10 hours, 100 minutes and 100 seconds", () => {
@@ -171,23 +177,25 @@ test("blink cadence is phase-locked to each clock system's own seconds", () => {
     );
   }
 
-  // Complete duodecimal second = 86400000 / 1728 = 50000 ms.
+  // Complete duodecimal fractional digit = 86400000 / 12^4 = 4166.666... ms.
   assert.equal(formatClockTime(midnight, clock("duodecimal")).showColon, true);
   assert.equal(
     formatClockTime(
-      new Date(2026, 0, 1, 0, 0, 49, 999),
+      new Date(2026, 0, 1, 0, 0, 4, 166),
       clock("duodecimal"),
     ).showColon,
     true,
   );
   assert.equal(
-    formatClockTime(new Date(2026, 0, 1, 0, 0, 50, 0), clock("duodecimal"))
-      .showColon,
+    formatClockTime(
+      new Date(2026, 0, 1, 0, 0, 4, 167),
+      clock("duodecimal"),
+    ).showColon,
     false,
   );
   assert.equal(
     formatClockTime(
-      new Date(2026, 0, 1, 0, 0, 25, 0),
+      new Date(2026, 0, 1, 0, 0, 2, 84),
       clock("duodecimal", true, "24", false, true),
     ).showColon,
     false,
@@ -228,15 +236,15 @@ test("blink cadence is phase-locked to each clock system's own seconds", () => {
 
 test("normal blink transitions coincide with each system's displayed second advance", () => {
   const duodecimalBefore = formatClockTime(
-    new Date(2026, 0, 1, 0, 0, 49, 999),
+    new Date(2026, 0, 1, 0, 0, 4, 166),
     clock("duodecimal"),
   );
   const duodecimalAfter = formatClockTime(
-    new Date(2026, 0, 1, 0, 0, 50, 0),
+    new Date(2026, 0, 1, 0, 0, 4, 167),
     clock("duodecimal"),
   );
-  assert.equal(duodecimalBefore.secondText, ":0");
-  assert.equal(duodecimalAfter.secondText, ":1");
+  assert.equal(duodecimalBefore.secondText, ":0.0");
+  assert.equal(duodecimalAfter.secondText, ":0.1");
   assert.notEqual(duodecimalBefore.showColon, duodecimalAfter.showColon);
 
   const decimalBefore = formatClockTime(
@@ -271,14 +279,14 @@ test("clock scheduling follows visible time-system boundaries", () => {
   assert.equal(getClockNextTickDelayMs(midSecond, clock("civil")), 750);
   assert.equal(
     getClockNextTickDelayMs(midnight, clock("duodecimal")),
-    50000,
+    4167,
   );
   assert.equal(
     getClockNextTickDelayMs(
       midnight,
       clock("duodecimal", true, "24", false, true),
     ),
-    25000,
+    2084,
   );
 
   // A French decimal second is exactly 864 ms.

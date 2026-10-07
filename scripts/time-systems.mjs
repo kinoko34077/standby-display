@@ -16,6 +16,7 @@ const CLOCK_SYSTEMS = new Map([
     usesHourFormat: true,
     supportsLetterCase: false,
     secondPartitionsPerDay: 24 * 60 * 60,
+    blinkPartitionsPerDay: 24 * 60 * 60,
     format: formatCivilDecimal,
     nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
   }],
@@ -23,6 +24,7 @@ const CLOCK_SYSTEMS = new Map([
     usesHourFormat: false,
     supportsLetterCase: true,
     secondPartitionsPerDay: 24 * 60 * 60,
+    blinkPartitionsPerDay: 24 * 60 * 60,
     format: (now, settings, system) => formatCivilRadix(now, settings, 12, system),
     nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
   }],
@@ -30,6 +32,7 @@ const CLOCK_SYSTEMS = new Map([
     usesHourFormat: false,
     supportsLetterCase: true,
     secondPartitionsPerDay: 12 * 12 * 12,
+    blinkPartitionsPerDay: 12 ** 4,
     format: formatDuodecimalDay,
     nextVisibleBoundaryMs: nextDuodecimalBoundaryMs,
   }],
@@ -37,6 +40,7 @@ const CLOCK_SYSTEMS = new Map([
     usesHourFormat: false,
     supportsLetterCase: false,
     secondPartitionsPerDay: 100000,
+    blinkPartitionsPerDay: 100000,
     format: formatDecimalTime,
     nextVisibleBoundaryMs: nextDecimalTimeBoundaryMs,
   }],
@@ -44,6 +48,7 @@ const CLOCK_SYSTEMS = new Map([
     usesHourFormat: false,
     supportsLetterCase: true,
     secondPartitionsPerDay: 24 * 60 * 60,
+    blinkPartitionsPerDay: 24 * 60 * 60,
     format: (now, settings, system) => formatCivilRadix(now, settings, 16, system),
     nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
   }],
@@ -51,6 +56,7 @@ const CLOCK_SYSTEMS = new Map([
     usesHourFormat: false,
     supportsLetterCase: true,
     secondPartitionsPerDay: 16 ** 4,
+    blinkPartitionsPerDay: 16 ** 4,
     format: formatHexDay,
     nextVisibleBoundaryMs: nextHexDayBoundaryMs,
   }],
@@ -67,7 +73,7 @@ export function getClockNextTickDelayMs(now, clockSettings) {
     system.nextVisibleBoundaryMs(now, clockSettings),
     nextBlinkBoundaryMs(
       now,
-      system.secondPartitionsPerDay,
+      system.blinkPartitionsPerDay,
       clockSettings.fastBlink,
     ),
     nextCivilMinuteBoundaryMs(now),
@@ -96,7 +102,7 @@ function formatCivilDecimal(now, settings, system) {
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
-    secondPartitionsPerDay: system.secondPartitionsPerDay,
+    blinkPartitionsPerDay: system.blinkPartitionsPerDay,
   });
 }
 
@@ -117,12 +123,15 @@ function formatCivilRadix(now, settings, radix, system) {
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
-    secondPartitionsPerDay: system.secondPartitionsPerDay,
+    blinkPartitionsPerDay: system.blinkPartitionsPerDay,
   });
 }
 
 function formatDuodecimalDay(now, settings, system) {
-  const total = partitionNominalDay(now, 12 * 12 * 12);
+  const fractionalTotal = partitionNominalDay(now, 12 ** 4);
+  const total = Math.floor(fractionalTotal / 12);
+  const fraction = fractionalTotal % 12;
+
   return colonClock({
     hourText: formatRadixInteger(Math.floor(total / 144), 12, {
       uppercase: settings.uppercaseDigits,
@@ -130,13 +139,15 @@ function formatDuodecimalDay(now, settings, system) {
     minuteText: formatRadixInteger(Math.floor(total / 12) % 12, 12, {
       uppercase: settings.uppercaseDigits,
     }),
-    secondText: formatRadixInteger(total % 12, 12, {
+    secondText: `${formatRadixInteger(total % 12, 12, {
       uppercase: settings.uppercaseDigits,
-    }),
+    })}.${formatRadixInteger(fraction, 12, {
+      uppercase: settings.uppercaseDigits,
+    })}`,
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
-    secondPartitionsPerDay: system.secondPartitionsPerDay,
+    blinkPartitionsPerDay: system.blinkPartitionsPerDay,
   });
 }
 
@@ -149,7 +160,7 @@ function formatDecimalTime(now, settings, system) {
     now,
     showSeconds: settings.showSeconds,
     fastBlink: settings.fastBlink,
-    secondPartitionsPerDay: system.secondPartitionsPerDay,
+    blinkPartitionsPerDay: system.blinkPartitionsPerDay,
   });
 }
 
@@ -168,7 +179,7 @@ function formatHexDay(now, settings, system) {
     showColon: false,
     showPrefix: isBlinkVisible(
       now,
-      system.secondPartitionsPerDay,
+      system.blinkPartitionsPerDay,
       settings.fastBlink,
     ),
   };
@@ -181,7 +192,7 @@ function colonClock({
   now,
   showSeconds,
   fastBlink,
-  secondPartitionsPerDay,
+  blinkPartitionsPerDay,
 }) {
   return {
     prefixText: "",
@@ -190,7 +201,7 @@ function colonClock({
     secondText: `:${secondText}`,
     separatorText: ":",
     showSeconds,
-    showColon: isBlinkVisible(now, secondPartitionsPerDay, fastBlink),
+    showColon: isBlinkVisible(now, blinkPartitionsPerDay, fastBlink),
     showPrefix: false,
   };
 }
@@ -204,7 +215,7 @@ function partitionNominalDay(now, unitCount) {
 }
 
 function nextDuodecimalBoundaryMs(now, settings) {
-  return nextPartitionBoundaryMs(now, settings.showSeconds ? 12 ** 3 : 12 ** 2);
+  return nextPartitionBoundaryMs(now, settings.showSeconds ? 12 ** 4 : 12 ** 2);
 }
 
 function nextDecimalTimeBoundaryMs(now, settings) {
@@ -227,13 +238,13 @@ function nextCivilSecondBoundaryMs(now) {
   return milliseconds === 0 ? 1000 : 1000 - milliseconds;
 }
 
-function nextBlinkBoundaryMs(now, secondPartitionsPerDay, fastBlink) {
-  const partitionCount = secondPartitionsPerDay * (fastBlink ? 2 : 1);
+function nextBlinkBoundaryMs(now, blinkPartitionsPerDay, fastBlink) {
+  const partitionCount = blinkPartitionsPerDay * (fastBlink ? 2 : 1);
   return nextPartitionBoundaryMs(now, partitionCount);
 }
 
-function isBlinkVisible(now, secondPartitionsPerDay, fastBlink) {
-  const partitionCount = secondPartitionsPerDay * (fastBlink ? 2 : 1);
+function isBlinkVisible(now, blinkPartitionsPerDay, fastBlink) {
+  const partitionCount = blinkPartitionsPerDay * (fastBlink ? 2 : 1);
   return partitionNominalDay(now, partitionCount) % 2 === 0;
 }
 
