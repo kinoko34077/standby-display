@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     font: "d7",
     timeSystem: "civil",
     uppercaseDigits: false,
+    fastBlink: false,
     sizePercent: 100,
     letterSpacingEm: 0,
   },
@@ -113,7 +114,11 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     label: "DSEG7 Classic Mini Bold",
     family: "\"DSEG7-Classic-MINI\", \"D7\", \"Rajdhani\", sans-serif",
     weight: 700,
-    normalization: Object.freeze({ sizeScale: 0.655, trackingEm: -0.081 }),
+    normalization: Object.freeze({
+      sizeScale: 0.655,
+      trackingEm: -0.081,
+      secondaryTrackingEm: 0,
+    }),
   },
   {
     id: "rajdhani",

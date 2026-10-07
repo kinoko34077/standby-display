@@ -53,6 +53,7 @@
   --app-clock-font-weight: 400;
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
+  --app-clock-secondary-letter-spacing: 0em;
   --app-text-font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --color-weekday: #8b8b8b;
   --color-weekday-sunday: #ff7878;
@@ -171,12 +172,26 @@ body {
   transform-origin: center center;
 }
 
+.clock-prefix {
+  display: inline-block;
+  min-width: 0.3em;
+}
+
 .seconds {
   position: absolute;
   right: 2vw;
   bottom: 5%;
   font-size: var(--seconds-size);
+  letter-spacing: var(--app-clock-secondary-letter-spacing);
   opacity: 0.4;
+}
+
+body[data-clock-font="dseg7-classic-mini-bold"] .seconds {
+  left: auto;
+  right: 0;
+  top: 100%;
+  bottom: auto;
+  margin-top: clamp(0.2rem, 0.45vw, 0.6rem);
 }
 
 .seconds[hidden],

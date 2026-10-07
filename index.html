@@ -52,7 +52,8 @@
       <section class="clock-panel" aria-label="現在時刻">
         <div class="block clock-block">
           <div class="time-line">
-            <span id="hour">88</span><span class="colon">:</span
+            <span id="clock-prefix" class="clock-prefix" aria-hidden="true"></span
+            ><span id="hour">88</span><span class="colon">:</span
             ><span id="minute">88</span>
           </div>
           <div class="seconds" id="seconds">:88</div>
@@ -137,6 +138,14 @@
               <span class="control-label">秒表示</span>
               <span class="switch">
                 <input id="setting-clock-seconds" type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+
+            <label class="control-row">
+              <span class="control-label">点滅を倍速</span>
+              <span class="switch">
+                <input id="setting-clock-fast-blink" type="checkbox" />
                 <span class="switch-track"><span class="switch-thumb"></span></span>
               </span>
             </label>

@@ -21,7 +21,11 @@ test("clock fonts carry Digital-7-relative normalization metadata", () => {
 
   assert.deepEqual(metrics, {
     d7: { sizeScale: 1, trackingEm: 0 },
-    "dseg7-classic-mini-bold": { sizeScale: 0.655, trackingEm: -0.081 },
+    "dseg7-classic-mini-bold": {
+      sizeScale: 0.655,
+      trackingEm: -0.081,
+      secondaryTrackingEm: 0,
+    },
     rajdhani: { sizeScale: 1.018, trackingEm: -0.07 },
     mono: { sizeScale: 0.907, trackingEm: -0.183 },
   });
@@ -138,6 +142,7 @@ test("font normalization and user adjustment compose in one render calculation",
     weight: 700,
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
+    secondaryLetterSpacingEm: 0.03,
   });
 });
 
@@ -168,5 +173,49 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /assets\/fonts\/ibm-plex-mono-latin-400-normal\.woff2/);
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
+  assert.match(css, /--app-clock-secondary-letter-spacing/);
+  assert.match(
+    css,
+    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?top:\s*100%/,
+  );
+  assert.match(
+    css,
+    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?right:\s*0/,
+  );
+  assert.match(
+    css,
+    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?bottom:\s*auto/,
+  );
+  assert.match(css, /--app-clock-secondary-letter-spacing/);
   assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);
+});
+
+
+test("DSEG secondary seconds use a below-right region without shifting the primary clock", async () => {
+  const [renderer, css] = await Promise.all([
+    readFile(new URL("scripts/render.mjs", root), "utf8"),
+    readFile(new URL("style.css", root), "utf8"),
+  ]);
+
+  assert.match(renderer, /dataset\.clockFont = settings\.clock\.font/);
+  assert.match(
+    css,
+    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?left:\s*auto;[\s\S]*?right:\s*0;[\s\S]*?top:\s*100%;[\s\S]*?bottom:\s*auto;/,
+  );
+  assert.doesNotMatch(
+    css,
+    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?left:\s*calc\(100%/,
+  );
+});
+
+test("DSEG secondary seconds avoid the main negative tracking compression", () => {
+  const defaults = sanitizeSettings({
+    clock: {
+      font: "dseg7-classic-mini-bold",
+      letterSpacingEm: 0,
+    },
+  });
+  const typography = resolveClockTypography(defaults);
+  assert.equal(typography.letterSpacingEm, -0.081);
+  assert.equal(typography.secondaryLetterSpacingEm, 0);
 });

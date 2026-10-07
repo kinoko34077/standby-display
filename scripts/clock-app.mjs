@@ -437,7 +437,7 @@ export function createClockApp({
 
     if (
       group === "clock" &&
-      (key === "timeSystem" || key === "showSeconds")
+      (key === "timeSystem" || key === "showSeconds" || key === "fastBlink")
     ) {
       startClockLoop();
     }
