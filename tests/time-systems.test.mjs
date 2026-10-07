@@ -82,6 +82,14 @@ test("complete duodecimal day divides the day as 12 x 12 x 12", () => {
   assert.equal(`${midnight.hourText}:${midnight.minuteText}${midnight.secondText}`, "0:0:0");
   assert.equal(`${noon.hourText}:${noon.minuteText}${noon.secondText}`, "6:0:0");
   assert.equal(`${end.hourText}:${end.minuteText}${end.secondText}`, "b:b:b");
+  const upperEnd = formatClockTime(
+    new Date(2026, 0, 1, 23, 59, 59, 999),
+    clock("duodecimal", true, "24", true),
+  );
+  assert.equal(
+    `${upperEnd.hourText}:${upperEnd.minuteText}${upperEnd.secondText}`,
+    "B:B:B",
+  );
 });
 
 test("French decimal time uses 10 hours, 100 minutes and 100 seconds", () => {
@@ -168,6 +176,7 @@ test("UI and PWA wire the clock-system modules", async () => {
   assert.match(ui, /key: "timeSystem"/);
   assert.match(ui, /key: "uppercaseDigits"/);
   assert.match(ui, /clockSystemSupportsLetterCase/);
+  assert.match(ui, /classList\.toggle\("is-disabled"/);
   assert.match(ui, /clockSystemUsesHourFormat/);
   assert.match(renderer, /timeView\.separatorText/);
   assert.match(worker, /scripts\/radix\.mjs/);

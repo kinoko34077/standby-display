@@ -259,8 +259,12 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     controls.showSeconds.checked = settings.clock.showSeconds;
     controls.timeSystem.value = settings.clock.timeSystem;
     controls.uppercaseDigits.checked = settings.clock.uppercaseDigits;
-    controls.uppercaseDigits.disabled =
+    const uppercaseDisabled =
       !clockSystemSupportsLetterCase(settings.clock.timeSystem);
+    controls.uppercaseDigits.disabled = uppercaseDisabled;
+    controls.uppercaseDigits
+      .closest(".control-row")
+      ?.classList.toggle("is-disabled", uppercaseDisabled);
     controls.clockFont.value = settings.clock.font;
     controls.clockSize.value = String(settings.clock.sizePercent);
     controls.clockSizeValue.textContent = `${settings.clock.sizePercent}%`;
