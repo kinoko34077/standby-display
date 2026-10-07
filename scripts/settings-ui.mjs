@@ -5,6 +5,10 @@ import {
   TEXT_FONT_OPTIONS,
 } from "./constants.mjs";
 import {
+  CLOCK_SYSTEM_OPTIONS,
+  clockSystemUsesHourFormat,
+} from "./time-systems.mjs";
+import {
   createColorPickers,
   createRandomColorControls,
   renderColorPickers,
@@ -26,6 +30,7 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
 
   const controls = {
     showSeconds: documentObject.getElementById("setting-clock-seconds"),
+    timeSystem: documentObject.getElementById("setting-clock-system"),
     clockFont: documentObject.getElementById("setting-clock-font"),
     clockSize: documentObject.getElementById("setting-clock-size"),
     clockSizeValue: documentObject.getElementById("setting-clock-size-value"),
@@ -54,6 +59,7 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     clock: controls.clockColor,
   }, callbacks);
 
+  populateFontSelect(controls.timeSystem, CLOCK_SYSTEM_OPTIONS);
   populateFontSelect(controls.clockFont, CLOCK_FONT_OPTIONS);
   populateFontSelect(controls.textFont, TEXT_FONT_OPTIONS);
   configureRangeControl(controls.clockSize, CLOCK_SIZE_CONTROL);
@@ -97,6 +103,14 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
       group: "clock",
       key: "showSeconds",
       value: event.target.checked,
+    });
+  });
+
+  controls.timeSystem.addEventListener("change", (event) => {
+    callbacks.onSettingChange({
+      group: "clock",
+      key: "timeSystem",
+      value: event.target.value,
     });
   });
 
@@ -233,6 +247,7 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     }
 
     controls.showSeconds.checked = settings.clock.showSeconds;
+    controls.timeSystem.value = settings.clock.timeSystem;
     controls.clockFont.value = settings.clock.font;
     controls.clockSize.value = String(settings.clock.sizePercent);
     controls.clockSizeValue.textContent = `${settings.clock.sizePercent}%`;
@@ -255,6 +270,9 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     renderRandomColorControls(randomControls, settings.randomColors, documentObject);
 
     setRadioValue(documentObject, "hour-format", settings.clock.hourFormat);
+    for (const input of documentObject.querySelectorAll('input[name="hour-format"]')) {
+      input.disabled = !clockSystemUsesHourFormat(settings.clock.timeSystem);
+    }
     setRadioValue(documentObject, "year-system", settings.calendar.yearSystem);
     setRadioValue(
       documentObject,

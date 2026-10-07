@@ -25,6 +25,7 @@ import {
   sanitizeSettings,
 } from "./settings.mjs";
 import { createSettingsUi } from "./settings-ui.mjs";
+import { getClockTickIntervalMs } from "./time-systems.mjs";
 
 export function createLatestRequestFence(getCurrentKey) {
   let latestGeneration = 0;
@@ -253,13 +254,14 @@ export function createClockApp({
     stopSecondLoop();
     renderClockView();
 
+    const intervalMs = getClockTickIntervalMs(state.settings.clock);
     const syncedNow = Date.now() + state.clockOffsetMs;
-    const remainder = syncedNow % 1000;
-    const delay = remainder === 0 ? 1000 : 1000 - remainder;
+    const remainder = syncedNow % intervalMs;
+    const delay = remainder === 0 ? intervalMs : intervalMs - remainder;
 
     state.timers.secondAlignment = timers.setTimeout(() => {
       handleSecondTick();
-      state.timers.secondTick = timers.setInterval(handleSecondTick, 1000);
+      state.timers.secondTick = timers.setInterval(handleSecondTick, intervalMs);
     }, delay);
   }
 
@@ -435,6 +437,10 @@ export function createClockApp({
         refreshLocationStatus: locationVisibilityChanged && !value,
       },
     );
+
+    if (group === "clock" && key === "timeSystem") {
+      startSecondLoop();
+    }
   }
 
   function openSettings() {

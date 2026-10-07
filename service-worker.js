@@ -29,6 +29,8 @@ const PRECACHE_URLS = [
   "./vendor/kanji-fallback.mjs",
   "./scripts/render.mjs",
   "./scripts/random-colors.mjs",
+  "./scripts/radix.mjs",
+  "./scripts/time-systems.mjs",
   "./scripts/services.mjs",
   "./scripts/settings.mjs",
   "./scripts/settings-ui.mjs",
