@@ -17,6 +17,7 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 - 正刻・時辰・天気・月齢・六曜の表示
 - PWA 対応
 - HUD 型の設定オーバーレイ
+- 現行時計、12進表示、完全12進、フランス十進時法、16進表示、完全16進の切替
 - 秒表示、時間形式、書字方向、フォント、時計文字サイズ・字間、色、表示情報の切替
 - 日次のランダム色（時計・文字・背景）と色相・明度の範囲指定
 - ランダム色スイッチの切替時の再抽選
@@ -36,6 +37,8 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 | `scripts/settings-ui.mjs` | 設定 UI のイベント処理と描画 |
 | `scripts/color-controls.mjs` | タッチ対応カラーピッカーと色範囲UI |
 | `scripts/random-colors.mjs` | 日付固定のランダム色生成と範囲正規化 |
+| `scripts/radix.mjs` | 2〜16進の純粋な数値表記変換（10以上はa〜f） |
+| `scripts/time-systems.mjs` | 時間体系Adapterと時計preset、更新周期 |
 | `scripts/formatters.mjs` | 時計・日付・付加情報の表示文字列生成 |
 | `scripts/render.mjs` | DOM 反映 |
 | `scripts/services.mjs` | 時刻同期、位置情報、天気、月齢、六曜取得 |
