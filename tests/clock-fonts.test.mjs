@@ -20,22 +20,22 @@ test("clock fonts carry Digital-7-relative normalization metadata", () => {
   );
 
   assert.deepEqual(metrics, {
-    d7: { sizeScale: 1, trackingEm: 0, prefixShiftEm: 0.032 },
+    d7: { sizeScale: 1, trackingEm: 0, prefixShiftEm: 0.077 },
     "dseg7-classic-mini-bold": {
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
-      prefixShiftEm: 0.006,
+      prefixShiftEm: 0.015,
     },
     rajdhani: {
       sizeScale: 1.018,
       trackingEm: -0.07,
-      prefixShiftEm: 0.02,
+      prefixShiftEm: 0.11,
     },
     mono: {
       sizeScale: 0.907,
       trackingEm: -0.183,
-      prefixShiftEm: 0.023,
+      prefixShiftEm: 0.27,
     },
   });
 });
@@ -151,8 +151,9 @@ test("font normalization and user adjustment compose in one render calculation",
     weight: 700,
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
+    centerShiftEm: -0.0255,
     secondaryLetterSpacingEm: 0.03,
-    prefixShiftEm: 0.006,
+    prefixShiftEm: 0.015,
   });
 });
 
@@ -184,21 +185,30 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
   assert.match(css, /--app-clock-secondary-letter-spacing/);
+  assert.match(css, /--app-clock-center-shift/);
   assert.match(css, /--app-clock-prefix-shift/);
   assert.match(
     css,
-    /\.clock-prefix\s*\{[\s\S]*?transform:\s*translateX\(var\(--app-clock-prefix-shift\)\)/,
+    /\.clock-prefix\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?letter-spacing:\s*0;[\s\S]*?transform:\s*translateX\(var\(--app-clock-prefix-shift\)\)/,
   );
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?display:\s*none/);
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?min-width:\s*0/);
   assert.match(css, /\.clock-block\s*\{[\s\S]*?width:\s*max-content/);
+  assert.match(
+    css,
+    /\.clock-block\s*\{[\s\S]*?transform:\s*scale\(var\(--app-clock-size-scale\)\)\s*translateX\(var\(--app-clock-center-shift\)\)/,
+  );
+  assert.match(css, /\.time-line\s*\{[\s\S]*?position:\s*relative/);
   assert.match(css, /\.time-line\s*\{[\s\S]*?width:\s*max-content/);
   assert.match(css, /\.time-line\s*\{[\s\S]*?text-align:\s*center/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?right:\s*0/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?top:\s*100%/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?text-align:\s*right/);
   assert.match(css, /--app-clock-secondary-letter-spacing/);
-  assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);
+  assert.match(
+    css,
+    /transform:\s*scale\(var\(--app-clock-size-scale\)\)\s*translateX\(var\(--app-clock-center-shift\)\)/,
+  );
 });
 
 
