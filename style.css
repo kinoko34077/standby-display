@@ -923,7 +923,7 @@ body[data-settings-open="true"] .settings-trigger-layer {
 
   .clock-panel {
     align-self: center;
-    justify-self: stretch;
+    justify-self: center;
   }
 
   .clock-block {
