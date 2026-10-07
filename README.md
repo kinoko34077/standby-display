@@ -64,7 +64,7 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 色選択には、タッチスクリーン対応・HSL/HSV 対応の [iro.js](https://iro.js.org/) 5.5.2 を
 `assets/vendor/iro.min.js`へ同梱して使用します。読み込み失敗時は標準カラーピッカーへ戻ります。
 Digital-7、DSEG7 Classic Mini Bold、Rajdhani、IBM Plex Mono、Noto Sans JPも`assets/fonts/`へ同梱し、時計画面の実行時外部asset依存をなくしています。DSEG7 Classic Mini BoldはDSEG v0.46（Copyright (c) keshikan、SIL Open Font License 1.1）を使用し、`assets/fonts/DSEG-LICENSE.txt`を同梱しています。IBM Plex MonoはSIL Open Font License 1.1に従って使用し、`assets/fonts/IBM-PLEX-MONO-LICENSE.txt`を同梱しています。
-時計フォントはDigital-7を基準に、元フォントの数字glyph高と`88:88`のadvance幅から既定サイズ・字間を補正します。設定の「時計文字サイズ」「時計字間」はその既定補正へ追加で適用され、URL共有と`localStorage`保存の対象です。小型の秒表示は時分とは別のレイアウト領域を持ち、DSEG7では主表示用の幅圧縮trackingをそのまま継承せず、小サイズでsegment glyphが衝突しないsecondary trackingを使います。
+時計フォントはDigital-7を基準に、元フォントの数字glyph高と`88:88`のadvance幅から既定サイズ・字間を補正します。設定の「時計文字サイズ」「時計字間」はその既定補正へ追加で適用され、URL共有と`localStorage`保存の対象です。小型の秒表示は主時計の中心位置を変えず、時分表示の外側右へ独立配置します。DSEG7では主表示用の幅圧縮trackingをそのまま継承せず、小サイズでsegment glyphが衝突しないsecondary trackingを使います。
 
 ## 今後の課題
 

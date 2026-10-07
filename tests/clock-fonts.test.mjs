@@ -174,9 +174,9 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
   assert.match(css, /--app-clock-secondary-letter-spacing/);
-  assert.match(css, /display: inline-flex/);
-  assert.match(css, /gap: clamp/);
-  assert.match(css, /position: static/);
+  assert.match(css, /left: calc\(100% \+ clamp/);
+  assert.match(css, /right: auto/);
+  assert.match(css, /--app-clock-secondary-letter-spacing/);
   assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);
 });
 

@@ -160,10 +160,6 @@ body {
 
 .clock-block {
   position: relative;
-  display: inline-flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: clamp(0.6rem, 1.4vw, 1.8rem);
   font-family: var(--app-clock-font);
   font-weight: var(--app-clock-font-weight);
   font-size: var(--clock-size);
@@ -176,20 +172,16 @@ body {
   transform-origin: center center;
 }
 
-.time-line {
-  flex: 0 0 auto;
-}
-
 .clock-prefix {
   display: inline-block;
   min-width: 0.3em;
 }
 
 .seconds {
-  position: static;
-  flex: 0 0 auto;
-  align-self: flex-end;
-  margin-bottom: 0.06em;
+  position: absolute;
+  left: calc(100% + clamp(0.6rem, 1.4vw, 1.8rem));
+  right: auto;
+  bottom: 0.06em;
   font-size: var(--seconds-size);
   letter-spacing: var(--app-clock-secondary-letter-spacing);
   opacity: 0.4;
