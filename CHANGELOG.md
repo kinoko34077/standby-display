@@ -11,6 +11,36 @@
 - 変更概要は各コミットの差分をもとに整理しています。
 - Git単体にプッシュ時刻が残っていない場合は、プッシュ時刻を「不明」とします。
 
+## 記録の範囲
+
+以下の2026-09-06〜09-07表は当時の詳細なコミット・プッシュ記録です。
+それ以降については、実装が受け入れられたGitHub Issue/PRを変更履歴の正本として参照します。
+受入済みPRの個別差分・レビュー・CI・merge SHAは各リンク先で確認できます。
+未mergeの実装ブランチで試行している内容を、公開済み機能として列挙しません。
+
+## 2026-09-26〜2026-10-08（受入済みの主な変更）
+
+| Issue / PR | 現行版へ反映された内容 |
+|---|---|
+| [#1 / PR #2](https://github.com/kinoko34077/standby-display/pull/2) | Wake Lock・設定操作・位置情報失敗時の復旧導線 |
+| [#3 / PR #4](https://github.com/kinoko34077/standby-display/pull/4) | 旧字体変換fallbackの生成物同期 |
+| [#5 / PR #10](https://github.com/kinoko34077/standby-display/pull/10) | Service Workerのキャッシュ整合 |
+| [#12 / PR #13](https://github.com/kinoko34077/standby-display/pull/13) | 六曜の古い非同期応答による上書き防止 |
+| [#14 / PR #15](https://github.com/kinoko34077/standby-display/pull/15) | DSEG7 Classic Mini Boldの時計フォント選択 |
+| [#16 / PR #17](https://github.com/kinoko34077/standby-display/pull/17) | フォント寸法正規化とサイズ・字間調整 |
+| [#18 / PR #19](https://github.com/kinoko34077/standby-display/pull/19) | 12進・16進・フランス十進時法などの時計方式 |
+| [#20 / PR #21](https://github.com/kinoko34077/standby-display/pull/21) | 進法ごとのゼロ埋めと英字桁の大文字化 |
+| [#22 / PR #23](https://github.com/kinoko34077/standby-display/pull/23) | 代替時法の正確な境界に同期する更新 |
+| [#24 / PR #26](https://github.com/kinoko34077/standby-display/pull/26) | 点滅速度とDSEGの小型秒表示配置 |
+| [#28 / PR #29](https://github.com/kinoko34077/standby-display/pull/29) | 時法ごとの秒境界と記号点滅の同期 |
+| [#30 / PR #31](https://github.com/kinoko34077/standby-display/pull/31) | 主時計の中央配置・完全12進の小数精度 |
+| [#32 / PR #34](https://github.com/kinoko34077/standby-display/pull/34) | 横幅に適応する設定インスペクター |
+| [#35 / PR #39](https://github.com/kinoko34077/standby-display/pull/39) | 時分の視覚中心と完全16進ピリオドの間隔調整 |
+| [#35 / PR #40](https://github.com/kinoko34077/standby-display/pull/40) | 縦向き画面での主時計中央配置修正 |
+
+PR #27とPR #33は採用版ではなく、後続の受入済みPRに置き換えられた履歴です。
+PR #38もその後の視覚再検証でPR #39により置き換えられました。
+
 ## 2026-09-06〜2026-09-07
 
 作業開始時点の基準コミットは、2026-08-14 21:08:37 の `375210f`
