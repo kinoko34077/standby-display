@@ -205,3 +205,14 @@ test("settings persistence reports success or failure instead of silently swallo
   assert.match(clockSource, /自動保存に失敗しました/);
   assert.match(clockSource, /ブラウザの保存設定を確認してください/);
 });
+
+
+test("iro color picker keeps native color input as a keyboard-accessible alternative", async () => {
+  const source = await read("scripts/color-controls.mjs");
+
+  assert.doesNotMatch(source, /input\.hidden\s*=\s*true/);
+  assert.match(
+    source,
+    /const picker = new colorPickerLibrary\.ColorPicker[\s\S]*?bindColorControl\(input, onChange\)[\s\S]*?picker\.on\("color:change"/,
+  );
+});

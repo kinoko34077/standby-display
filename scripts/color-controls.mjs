@@ -85,7 +85,7 @@ export function createColorPickers(
           },
         ],
       });
-      input.hidden = true;
+      bindColorControl(input, onChange);
       picker.on("color:change", (color) => {
         const nextValue = color.hexString.toLowerCase();
         input.value = nextValue;

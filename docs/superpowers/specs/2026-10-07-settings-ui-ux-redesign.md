@@ -321,7 +321,11 @@ Use only where choices are few and mutually exclusive, such as 12/24-hour format
 
 Use for enumerations with several values, such as clock system and font.
 
-### 9.5 Ranges
+### 9.5 Color picker input paths
+
+When the enhanced iro.js picker is available, the native `input[type="color"]` remains visible and keyboard-reachable as the non-pointer alternative. Both paths update the same setting and stay synchronized through the existing render path.
+
+### 9.6 Ranges
 
 Keep range controls for size, tracking and random range limits.
 
@@ -329,7 +333,7 @@ Show the current numeric value adjacent to the control.
 
 Compact density is not forced uniformly. Color pickers and paired range controls may use more vertical space than ordinary boolean/select rows when that improves manipulation accuracy and prevents horizontal crowding.
 
-### 9.6 Helper text
+### 9.7 Helper text
 
 Move helper text close to the setting it explains.
 
