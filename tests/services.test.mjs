@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 
 import { WEATHER_CACHE_KEY } from "../scripts/constants.mjs";
 import {
+  createLocationService,
   createWeatherService,
   estimateClockOffset,
+  fetchJson,
 } from "../scripts/services.mjs";
 
 function createStorage(initialValue) {
@@ -157,4 +159,132 @@ test("rejects invalid clock-sync timing observations", () => {
       }),
     /finite/,
   );
+});
+
+
+test("location cache expires and force refresh bypasses a fresh coordinate", async () => {
+  let nowMs = 1000;
+  let calls = 0;
+  const optionsSeen = [];
+  const geolocation = {
+    getCurrentPosition(success, _error, options) {
+      calls += 1;
+      optionsSeen.push(options);
+      success({
+        coords: {
+          latitude: 35 + calls,
+          longitude: 139 + calls,
+        },
+      });
+    },
+  };
+  const service = createLocationService(geolocation, {
+    now: () => nowMs,
+    maxAgeMs: 900000,
+  });
+
+  const first = await service.getCurrentPosition();
+  assert.deepEqual(first, { lat: 36, lon: 140 });
+  assert.equal(calls, 1);
+
+  nowMs += 899999;
+  assert.deepEqual(await service.getCurrentPosition(), first);
+  assert.equal(calls, 1);
+
+  nowMs += 1;
+  assert.deepEqual(await service.getCurrentPosition(), { lat: 37, lon: 141 });
+  assert.equal(calls, 2);
+
+  nowMs += 1;
+  assert.deepEqual(
+    await service.getCurrentPosition({ force: true }),
+    { lat: 38, lon: 142 },
+  );
+  assert.equal(calls, 3);
+  assert.equal(optionsSeen.at(-1).maximumAge, 0);
+});
+
+test("location invalidation and concurrent requests preserve one in-flight lookup", async () => {
+  let successCallback;
+  let calls = 0;
+  const geolocation = {
+    getCurrentPosition(success) {
+      calls += 1;
+      successCallback = success;
+    },
+  };
+  const service = createLocationService(geolocation, {
+    now: () => 1000,
+    maxAgeMs: 900000,
+  });
+
+  const first = service.getCurrentPosition();
+  const second = service.getCurrentPosition({ force: true });
+  assert.equal(calls, 1);
+
+  successCallback({ coords: { latitude: 35.5, longitude: 139.5 } });
+  assert.deepEqual(await first, { lat: 35.5, lon: 139.5 });
+  assert.deepEqual(await second, { lat: 35.5, lon: 139.5 });
+
+  service.invalidate();
+  const third = service.getCurrentPosition();
+  assert.equal(calls, 2);
+  successCallback({ coords: { latitude: 36, longitude: 140 } });
+  assert.deepEqual(await third, { lat: 36, lon: 140 });
+});
+
+test("fetchJson aborts a request when the application timeout expires", async () => {
+  let timeoutCallback;
+  let aborted = false;
+  class FakeAbortController {
+    constructor() {
+      this.signal = {};
+    }
+    abort() {
+      aborted = true;
+    }
+  }
+
+  const request = fetchJson(
+    () => new Promise(() => {}),
+    "https://example.test/hung",
+    {
+      timeoutMs: 25,
+      AbortControllerImpl: FakeAbortController,
+      setTimeoutImpl(callback) {
+        timeoutCallback = callback;
+        return 1;
+      },
+      clearTimeoutImpl() {},
+    },
+  );
+
+  timeoutCallback();
+  await assert.rejects(request, /Request timed out after 25ms/);
+  assert.equal(aborted, true);
+});
+
+test("fetchJson clears its timeout after a successful response", async () => {
+  let cleared = null;
+  const result = await fetchJson(
+    async () => ({
+      ok: true,
+      async json() {
+        return { ok: true };
+      },
+    }),
+    "https://example.test/ok",
+    {
+      timeoutMs: 25,
+      setTimeoutImpl() {
+        return 17;
+      },
+      clearTimeoutImpl(id) {
+        cleared = id;
+      },
+    },
+  );
+
+  assert.deepEqual(result, { ok: true });
+  assert.equal(cleared, 17);
 });
