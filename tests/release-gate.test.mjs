@@ -26,10 +26,10 @@ test("canonical metadata stays on Workers and the only external runtime asset is
   assert.match(indexHtml, /src="assets\/vendor\/iro\.min\.js"/);
   assert.doesNotMatch(indexHtml, /fonts\.googleapis\.com|cdn\.jsdelivr\.net/);
   const externalStyleUrls = [
-    ...styleCss.matchAll(/https?:\\/\\/[^"'\\)]+/g),
+    ...styleCss.matchAll(/https?:\/\/[^"')]+/g),
   ].map((match) => match[0]);
   assert.deepEqual(externalStyleUrls, [
     "https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2",
   ]);
-  assert.doesNotMatch(legacyStyleCss, /https?:\\/\\//);
+  assert.doesNotMatch(legacyStyleCss, /https?:\/\//);
 });
