@@ -99,6 +99,7 @@ export function createRenderer(documentObject) {
 
   function renderTime(timeView) {
     setText(elements.prefix, timeView.prefixText);
+    setHidden(elements.prefix, !timeView.prefixText);
     setText(elements.hour, timeView.hourText);
     setText(elements.minute, timeView.minuteText);
     setText(elements.seconds, timeView.secondText);

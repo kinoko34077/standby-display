@@ -21,7 +21,11 @@ test("clock fonts carry Digital-7-relative normalization metadata", () => {
 
   assert.deepEqual(metrics, {
     d7: { sizeScale: 1, trackingEm: 0 },
-    "dseg7-classic-mini-bold": { sizeScale: 0.655, trackingEm: -0.081 },
+    "dseg7-classic-mini-bold": {
+      sizeScale: 0.655,
+      trackingEm: -0.081,
+      secondaryTrackingEm: 0,
+    },
     rajdhani: { sizeScale: 1.018, trackingEm: -0.07 },
     mono: { sizeScale: 0.907, trackingEm: -0.183 },
   });
@@ -138,6 +142,7 @@ test("font normalization and user adjustment compose in one render calculation",
     weight: 700,
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
+    secondaryLetterSpacingEm: 0.03,
   });
 });
 
@@ -168,5 +173,22 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /assets\/fonts\/ibm-plex-mono-latin-400-normal\.woff2/);
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
+  assert.match(css, /--app-clock-secondary-letter-spacing/);
+  assert.match(css, /display: inline-flex/);
+  assert.match(css, /gap: clamp/);
+  assert.match(css, /position: static/);
   assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);
+});
+
+
+test("DSEG secondary seconds avoid the main negative tracking compression", () => {
+  const defaults = sanitizeSettings({
+    clock: {
+      font: "dseg7-classic-mini-bold",
+      letterSpacingEm: 0,
+    },
+  });
+  const typography = resolveClockTypography(defaults);
+  assert.equal(typography.letterSpacingEm, -0.081);
+  assert.equal(typography.secondaryLetterSpacingEm, 0);
 });
