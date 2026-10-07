@@ -58,6 +58,7 @@ export function getClockNextTickDelayMs(now, clockSettings) {
   const system = getSystem(clockSettings.timeSystem);
   return Math.min(
     system.nextVisibleBoundaryMs(now, clockSettings),
+    nextBlinkBoundaryMs(now, clockSettings),
     nextCivilMinuteBoundaryMs(now),
   );
 }
@@ -83,6 +84,7 @@ function formatCivilDecimal(now, settings) {
     secondText: String(now.getSeconds()).padStart(2, "0"),
     now,
     showSeconds: settings.showSeconds,
+    settings,
   });
 }
 
@@ -102,6 +104,7 @@ function formatCivilRadix(now, settings, radix) {
     }),
     now,
     showSeconds: settings.showSeconds,
+    settings,
   });
 }
 
@@ -119,6 +122,7 @@ function formatDuodecimalDay(now, settings) {
     }),
     now,
     showSeconds: settings.showSeconds,
+    settings,
   });
 }
 
@@ -130,6 +134,7 @@ function formatDecimalTime(now, settings) {
     secondText: String(total % 100).padStart(2, "0"),
     now,
     showSeconds: settings.showSeconds,
+    settings,
   });
 }
 
@@ -139,7 +144,10 @@ function formatHexDay(now, settings) {
     uppercase: settings.uppercaseDigits,
   });
   return {
-    hourText: `.${digits.slice(0, 2)}`,
+    prefixText: ".",
+    showPrefix: true,
+    prefixVisible: isBlinkVisible(now, settings),
+    hourText: digits.slice(0, 2),
     minuteText: settings.showSeconds ? digits.slice(2) : "",
     secondText: "",
     separatorText: "",
@@ -148,14 +156,24 @@ function formatHexDay(now, settings) {
   };
 }
 
-function colonClock({ hourText, minuteText, secondText, now, showSeconds }) {
+function colonClock({
+  hourText,
+  minuteText,
+  secondText,
+  now,
+  showSeconds,
+  settings,
+}) {
   return {
+    prefixText: "",
+    showPrefix: false,
+    prefixVisible: false,
     hourText,
     minuteText,
     secondText: `:${secondText}`,
     separatorText: ":",
     showSeconds,
-    showColon: now.getSeconds() % 2 === 0,
+    showColon: isBlinkVisible(now, settings),
   };
 }
 
@@ -184,6 +202,17 @@ function nextPartitionBoundaryMs(now, unitCount) {
   const currentUnit = Math.floor((elapsedMs * unitCount) / NOMINAL_DAY_MS);
   const nextBoundaryElapsedMs = ((currentUnit + 1) * NOMINAL_DAY_MS) / unitCount;
   return Math.max(1, Math.ceil(nextBoundaryElapsedMs - elapsedMs));
+}
+
+function nextBlinkBoundaryMs(now, settings) {
+  const intervalMs = settings.blinkDoubleSpeed ? 500 : 1000;
+  const remainder = ((now.getTime() % intervalMs) + intervalMs) % intervalMs;
+  return remainder === 0 ? intervalMs : intervalMs - remainder;
+}
+
+function isBlinkVisible(now, settings) {
+  const intervalMs = settings.blinkDoubleSpeed ? 500 : 1000;
+  return Math.floor(now.getTime() / intervalMs) % 2 === 0;
 }
 
 function nextCivilSecondBoundaryMs(now) {

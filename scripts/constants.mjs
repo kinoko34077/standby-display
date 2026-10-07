@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     font: "d7",
     timeSystem: "civil",
     uppercaseDigits: false,
+    blinkDoubleSpeed: false,
     sizePercent: 100,
     letterSpacingEm: 0,
   },
