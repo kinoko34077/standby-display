@@ -95,7 +95,6 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   };
 
   triggerButton.addEventListener("click", callbacks.onOpen);
-  closeButton.addEventListener("click", callbacks.onClose);
   copyUrlButton.addEventListener("click", callbacks.onCopyUrl);
   resetButton.addEventListener("click", () => {
     if (confirmReset()) {
@@ -128,17 +127,25 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     }
   }
 
+  function rememberCurrentScroll() {
+    if (settingsContent) {
+      categoryScrollPositions.set(activeCategory, settingsContent.scrollTop);
+    }
+  }
+
   function selectCategory(nextCategory) {
     if (!SETTINGS_CATEGORIES.includes(nextCategory)) {
       return;
     }
 
-    if (settingsContent) {
-      categoryScrollPositions.set(activeCategory, settingsContent.scrollTop);
-    }
-
+    rememberCurrentScroll();
     activeCategory = nextCategory;
     syncCategoryPresentation({ restoreScroll: true });
+  }
+
+  function requestClose() {
+    rememberCurrentScroll();
+    callbacks.onClose();
   }
 
   for (const button of categoryButtons) {
@@ -147,9 +154,11 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     });
   }
 
+  closeButton.addEventListener("click", requestClose);
+
   documentObject.addEventListener("keydown", (event) => {
     if (settingsOpen && event.key === "Escape") {
-      callbacks.onClose();
+      requestClose();
     }
   });
 
@@ -158,7 +167,11 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     rootElement.dataset.settingsLayout = narrow ? "narrow" : "wide";
 
     if (mainLayout) {
+      const focusWasInMain = mainLayout.contains(documentObject.activeElement);
       mainLayout.inert = settingsOpen && narrow;
+      if (settingsOpen && narrow && focusWasInMain) {
+        closeButton.focus();
+      }
     }
   }
 

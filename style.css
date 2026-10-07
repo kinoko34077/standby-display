@@ -638,11 +638,17 @@ body[data-settings-open="true"] .settings-trigger-layer {
   text-align: right;
 }
 
+.color-row {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
 .color-row .color-control {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .color-picker {
@@ -776,7 +782,7 @@ body[data-settings-open="true"] .settings-trigger-layer {
   min-width: 68px;
   color: var(--overlay-subtle);
   font-size: 0.88rem;
-  text-align: right;
+  text-align: left;
 }
 
 .action-column {
@@ -868,21 +874,6 @@ body[data-settings-open="true"] .settings-trigger-layer {
 
   .settings-disclosure summary {
     min-height: 44px;
-  }
-}
-
-@media (max-width: 560px) {
-  .color-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  .color-row .color-control {
-    justify-content: flex-start;
-  }
-
-  .color-row .color-value {
-    text-align: left;
   }
 }
 

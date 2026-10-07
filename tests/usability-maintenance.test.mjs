@@ -136,6 +136,7 @@ test("settings shell adapts from a wide inspector to a narrow fullscreen surface
     css,
     /@media \(max-width:\s*800px\)[\s\S]*?\.settings-category-nav\s*\{[\s\S]*?flex-direction:\s*row/,
   );
+  assert.match(css, /\.color-row\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
   assert.doesNotMatch(css, /settings-grid|data-view="compact"/);
 });
 
@@ -144,8 +145,11 @@ test("settings navigation preserves session context and narrows background inter
 
   assert.match(source, /SETTINGS_CATEGORIES = \["clock", "notation", "display", "color", "system"\]/);
   assert.match(source, /categoryScrollPositions/);
+  assert.match(source, /rememberCurrentScroll/);
+  assert.match(source, /requestClose/);
   assert.match(source, /aria-current/);
   assert.match(source, /mainLayout\.inert = settingsOpen && narrow/);
+  assert.match(source, /focusWasInMain/);
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /closeButton\.focus\(\)/);
   assert.match(source, /triggerButton\.focus\(\)/);
