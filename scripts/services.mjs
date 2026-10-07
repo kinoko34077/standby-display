@@ -221,16 +221,23 @@ export async function fetchJson(
   });
 
   try {
-    const response = await Promise.race([
-      fetchImpl(url, controller ? { signal: controller.signal } : undefined),
+    return await Promise.race([
+      (async () => {
+        const response = await fetchImpl(
+          url,
+          controller ? { signal: controller.signal } : undefined,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        }
+
+        // Keep the timeout active while the response body is parsed, not only
+        // while HTTP headers are pending.
+        return response.json();
+      })(),
       timeoutPromise,
     ]);
-
-    if (!response.ok) {
-      throw new Error(`Request failed: ${response.status} ${response.statusText}`);
-    }
-
-    return response.json();
   } finally {
     if (timeoutId !== null) {
       clearTimeoutImpl(timeoutId);
