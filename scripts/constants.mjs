@@ -107,7 +107,11 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     label: "Digital-7",
     family: "\"D7\", \"Rajdhani\", sans-serif",
     weight: 400,
-    normalization: Object.freeze({ sizeScale: 1, trackingEm: 0 }),
+    normalization: Object.freeze({
+      sizeScale: 1,
+      trackingEm: 0,
+      prefixShiftEm: 0.032,
+    }),
   },
   {
     id: "dseg7-classic-mini-bold",
@@ -118,6 +122,7 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
+      prefixShiftEm: 0.006,
     }),
   },
   {
@@ -125,14 +130,22 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     label: "Rajdhani",
     family: "\"Rajdhani\", sans-serif",
     weight: 500,
-    normalization: Object.freeze({ sizeScale: 1.018, trackingEm: -0.07 }),
+    normalization: Object.freeze({
+      sizeScale: 1.018,
+      trackingEm: -0.07,
+      prefixShiftEm: 0.02,
+    }),
   },
   {
     id: "mono",
     label: "Monospace",
     family: "\"IBM Plex Mono\", Consolas, monospace",
     weight: 400,
-    normalization: Object.freeze({ sizeScale: 0.907, trackingEm: -0.183 }),
+    normalization: Object.freeze({
+      sizeScale: 0.907,
+      trackingEm: -0.183,
+      prefixShiftEm: 0.023,
+    }),
   },
 ]);
 

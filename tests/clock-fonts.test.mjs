@@ -20,14 +20,23 @@ test("clock fonts carry Digital-7-relative normalization metadata", () => {
   );
 
   assert.deepEqual(metrics, {
-    d7: { sizeScale: 1, trackingEm: 0 },
+    d7: { sizeScale: 1, trackingEm: 0, prefixShiftEm: 0.032 },
     "dseg7-classic-mini-bold": {
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
+      prefixShiftEm: 0.006,
     },
-    rajdhani: { sizeScale: 1.018, trackingEm: -0.07 },
-    mono: { sizeScale: 0.907, trackingEm: -0.183 },
+    rajdhani: {
+      sizeScale: 1.018,
+      trackingEm: -0.07,
+      prefixShiftEm: 0.02,
+    },
+    mono: {
+      sizeScale: 0.907,
+      trackingEm: -0.183,
+      prefixShiftEm: 0.023,
+    },
   });
 });
 
@@ -143,6 +152,7 @@ test("font normalization and user adjustment compose in one render calculation",
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
     secondaryLetterSpacingEm: 0.03,
+    prefixShiftEm: 0.006,
   });
 });
 
@@ -174,6 +184,11 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
   assert.match(css, /--app-clock-secondary-letter-spacing/);
+  assert.match(css, /--app-clock-prefix-shift/);
+  assert.match(
+    css,
+    /\.clock-prefix\s*\{[\s\S]*?transform:\s*translateX\(var\(--app-clock-prefix-shift\)\)/,
+  );
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?display:\s*none/);
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?min-width:\s*0/);
   assert.match(css, /\.clock-block\s*\{[\s\S]*?width:\s*max-content/);

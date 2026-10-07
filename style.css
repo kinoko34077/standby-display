@@ -54,6 +54,7 @@
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
   --app-clock-secondary-letter-spacing: 0em;
+  --app-clock-prefix-shift: 0em;
   --app-text-font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --color-weekday: #8b8b8b;
   --color-weekday-sunday: #ff7878;
@@ -182,6 +183,7 @@ body {
 .clock-prefix {
   display: inline-block;
   min-width: 0.3em;
+  transform: translateX(var(--app-clock-prefix-shift));
 }
 
 .clock-prefix[hidden] {
