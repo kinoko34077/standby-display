@@ -22,8 +22,15 @@ function clock(
   showSeconds = true,
   hourFormat = "24",
   uppercaseDigits = false,
+  blinkDoubleSpeed = false,
 ) {
-  return { timeSystem, showSeconds, hourFormat, uppercaseDigits };
+  return {
+    timeSystem,
+    showSeconds,
+    hourFormat,
+    uppercaseDigits,
+    blinkDoubleSpeed,
+  };
 }
 
 test("radix formatter supports bases 2 through 16 and uses lowercase digits", () => {
@@ -120,8 +127,8 @@ test("complete hexadecimal day uses .hhhh day fraction", () => {
   const midnight = formatClockTime(new Date(2026, 0, 1, 0, 0, 0, 0), clock("hex-day"));
   const noon = formatClockTime(new Date(2026, 0, 1, 12, 0, 0, 0), clock("hex-day"));
   const compact = formatClockTime(new Date(2026, 0, 1, 12, 0, 0, 0), clock("hex-day", false));
-  assert.equal(midnight.hourText + midnight.minuteText, ".0000");
-  assert.equal(noon.hourText + noon.minuteText, ".8000");
+  assert.equal(midnight.prefixText + midnight.hourText + midnight.minuteText, ".0000");
+  assert.equal(noon.prefixText + noon.hourText + noon.minuteText, ".8000");
   const lettersLower = formatClockTime(
     new Date(2026, 0, 1, 16, 0, 0, 0),
     clock("hex-day"),
@@ -134,7 +141,7 @@ test("complete hexadecimal day uses .hhhh day fraction", () => {
     lettersUpper.hourText + lettersUpper.minuteText,
     (lettersLower.hourText + lettersLower.minuteText).toUpperCase(),
   );
-  assert.equal(compact.hourText + compact.minuteText, ".80");
+  assert.equal(compact.prefixText + compact.hourText + compact.minuteText, ".80");
   assert.equal(noon.separatorText, "");
   assert.equal(noon.showSeconds, false);
   assert.equal(
@@ -142,8 +149,9 @@ test("complete hexadecimal day uses .hhhh day fraction", () => {
       new Date(2026, 0, 1, 0, 0, 0, 0),
       clock("hex-day"),
     ),
-    1319,
+    1000,
   );
+  assert.equal(midnight.showPrefix, true);
 });
 
 test("clock scheduling follows visible time-system boundaries", () => {
@@ -152,6 +160,13 @@ test("clock scheduling follows visible time-system boundaries", () => {
 
   assert.equal(getClockNextTickDelayMs(midSecond, clock("civil")), 750);
   assert.equal(getClockNextTickDelayMs(midSecond, clock("duodecimal")), 750);
+  assert.equal(
+    getClockNextTickDelayMs(
+      midSecond,
+      clock("civil", true, "24", false, true),
+    ),
+    250,
+  );
 
   // A French decimal second is exactly 864 ms.
   assert.equal(getClockNextTickDelayMs(midnight, clock("decimal-time")), 864);
@@ -171,10 +186,17 @@ test("clock scheduling follows visible time-system boundaries", () => {
 
   // A full hexadecimal day digit step is 86400000 / 65536 = 1318.359375 ms.
   assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day")), 1319);
-  // Compact .hh changes every 337500 ms, but minute/date/info refresh must wake first.
+  // Compact .hh changes every 337500 ms, but its blinking prefix wakes earlier.
   assert.equal(
     getClockNextTickDelayMs(midnight, clock("hex-day", false)),
-    60000,
+    1000,
+  );
+  assert.equal(
+    getClockNextTickDelayMs(
+      midnight,
+      clock("hex-day", false, "24", false, true),
+    ),
+    500,
   );
 
   const atDecimalBoundary = formatClockTime(
@@ -188,6 +210,37 @@ test("clock scheduling follows visible time-system boundaries", () => {
     getClockNextTickDelayMs(beforeHexBoundary, clock("hex-day")),
     1,
   );
+});
+
+test("blink speed applies to colon clocks and complete-hex prefix", () => {
+  const start = new Date(2026, 0, 1, 0, 0, 0, 0);
+  const half = new Date(2026, 0, 1, 0, 0, 0, 500);
+  const oneSecond = new Date(2026, 0, 1, 0, 0, 1, 0);
+
+  const civilNormalStart = formatClockTime(start, clock("civil"));
+  const civilNormalHalf = formatClockTime(half, clock("civil"));
+  const civilNormalOne = formatClockTime(oneSecond, clock("civil"));
+  assert.equal(civilNormalStart.showColon, civilNormalHalf.showColon);
+  assert.notEqual(civilNormalStart.showColon, civilNormalOne.showColon);
+
+  const civilFastStart = formatClockTime(
+    start,
+    clock("civil", true, "24", false, true),
+  );
+  const civilFastHalf = formatClockTime(
+    half,
+    clock("civil", true, "24", false, true),
+  );
+  assert.notEqual(civilFastStart.showColon, civilFastHalf.showColon);
+
+  const hexNormalStart = formatClockTime(start, clock("hex-day"));
+  const hexNormalHalf = formatClockTime(half, clock("hex-day"));
+  const hexFastHalf = formatClockTime(
+    half,
+    clock("hex-day", true, "24", false, true),
+  );
+  assert.equal(hexNormalStart.prefixVisible, hexNormalHalf.prefixVisible);
+  assert.notEqual(hexNormalStart.prefixVisible, hexFastHalf.prefixVisible);
 });
 
 test("uppercase digit support is enabled only for radix modes", () => {
@@ -206,17 +259,22 @@ test("only the current civil preset uses the 12/24-hour option", () => {
 });
 
 test("time system persists through settings and URL while old settings stay civil", () => {
-  const parsed = parseSettingsFromSearch("?timesys=civil-base16&radixcase=upper");
+  const parsed = parseSettingsFromSearch(
+    "?timesys=civil-base16&radixcase=upper&blink2x=1",
+  );
   assert.equal(parsed.clock.timeSystem, "civil-base16");
   assert.equal(parsed.clock.uppercaseDigits, true);
+  assert.equal(parsed.clock.blinkDoubleSpeed, true);
   const search = buildSettingsSearch(parsed);
   const restored = parseSettingsFromSearch(`?${search}`);
   assert.equal(restored.clock.timeSystem, "civil-base16");
   assert.equal(restored.clock.uppercaseDigits, true);
+  assert.equal(restored.clock.blinkDoubleSpeed, true);
 
   const oldSettings = sanitizeSettings({ clock: { font: "d7" } });
   assert.equal(oldSettings.clock.timeSystem, "civil");
   assert.equal(oldSettings.clock.uppercaseDigits, false);
+  assert.equal(oldSettings.clock.blinkDoubleSpeed, false);
   assert.equal(sanitizeSettings({ clock: { timeSystem: "base36" } }).clock.timeSystem, "civil");
 });
 
@@ -230,16 +288,22 @@ test("UI and PWA wire the clock-system modules", async () => {
   ]);
   assert.match(html, /id="setting-clock-system"/);
   assert.match(html, /id="setting-clock-uppercase"/);
+  assert.match(html, /id="setting-clock-blink-double"/);
+  assert.match(html, /id="clock-prefix"/);
   assert.match(ui, /key: "timeSystem"/);
   assert.match(ui, /key: "uppercaseDigits"/);
+  assert.match(ui, /key: "blinkDoubleSpeed"/);
   assert.match(ui, /clockSystemSupportsLetterCase/);
   assert.match(ui, /classList\.toggle\("is-disabled"/);
   assert.match(ui, /clockSystemUsesHourFormat/);
   assert.match(renderer, /timeView\.separatorText/);
+  assert.match(renderer, /timeView\.prefixText/);
+  assert.match(renderer, /prefix\.style\.visibility/);
   assert.match(worker, /scripts\/radix\.mjs/);
   assert.match(worker, /scripts\/time-systems\.mjs/);
   assert.match(app, /scheduleNextClockTick/);
   assert.match(app, /getClockNextTickDelayMs/);
   assert.doesNotMatch(app, /setInterval\(handleClockTick/);
   assert.match(app, /key === "showSeconds"/);
+  assert.match(app, /key === "blinkDoubleSpeed"/);
 });

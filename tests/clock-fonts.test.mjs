@@ -138,7 +138,28 @@ test("font normalization and user adjustment compose in one render calculation",
     weight: 700,
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
+    secondsLetterSpacingEm: 0.03,
   });
+});
+
+test("DSEG secondary seconds tracking excludes main normalization baseline", () => {
+  const base = sanitizeSettings({
+    clock: {
+      font: "dseg7-classic-mini-bold",
+      letterSpacingEm: 0,
+    },
+  });
+  const adjusted = sanitizeSettings({
+    clock: {
+      font: "dseg7-classic-mini-bold",
+      letterSpacingEm: 0.04,
+    },
+  });
+
+  assert.equal(resolveClockTypography(base).letterSpacingEm, -0.081);
+  assert.equal(resolveClockTypography(base).secondsLetterSpacingEm, 0);
+  assert.equal(resolveClockTypography(adjusted).letterSpacingEm, -0.041);
+  assert.equal(resolveClockTypography(adjusted).secondsLetterSpacingEm, 0.04);
 });
 
 test("settings UI exposes immediate clock size and tracking sliders", async () => {
@@ -168,5 +189,19 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /assets\/fonts\/ibm-plex-mono-latin-400-normal\.woff2/);
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
+  assert.match(css, /--app-seconds-letter-spacing/);
+  assert.match(
+    css,
+    /\.time-line\s*\{[\s\S]*?letter-spacing:\s*var\(--app-clock-letter-spacing\)/,
+  );
+  assert.match(css, /\.seconds\s*\{[\s\S]*?position:\s*static/);
+  assert.match(
+    css,
+    /\.seconds\s*\{[\s\S]*?letter-spacing:\s*var\(--app-seconds-letter-spacing\)/,
+  );
+  assert.doesNotMatch(
+    css,
+    /\.seconds\s*\{[\s\S]{0,180}?position:\s*absolute/,
+  );
   assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);
 });
