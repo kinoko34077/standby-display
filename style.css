@@ -170,19 +170,25 @@ body {
   letter-spacing: var(--app-clock-letter-spacing);
   text-align: center;
   white-space: nowrap;
-  transform: scale(var(--app-clock-size-scale));
+  transform: scale(var(--app-clock-size-scale))
+    translateX(calc(var(--app-clock-letter-spacing) / 2));
   transform-origin: center center;
 }
 
 .time-line {
+  position: relative;
   width: max-content;
   margin-inline: auto;
   text-align: center;
 }
 
 .clock-prefix {
+  position: absolute;
+  top: 0;
+  right: 100%;
   display: inline-block;
-  min-width: 0.3em;
+  min-width: 0;
+  letter-spacing: 0;
   transform: translateX(var(--app-clock-prefix-shift));
 }
 
