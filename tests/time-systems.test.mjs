@@ -147,7 +147,7 @@ test("complete hexadecimal day uses .hhhh day fraction", () => {
       new Date(2026, 0, 1, 0, 0, 0, 0),
       clock("hex-day"),
     ),
-    1000,
+    1319,
   );
 });
 
@@ -226,6 +226,44 @@ test("blink cadence is phase-locked to each clock system's own seconds", () => {
   );
 });
 
+test("normal blink transitions coincide with each system's displayed second advance", () => {
+  const duodecimalBefore = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 49, 999),
+    clock("duodecimal"),
+  );
+  const duodecimalAfter = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 50, 0),
+    clock("duodecimal"),
+  );
+  assert.equal(duodecimalBefore.secondText, ":0");
+  assert.equal(duodecimalAfter.secondText, ":1");
+  assert.notEqual(duodecimalBefore.showColon, duodecimalAfter.showColon);
+
+  const decimalBefore = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 0, 863),
+    clock("decimal-time"),
+  );
+  const decimalAfter = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 0, 864),
+    clock("decimal-time"),
+  );
+  assert.equal(decimalBefore.secondText, ":00");
+  assert.equal(decimalAfter.secondText, ":01");
+  assert.notEqual(decimalBefore.showColon, decimalAfter.showColon);
+
+  const hexBefore = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 1, 318),
+    clock("hex-day"),
+  );
+  const hexAfter = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 1, 319),
+    clock("hex-day"),
+  );
+  assert.equal(hexBefore.hourText + hexBefore.minuteText, "0000");
+  assert.equal(hexAfter.hourText + hexAfter.minuteText, "0001");
+  assert.notEqual(hexBefore.showPrefix, hexAfter.showPrefix);
+});
+
 test("clock scheduling follows visible time-system boundaries", () => {
   const midnight = new Date(2026, 0, 1, 0, 0, 0, 0);
   const midSecond = new Date(2026, 0, 1, 0, 0, 0, 250);
@@ -273,7 +311,7 @@ test("clock scheduling follows visible time-system boundaries", () => {
     getClockNextTickDelayMs(new Date(2026, 0, 1, 0, 0, 1, 0), clock("hex-day")),
     319,
   );
-  assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day", false)), 1000);
+  assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day", false)), 1319);
   assert.equal(
     getClockNextTickDelayMs(midnight, clock("hex-day", true, "24", false, true)),
     660,
