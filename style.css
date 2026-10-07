@@ -457,6 +457,15 @@ body[data-settings-open="true"] .settings-trigger-layer {
   transform: translateX(20px);
 }
 
+.control-row.is-disabled .control-label,
+.switch input:disabled + .switch-track {
+  opacity: 0.38;
+}
+
+.switch input:disabled + .switch-track {
+  cursor: not-allowed;
+}
+
 .segmented-control {
   display: inline-grid;
   grid-auto-flow: column;

@@ -72,6 +72,15 @@ export function parseSettingsFromSearch(search) {
     assign(partialSettings, "clock", "timeSystem", params.get("timesys"));
   }
 
+  if (params.has("radixcase")) {
+    assign(
+      partialSettings,
+      "clock",
+      "uppercaseDigits",
+      params.get("radixcase") === "upper",
+    );
+  }
+
   if (params.has("clocksize")) {
     assign(partialSettings, "clock", "sizePercent", params.get("clocksize"));
   }
@@ -166,6 +175,12 @@ export function buildSettingsSearch(settings) {
   appendSetting(params, "hour", current.clock.hourFormat, String);
   appendSetting(params, "clockfont", current.clock.font, String);
   appendSetting(params, "timesys", current.clock.timeSystem, String);
+  appendSetting(
+    params,
+    "radixcase",
+    current.clock.uppercaseDigits,
+    (value) => (value ? "upper" : "lower"),
+  );
   appendSetting(params, "clocksize", current.clock.sizePercent, String);
   appendSetting(params, "clockspacing", current.clock.letterSpacingEm, String);
   appendSetting(params, "cal", current.calendar.yearSystem, String);
@@ -211,6 +226,7 @@ export function sanitizeSettings(partialSettings) {
       timeSystem: CLOCK_SYSTEM_IDS.has(merged.clock.timeSystem)
         ? merged.clock.timeSystem
         : DEFAULT_SETTINGS.clock.timeSystem,
+      uppercaseDigits: Boolean(merged.clock.uppercaseDigits),
       sizePercent: normalizeBoundedNumber(
         merged.clock.sizePercent,
         DEFAULT_SETTINGS.clock.sizePercent,

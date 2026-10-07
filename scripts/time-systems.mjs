@@ -12,12 +12,12 @@ export const CLOCK_SYSTEM_OPTIONS = Object.freeze([
 ]);
 
 const CLOCK_SYSTEMS = new Map([
-  ["civil", { tickIntervalMs: 1000, usesHourFormat: true, format: formatCivilDecimal }],
-  ["civil-base12", { tickIntervalMs: 1000, usesHourFormat: false, format: (now, settings) => formatCivilRadix(now, settings, 12) }],
-  ["duodecimal", { tickIntervalMs: 1000, usesHourFormat: false, format: formatDuodecimalDay }],
-  ["decimal-time", { tickIntervalMs: 250, usesHourFormat: false, format: formatDecimalTime }],
-  ["civil-base16", { tickIntervalMs: 1000, usesHourFormat: false, format: (now, settings) => formatCivilRadix(now, settings, 16) }],
-  ["hex-day", { tickIntervalMs: 500, usesHourFormat: false, format: formatHexDay }],
+  ["civil", { tickIntervalMs: 1000, usesHourFormat: true, supportsLetterCase: false, format: formatCivilDecimal }],
+  ["civil-base12", { tickIntervalMs: 1000, usesHourFormat: false, supportsLetterCase: true, format: (now, settings) => formatCivilRadix(now, settings, 12) }],
+  ["duodecimal", { tickIntervalMs: 1000, usesHourFormat: false, supportsLetterCase: true, format: formatDuodecimalDay }],
+  ["decimal-time", { tickIntervalMs: 250, usesHourFormat: false, supportsLetterCase: false, format: formatDecimalTime }],
+  ["civil-base16", { tickIntervalMs: 1000, usesHourFormat: false, supportsLetterCase: true, format: (now, settings) => formatCivilRadix(now, settings, 16) }],
+  ["hex-day", { tickIntervalMs: 500, usesHourFormat: false, supportsLetterCase: true, format: formatHexDay }],
 ]);
 
 export function formatClockTime(now, clockSettings) {
@@ -30,6 +30,10 @@ export function getClockTickIntervalMs(clockSettings) {
 
 export function clockSystemUsesHourFormat(systemId) {
   return getSystem(systemId).usesHourFormat;
+}
+
+export function clockSystemSupportsLetterCase(systemId) {
+  return getSystem(systemId).supportsLetterCase;
 }
 
 function getSystem(systemId) {
@@ -50,9 +54,18 @@ function formatCivilDecimal(now, settings) {
 
 function formatCivilRadix(now, settings, radix) {
   return colonClock({
-    hourText: formatRadixInteger(now.getHours(), radix),
-    minuteText: formatRadixInteger(now.getMinutes(), radix),
-    secondText: formatRadixInteger(now.getSeconds(), radix),
+    hourText: formatRadixInteger(now.getHours(), radix, {
+      minWidth: 2,
+      uppercase: settings.uppercaseDigits,
+    }),
+    minuteText: formatRadixInteger(now.getMinutes(), radix, {
+      minWidth: 2,
+      uppercase: settings.uppercaseDigits,
+    }),
+    secondText: formatRadixInteger(now.getSeconds(), radix, {
+      minWidth: 2,
+      uppercase: settings.uppercaseDigits,
+    }),
     now,
     showSeconds: settings.showSeconds,
   });
@@ -61,9 +74,15 @@ function formatCivilRadix(now, settings, radix) {
 function formatDuodecimalDay(now, settings) {
   const total = partitionNominalDay(now, 12 * 12 * 12);
   return colonClock({
-    hourText: formatRadixInteger(Math.floor(total / 144), 12),
-    minuteText: formatRadixInteger(Math.floor(total / 12) % 12, 12),
-    secondText: formatRadixInteger(total % 12, 12),
+    hourText: formatRadixInteger(Math.floor(total / 144), 12, {
+      uppercase: settings.uppercaseDigits,
+    }),
+    minuteText: formatRadixInteger(Math.floor(total / 12) % 12, 12, {
+      uppercase: settings.uppercaseDigits,
+    }),
+    secondText: formatRadixInteger(total % 12, 12, {
+      uppercase: settings.uppercaseDigits,
+    }),
     now,
     showSeconds: settings.showSeconds,
   });
@@ -81,7 +100,10 @@ function formatDecimalTime(now, settings) {
 }
 
 function formatHexDay(now, settings) {
-  const digits = formatRadixInteger(partitionNominalDay(now, 16 ** 4), 16, { minWidth: 4 });
+  const digits = formatRadixInteger(partitionNominalDay(now, 16 ** 4), 16, {
+    minWidth: 4,
+    uppercase: settings.uppercaseDigits,
+  });
   return {
     hourText: `.${digits.slice(0, 2)}`,
     minuteText: settings.showSeconds ? digits.slice(2) : "",
