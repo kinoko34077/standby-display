@@ -2,7 +2,9 @@ import "../shared/config.js";
 const API_ENDPOINTS = (typeof window !== "undefined" ? window : globalThis).StandbyConfig.api;
 
 import {
+  API_REQUEST_TIMEOUT_MS,
   DEFAULT_SUPPLEMENTAL_DATA,
+  LOCATION_CACHE_MAX_AGE_MS,
   MOON_PHASE_EMOJIS,
   WEATHER_CACHE_KEY,
   WEATHER_CACHE_LOCATION_TOLERANCE,
@@ -54,13 +56,26 @@ export function estimateClockOffset({
   return serverTime + roundTripTime / 2 - responseReceivedAt;
 }
 
-export function createLocationService(geolocation) {
+export function createLocationService(
+  geolocation,
+  {
+    now = () => Date.now(),
+    maxAgeMs = LOCATION_CACHE_MAX_AGE_MS,
+  } = {},
+) {
   let cachedLocation = null;
+  let cachedAt = 0;
   let pendingRequest = null;
 
   return {
-    async getCurrentPosition() {
-      if (cachedLocation) {
+    async getCurrentPosition({ force = false } = {}) {
+      const cacheAgeMs = now() - cachedAt;
+      if (
+        !force &&
+        cachedLocation &&
+        cacheAgeMs >= 0 &&
+        cacheAgeMs < maxAgeMs
+      ) {
         return cachedLocation;
       }
 
@@ -79,12 +94,13 @@ export function createLocationService(geolocation) {
               lat: position.coords.latitude,
               lon: position.coords.longitude,
             };
+            cachedAt = now();
             resolve(cachedLocation);
           },
           (error) => reject(error),
           {
             enableHighAccuracy: false,
-            maximumAge: 15 * 60 * 1000,
+            maximumAge: force ? 0 : maxAgeMs,
             timeout: 10000,
           },
         );
@@ -93,6 +109,11 @@ export function createLocationService(geolocation) {
       });
 
       return pendingRequest;
+    },
+
+    invalidate() {
+      cachedLocation = null;
+      cachedAt = 0;
     },
   };
 }
@@ -176,14 +197,45 @@ export function createCalendarService(fetchImpl) {
   };
 }
 
-async function fetchJson(fetchImpl, url) {
-  const response = await fetchImpl(url);
+export async function fetchJson(
+  fetchImpl,
+  url,
+  {
+    timeoutMs = API_REQUEST_TIMEOUT_MS,
+    AbortControllerImpl = globalThis.AbortController,
+    setTimeoutImpl = globalThis.setTimeout,
+    clearTimeoutImpl = globalThis.clearTimeout,
+  } = {},
+) {
+  const controller =
+    typeof AbortControllerImpl === "function"
+      ? new AbortControllerImpl()
+      : null;
+  let timeoutId = null;
 
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeoutImpl(() => {
+      controller?.abort();
+      reject(new Error(`Request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    const response = await Promise.race([
+      fetchImpl(url, controller ? { signal: controller.signal } : undefined),
+      timeoutPromise,
+    ]);
+
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeoutImpl(timeoutId);
+    }
   }
-
-  return response.json();
 }
 
 function toIsoDate(date) {
