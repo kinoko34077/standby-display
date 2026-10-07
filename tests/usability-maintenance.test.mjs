@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { installWakeLock } from "../scripts/browser-features.mjs";
+import { saveSettings } from "../scripts/settings.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (file) => readFile(new URL(file, root), "utf8");
@@ -98,4 +99,120 @@ test("location failures have persistent diagnostic state and retry wiring", asyn
   assert.match(clockSource, /位置情報/);
   assert.match(uiSource, /onRetryLocation/);
   assert.match(uiSource, /location-status/);
+});
+
+
+test("settings redesign uses five user-oriented categories without manual layout mode", async () => {
+  const [html, uiSource, settingsSource, clockSource] = await Promise.all([
+    read("index.html"),
+    read("scripts/settings-ui.mjs"),
+    read("scripts/settings.mjs"),
+    read("scripts/clock-app.mjs"),
+  ]);
+
+  assert.match(html, /aria-label="設定カテゴリ"/);
+  assert.equal((html.match(/data-settings-category=/g) ?? []).length, 5);
+  assert.equal((html.match(/data-settings-pane=/g) ?? []).length, 5);
+  assert.doesNotMatch(html, /settings-view-toggle/);
+  assert.doesNotMatch(uiSource, /settings-view-toggle|onToggleView|trapFocus/);
+  assert.doesNotMatch(settingsSource, /settingsView/);
+  assert.doesNotMatch(clockSource, /toggleSettingsView|settingsView/);
+});
+
+test("settings shell adapts from a wide inspector to a narrow fullscreen surface", async () => {
+  const css = await read("style.css");
+
+  assert.match(css, /\.settings-overlay\s*\{[\s\S]*?pointer-events:\s*none/);
+  assert.match(
+    css,
+    /\.settings-shell\s*\{[\s\S]*?width:\s*clamp\(420px,\s*34vw,\s*520px\)/,
+  );
+  assert.match(css, /\.settings-body\s*\{[\s\S]*?grid-template-columns:\s*116px/);
+  assert.match(css, /@media \(max-width:\s*800px\)/);
+  assert.match(
+    css,
+    /@media \(max-width:\s*800px\)[\s\S]*?\.settings-overlay\s*\{[\s\S]*?pointer-events:\s*auto/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width:\s*800px\)[\s\S]*?\.settings-category-nav\s*\{[\s\S]*?flex-direction:\s*row/,
+  );
+  assert.match(css, /\.color-row\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
+  assert.doesNotMatch(css, /settings-grid|data-view="compact"/);
+});
+
+test("settings navigation preserves session context and narrows background interactivity", async () => {
+  const source = await read("scripts/settings-ui.mjs");
+
+  assert.match(source, /SETTINGS_CATEGORIES = \["clock", "notation", "display", "color", "system"\]/);
+  assert.match(source, /categoryScrollPositions/);
+  assert.match(source, /rememberCurrentScroll/);
+  assert.match(source, /requestClose/);
+  assert.match(source, /aria-current/);
+  assert.match(source, /mainLayout\.inert = settingsOpen && narrow/);
+  assert.match(source, /focusWasInMain/);
+  assert.match(source, /event\.key === "Escape"/);
+  assert.match(source, /closeButton\.focus\(\)/);
+  assert.match(source, /triggerButton\.focus\(\)/);
+});
+
+test("advanced color tuning, diagnostics, and destructive reset have separate hierarchy", async () => {
+  const html = await read("index.html");
+  const displayPane = html.match(
+    /data-settings-pane="display"[\s\S]*?data-settings-pane="color"/,
+  )?.[0] ?? "";
+  const systemPane = html.match(
+    /data-settings-pane="system"[\s\S]*?<\/section>\s*<\/div>/,
+  )?.[0] ?? "";
+
+  assert.match(html, /<details id="settings-random-advanced"/);
+  assert.match(html, /<summary>詳細範囲<\/summary>/);
+  assert.match(displayPane, /location-status/);
+  assert.match(displayPane, /location-retry/);
+  assert.match(systemPane, /wake-lock-status/);
+  assert.match(systemPane, /wake-lock-retry/);
+  assert.match(systemPane, /settings-danger-zone/);
+  assert.match(systemPane, /settings-reset/);
+});
+
+test("disabled clock-mode controls expose contextual helper text", async () => {
+  const [html, source] = await Promise.all([
+    read("index.html"),
+    read("scripts/settings-ui.mjs"),
+  ]);
+
+  assert.match(html, /id="hour-format-help"/);
+  assert.match(html, /id="uppercase-help"/);
+  assert.match(source, /hourFormatHelp\.hidden = !hourFormatDisabled/);
+  assert.match(source, /uppercaseHelp\.hidden = !uppercaseDisabled/);
+});
+
+
+test("settings persistence reports success or failure instead of silently swallowing save errors", async () => {
+  const successStorage = {
+    setItem() {},
+  };
+  const failingStorage = {
+    setItem() {
+      throw new Error("blocked");
+    },
+  };
+
+  assert.equal(saveSettings(successStorage, {}), true);
+  assert.equal(saveSettings(failingStorage, {}), false);
+
+  const clockSource = await read("scripts/clock-app.mjs");
+  assert.match(clockSource, /自動保存に失敗しました/);
+  assert.match(clockSource, /ブラウザの保存設定を確認してください/);
+});
+
+
+test("iro color picker keeps native color input as a keyboard-accessible alternative", async () => {
+  const source = await read("scripts/color-controls.mjs");
+
+  assert.doesNotMatch(source, /input\.hidden\s*=\s*true/);
+  assert.match(
+    source,
+    /const picker = new colorPickerLibrary\.ColorPicker[\s\S]*?bindColorControl\(input, onChange\)[\s\S]*?picker\.on\("color:change"/,
+  );
 });

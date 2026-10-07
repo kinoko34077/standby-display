@@ -6,51 +6,45 @@ import {
 } from "./scripts/browser-features.mjs";
 
 function ensureCapabilityStatusUi() {
-  if (document.getElementById("wake-lock-status")) {
-    return;
+  const systemDiagnostics = document.getElementById("settings-system-diagnostics");
+  const displayDiagnostics = document.getElementById("settings-display-diagnostics");
+
+  if (systemDiagnostics && !document.getElementById("wake-lock-status")) {
+    const wakeStatus = document.createElement("p");
+    wakeStatus.id = "wake-lock-status";
+    wakeStatus.className = "settings-help settings-diagnostic-status";
+    wakeStatus.setAttribute("role", "status");
+    wakeStatus.setAttribute("aria-live", "polite");
+    wakeStatus.textContent = "画面スリープ防止: 状態を確認中…";
+    systemDiagnostics.appendChild(wakeStatus);
+
+    const wakeRetry = document.createElement("button");
+    wakeRetry.id = "wake-lock-retry";
+    wakeRetry.className = "action-button action-button-compact";
+    wakeRetry.type = "button";
+    wakeRetry.textContent = "再試行";
+    wakeRetry.hidden = true;
+    systemDiagnostics.appendChild(wakeRetry);
   }
 
-  const settingsGrid = document.querySelector(".settings-grid");
-  if (!settingsGrid) {
-    return;
+  if (displayDiagnostics && !document.getElementById("location-status")) {
+    const locationStatus = document.createElement("p");
+    locationStatus.id = "location-status";
+    locationStatus.className = "settings-help settings-diagnostic-status";
+    locationStatus.setAttribute("role", "status");
+    locationStatus.setAttribute("aria-live", "polite");
+    locationStatus.textContent =
+      "位置情報: 天気・月齢を有効にすると現在地を取得します。";
+    displayDiagnostics.appendChild(locationStatus);
+
+    const locationRetry = document.createElement("button");
+    locationRetry.id = "location-retry";
+    locationRetry.className = "action-button action-button-compact";
+    locationRetry.type = "button";
+    locationRetry.textContent = "再試行";
+    locationRetry.hidden = true;
+    displayDiagnostics.appendChild(locationRetry);
   }
-
-  const section = document.createElement("section");
-  section.className = "settings-section capability-status-section";
-
-  const heading = document.createElement("h2");
-  heading.textContent = "端末状態";
-
-  const wakeStatus = document.createElement("p");
-  wakeStatus.id = "wake-lock-status";
-  wakeStatus.className = "settings-help";
-  wakeStatus.setAttribute("role", "status");
-  wakeStatus.setAttribute("aria-live", "polite");
-  wakeStatus.textContent = "画面スリープ防止: 状態を確認中…";
-
-  const wakeRetry = document.createElement("button");
-  wakeRetry.id = "wake-lock-retry";
-  wakeRetry.className = "action-button";
-  wakeRetry.type = "button";
-  wakeRetry.textContent = "画面スリープ防止を再試行";
-  wakeRetry.hidden = true;
-
-  const locationStatus = document.createElement("p");
-  locationStatus.id = "location-status";
-  locationStatus.className = "settings-help";
-  locationStatus.setAttribute("role", "status");
-  locationStatus.setAttribute("aria-live", "polite");
-  locationStatus.textContent = "位置情報: 天気・月齢を有効にすると現在地を取得します。";
-
-  const locationRetry = document.createElement("button");
-  locationRetry.id = "location-retry";
-  locationRetry.className = "action-button";
-  locationRetry.type = "button";
-  locationRetry.textContent = "位置情報を再試行";
-  locationRetry.hidden = true;
-
-  section.append(heading, wakeStatus, wakeRetry, locationStatus, locationRetry);
-  settingsGrid.appendChild(section);
 }
 
 ensureCapabilityStatusUi();

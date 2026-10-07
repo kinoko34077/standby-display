@@ -20,7 +20,6 @@ export function cloneSettings(settings = DEFAULT_SETTINGS) {
 export function createDefaultUiState() {
   return {
     settingsOpen: false,
-    settingsView: "fullscreen",
     triggerVisible: true,
     statusMessage: "",
     locationStatus: "idle",
@@ -47,8 +46,10 @@ export function saveSettings(storage, settings) {
       SETTINGS_STORAGE_KEY,
       JSON.stringify(sanitizeSettings(settings)),
     );
+    return true;
   } catch (error) {
     console.warn("Settings save failed", error);
+    return false;
   }
 }
 
