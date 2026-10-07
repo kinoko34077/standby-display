@@ -4,6 +4,10 @@ import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 
 const workerSource = await readFile(new URL("../service-worker.js", import.meta.url), "utf8");
+const indexHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const styleCss = await readFile(new URL("../style.css", import.meta.url), "utf8");
+const REMOTE_DSEG_MODERN =
+  "https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2";
 
 function createWorker({ cached = [], fetchImpl } = {}) {
   const listeners = {};
@@ -200,4 +204,58 @@ test("activation evicts removed same-generation assets before network fallback c
   const response = await worker.dispatch("fetch", request("/removed-script.js"));
   assert.equal(response.status, 404);
   assert.equal(await response.text(), "not found");
+});
+
+
+test("runtime-critical same-origin shell assets are represented in the precache", () => {
+  const htmlRefs = [...indexHtml.matchAll(/(?:src|href)="([^"]+)"/g)]
+    .map((match) => match[1])
+    .filter((value) => !/^(?:https?:|#|\?)/.test(value))
+    .map((value) => value.replace(/^\.\//, ""));
+  const cssRefs = [...styleCss.matchAll(/url\(["']?([^"')]+)["']?\)/g)]
+    .map((match) => match[1])
+    .filter((value) => !/^https?:/.test(value))
+    .map((value) => value.replace(/^\.\//, ""));
+  const runtimeRefs = [...new Set([...htmlRefs, ...cssRefs])];
+
+  for (const asset of runtimeRefs) {
+    assert.equal(
+      workerSource.includes(`"./${asset}"`),
+      true,
+      `missing runtime asset from precache: ${asset}`,
+    );
+  }
+
+  assert.equal(runtimeRefs.includes("assets/settings-trigger.png"), true);
+});
+
+test("pinned external DSEG Modern font is allowlisted and cache-first", async () => {
+  let networkCalls = 0;
+  const worker = createWorker({
+    fetchImpl: async () => {
+      networkCalls += 1;
+      return new Response("remote-font", { status: 200 });
+    },
+  });
+
+  const onlineRequest = new Request(REMOTE_DSEG_MODERN);
+  const online = await worker.dispatch("fetch", onlineRequest);
+  assert.equal(await online.text(), "remote-font");
+  assert.equal(networkCalls, 1);
+  await worker.waitForBackground();
+
+  const offlineWorker = createWorker({
+    cached: [[REMOTE_DSEG_MODERN, new Response("cached-font", { status: 200 })]],
+    fetchImpl: async () => {
+      throw new Error("offline");
+    },
+  });
+  const offline = await offlineWorker.dispatch(
+    "fetch",
+    new Request(REMOTE_DSEG_MODERN),
+  );
+  assert.equal(await offline.text(), "cached-font");
+  assert.match(workerSource, /REMOTE_FONT_URLS/);
+  assert.match(workerSource, /DSEG7Modern-Regular\.woff2/);
+  assert.doesNotMatch(workerSource, /digital-7\.ttf/);
 });
