@@ -17,5 +17,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Temporary on #50 only: materialize the lockfile for the supported Wrangler
+      # upgrade in CI, then replace this step with normal npm ci after the artifact
+      # has been committed to the branch.
+      - run: npm install --package-lock-only --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-lock-audit-remediation
+          path: package-lock.json
+          if-no-files-found: error
       - run: npm ci
       - run: npm run verify
+      - run: npm run test:browser
+      - run: npx wrangler deploy --dry-run
