@@ -12,20 +12,54 @@ export const CLOCK_SYSTEM_OPTIONS = Object.freeze([
 ]);
 
 const CLOCK_SYSTEMS = new Map([
-  ["civil", { tickIntervalMs: 1000, usesHourFormat: true, supportsLetterCase: false, format: formatCivilDecimal }],
-  ["civil-base12", { tickIntervalMs: 1000, usesHourFormat: false, supportsLetterCase: true, format: (now, settings) => formatCivilRadix(now, settings, 12) }],
-  ["duodecimal", { tickIntervalMs: 1000, usesHourFormat: false, supportsLetterCase: true, format: formatDuodecimalDay }],
-  ["decimal-time", { tickIntervalMs: 250, usesHourFormat: false, supportsLetterCase: false, format: formatDecimalTime }],
-  ["civil-base16", { tickIntervalMs: 1000, usesHourFormat: false, supportsLetterCase: true, format: (now, settings) => formatCivilRadix(now, settings, 16) }],
-  ["hex-day", { tickIntervalMs: 500, usesHourFormat: false, supportsLetterCase: true, format: formatHexDay }],
+  ["civil", {
+    usesHourFormat: true,
+    supportsLetterCase: false,
+    format: formatCivilDecimal,
+    nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
+  }],
+  ["civil-base12", {
+    usesHourFormat: false,
+    supportsLetterCase: true,
+    format: (now, settings) => formatCivilRadix(now, settings, 12),
+    nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
+  }],
+  ["duodecimal", {
+    usesHourFormat: false,
+    supportsLetterCase: true,
+    format: formatDuodecimalDay,
+    nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
+  }],
+  ["decimal-time", {
+    usesHourFormat: false,
+    supportsLetterCase: false,
+    format: formatDecimalTime,
+    nextVisibleBoundaryMs: nextDecimalTimeBoundaryMs,
+  }],
+  ["civil-base16", {
+    usesHourFormat: false,
+    supportsLetterCase: true,
+    format: (now, settings) => formatCivilRadix(now, settings, 16),
+    nextVisibleBoundaryMs: nextCivilSecondBoundaryMs,
+  }],
+  ["hex-day", {
+    usesHourFormat: false,
+    supportsLetterCase: true,
+    format: formatHexDay,
+    nextVisibleBoundaryMs: nextHexDayBoundaryMs,
+  }],
 ]);
 
 export function formatClockTime(now, clockSettings) {
   return getSystem(clockSettings.timeSystem).format(now, clockSettings);
 }
 
-export function getClockTickIntervalMs(clockSettings) {
-  return getSystem(clockSettings.timeSystem).tickIntervalMs;
+export function getClockNextTickDelayMs(now, clockSettings) {
+  const system = getSystem(clockSettings.timeSystem);
+  return Math.min(
+    system.nextVisibleBoundaryMs(now, clockSettings),
+    nextCivilMinuteBoundaryMs(now),
+  );
 }
 
 export function clockSystemUsesHourFormat(systemId) {
@@ -126,8 +160,45 @@ function colonClock({ hourText, minuteText, secondText, now, showSeconds }) {
 }
 
 function partitionNominalDay(now, unitCount) {
-  const elapsedMs =
-    (((now.getHours() * 60 + now.getMinutes()) * 60 + now.getSeconds()) * 1000) +
-    now.getMilliseconds();
-  return Math.min(unitCount - 1, Math.floor((elapsedMs / NOMINAL_DAY_MS) * unitCount));
+  const elapsedMs = elapsedNominalDayMs(now);
+  return Math.min(
+    unitCount - 1,
+    Math.floor((elapsedMs * unitCount) / NOMINAL_DAY_MS),
+  );
+}
+
+function nextDecimalTimeBoundaryMs(now, settings) {
+  const partitionCount = settings.showSeconds ? 100000 : 1000;
+  return Math.min(
+    nextPartitionBoundaryMs(now, partitionCount),
+    nextCivilSecondBoundaryMs(now),
+  );
+}
+
+function nextHexDayBoundaryMs(now, settings) {
+  return nextPartitionBoundaryMs(now, settings.showSeconds ? 16 ** 4 : 16 ** 2);
+}
+
+function nextPartitionBoundaryMs(now, unitCount) {
+  const elapsedMs = elapsedNominalDayMs(now);
+  const currentUnit = Math.floor((elapsedMs * unitCount) / NOMINAL_DAY_MS);
+  const nextBoundaryElapsedMs = ((currentUnit + 1) * NOMINAL_DAY_MS) / unitCount;
+  return Math.max(1, Math.ceil(nextBoundaryElapsedMs - elapsedMs));
+}
+
+function nextCivilSecondBoundaryMs(now) {
+  const milliseconds = now.getMilliseconds();
+  return milliseconds === 0 ? 1000 : 1000 - milliseconds;
+}
+
+function nextCivilMinuteBoundaryMs(now) {
+  const elapsedInMinuteMs = now.getSeconds() * 1000 + now.getMilliseconds();
+  return elapsedInMinuteMs === 0 ? 60000 : 60000 - elapsedInMinuteMs;
+}
+
+function elapsedNominalDayMs(now) {
+  return (
+    ((now.getHours() * 60 + now.getMinutes()) * 60 + now.getSeconds()) * 1000 +
+    now.getMilliseconds()
+  );
 }

@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { WEATHER_CACHE_KEY } from "../scripts/constants.mjs";
-import { createWeatherService } from "../scripts/services.mjs";
+import {
+  createWeatherService,
+  estimateClockOffset,
+} from "../scripts/services.mjs";
 
 function createStorage(initialValue) {
   let value = initialValue ?? null;
@@ -112,4 +115,46 @@ test("stores the fetched weather location in the cache payload", async () => {
     data: "☀21℃",
   });
   assert.equal(storage.getItem(WEATHER_CACHE_KEY) !== null, true);
+});
+
+
+test("estimates synchronized clock offset with half-RTT compensation", () => {
+  assert.equal(
+    estimateClockOffset({
+      requestStartedAt: 1000,
+      responseReceivedAt: 1100,
+      serverTime: 1050,
+    }),
+    0,
+  );
+
+  assert.equal(
+    estimateClockOffset({
+      requestStartedAt: 1000,
+      responseReceivedAt: 1100,
+      serverTime: 1550,
+    }),
+    500,
+  );
+});
+
+test("rejects invalid clock-sync timing observations", () => {
+  assert.throws(
+    () =>
+      estimateClockOffset({
+        requestStartedAt: 1100,
+        responseReceivedAt: 1000,
+        serverTime: 1050,
+      }),
+    /precedes request/,
+  );
+  assert.throws(
+    () =>
+      estimateClockOffset({
+        requestStartedAt: 1000,
+        responseReceivedAt: Number.NaN,
+        serverTime: 1050,
+      }),
+    /finite/,
+  );
 });

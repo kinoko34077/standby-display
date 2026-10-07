@@ -7,7 +7,7 @@ import {
   clockSystemSupportsLetterCase,
   clockSystemUsesHourFormat,
   formatClockTime,
-  getClockTickIntervalMs,
+  getClockNextTickDelayMs,
 } from "../scripts/time-systems.mjs";
 import {
   buildSettingsSearch,
@@ -95,7 +95,13 @@ test("complete duodecimal day divides the day as 12 x 12 x 12", () => {
 test("French decimal time uses 10 hours, 100 minutes and 100 seconds", () => {
   const noon = formatClockTime(new Date(2026, 0, 1, 12, 0, 0, 0), clock("decimal-time"));
   assert.equal(`${noon.hourText}:${noon.minuteText}${noon.secondText}`, "5:00:00");
-  assert.equal(getClockTickIntervalMs(clock("decimal-time")), 250);
+  assert.equal(
+    getClockNextTickDelayMs(
+      new Date(2026, 0, 1, 0, 0, 0, 0),
+      clock("decimal-time"),
+    ),
+    864,
+  );
 });
 
 test("civil base-16 keeps civil units and renders lowercase a-f", () => {
@@ -131,7 +137,57 @@ test("complete hexadecimal day uses .hhhh day fraction", () => {
   assert.equal(compact.hourText + compact.minuteText, ".80");
   assert.equal(noon.separatorText, "");
   assert.equal(noon.showSeconds, false);
-  assert.equal(getClockTickIntervalMs(clock("hex-day")), 500);
+  assert.equal(
+    getClockNextTickDelayMs(
+      new Date(2026, 0, 1, 0, 0, 0, 0),
+      clock("hex-day"),
+    ),
+    1319,
+  );
+});
+
+test("clock scheduling follows visible time-system boundaries", () => {
+  const midnight = new Date(2026, 0, 1, 0, 0, 0, 0);
+  const midSecond = new Date(2026, 0, 1, 0, 0, 0, 250);
+
+  assert.equal(getClockNextTickDelayMs(midSecond, clock("civil")), 750);
+  assert.equal(getClockNextTickDelayMs(midSecond, clock("duodecimal")), 750);
+
+  // A French decimal second is exactly 864 ms.
+  assert.equal(getClockNextTickDelayMs(midnight, clock("decimal-time")), 864);
+  // Exact decimal boundaries must advance directly to the next unit, not emit a 1 ms retrigger.
+  assert.equal(
+    getClockNextTickDelayMs(
+      new Date(2026, 0, 1, 0, 0, 6, 48),
+      clock("decimal-time"),
+    ),
+    864,
+  );
+  // With decimal seconds hidden, the civil colon blink is the earliest visible event.
+  assert.equal(
+    getClockNextTickDelayMs(midnight, clock("decimal-time", false)),
+    1000,
+  );
+
+  // A full hexadecimal day digit step is 86400000 / 65536 = 1318.359375 ms.
+  assert.equal(getClockNextTickDelayMs(midnight, clock("hex-day")), 1319);
+  // Compact .hh changes every 337500 ms, but minute/date/info refresh must wake first.
+  assert.equal(
+    getClockNextTickDelayMs(midnight, clock("hex-day", false)),
+    60000,
+  );
+
+  const atDecimalBoundary = formatClockTime(
+    new Date(2026, 0, 1, 0, 0, 6, 48),
+    clock("decimal-time"),
+  );
+  assert.equal(atDecimalBoundary.secondText, ":07");
+
+  const beforeHexBoundary = new Date(2026, 0, 1, 0, 0, 1, 318);
+  assert.equal(
+    getClockNextTickDelayMs(beforeHexBoundary, clock("hex-day")),
+    1,
+  );
 });
 
 test("uppercase digit support is enabled only for radix modes", () => {
@@ -165,11 +221,12 @@ test("time system persists through settings and URL while old settings stay civi
 });
 
 test("UI and PWA wire the clock-system modules", async () => {
-  const [html, ui, renderer, worker] = await Promise.all([
+  const [html, ui, renderer, worker, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("scripts/settings-ui.mjs", root), "utf8"),
     readFile(new URL("scripts/render.mjs", root), "utf8"),
     readFile(new URL("service-worker.js", root), "utf8"),
+    readFile(new URL("scripts/clock-app.mjs", root), "utf8"),
   ]);
   assert.match(html, /id="setting-clock-system"/);
   assert.match(html, /id="setting-clock-uppercase"/);
@@ -181,4 +238,8 @@ test("UI and PWA wire the clock-system modules", async () => {
   assert.match(renderer, /timeView\.separatorText/);
   assert.match(worker, /scripts\/radix\.mjs/);
   assert.match(worker, /scripts\/time-systems\.mjs/);
+  assert.match(app, /scheduleNextClockTick/);
+  assert.match(app, /getClockNextTickDelayMs/);
+  assert.doesNotMatch(app, /setInterval\(handleClockTick/);
+  assert.match(app, /key === "showSeconds"/);
 });
