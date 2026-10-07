@@ -94,12 +94,9 @@
       </button>
     </div>
 
-    <div
+    <aside
       id="settings-overlay"
       class="settings-overlay"
-      data-view="fullscreen"
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="settings-title"
       hidden
     >
@@ -107,307 +104,343 @@
         <header class="settings-toolbar">
           <div class="settings-toolbar-title">
             <h1 id="settings-title">設定</h1>
+            <p class="settings-persistence-hint">即時反映・自動保存</p>
             <p id="settings-status" class="settings-status" role="status" aria-live="polite"></p>
           </div>
-          <div class="settings-toolbar-actions">
-            <button
-              id="settings-view-toggle"
-              class="toolbar-button"
-              type="button"
-              aria-label="部分表示へ切替"
-            >
-              部分
-            </button>
-            <button
-              id="settings-close"
-              class="toolbar-icon-button"
-              type="button"
-              aria-label="閉じる"
-              title="閉じる"
-            >
-              <span aria-hidden="true">✕</span>
-            </button>
-          </div>
+          <button
+            id="settings-close"
+            class="toolbar-icon-button"
+            type="button"
+            aria-label="設定を閉じる"
+            title="閉じる"
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
         </header>
 
-        <div class="settings-grid">
-          <section class="settings-section">
-            <h2>時計設定</h2>
+        <div class="settings-body">
+          <nav class="settings-category-nav" aria-label="設定カテゴリ">
+            <button id="settings-category-clock" class="settings-category-button" type="button" data-settings-category="clock" aria-current="page">時計</button>
+            <button id="settings-category-notation" class="settings-category-button" type="button" data-settings-category="notation">表記</button>
+            <button id="settings-category-display" class="settings-category-button" type="button" data-settings-category="display">表示</button>
+            <button id="settings-category-color" class="settings-category-button" type="button" data-settings-category="color">色</button>
+            <button id="settings-category-system" class="settings-category-button" type="button" data-settings-category="system">システム</button>
+          </nav>
 
-            <label class="control-row">
-              <span class="control-label">秒表示</span>
-              <span class="switch">
-                <input id="setting-clock-seconds" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
+          <div id="settings-content" class="settings-content">
+            <section class="settings-pane" data-settings-pane="clock" aria-labelledby="settings-category-clock">
+              <h2>時計</h2>
 
-            <label class="control-row">
-              <span class="control-label">点滅を倍速</span>
-              <span class="switch">
-                <input id="setting-clock-fast-blink" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
+              <label class="control-row control-row-select">
+                <span class="control-label">時計方式</span>
+                <select id="setting-clock-system" class="select-control" aria-label="時計方式"></select>
+              </label>
 
-            <div class="control-row">
-              <span class="control-label">時間形式</span>
-              <div class="segmented-control" role="radiogroup" aria-label="時間形式">
-                <label class="segment">
-                  <input type="radio" name="hour-format" value="24" />
-                  <span>24時間</span>
-                </label>
-                <label class="segment">
-                  <input type="radio" name="hour-format" value="12" />
-                  <span>12時間</span>
-                </label>
-              </div>
-            </div>
+              <p class="settings-help clock-system-help">
+                選択した方式に応じて時刻単位と点滅周期を切り替えます。
+              </p>
 
-            <label class="control-row control-row-select">
-              <span class="control-label">時計方式</span>
-              <select id="setting-clock-system" class="select-control" aria-label="時計方式"></select>
-            </label>
+              <label class="control-row">
+                <span class="control-label">秒表示</span>
+                <span class="switch">
+                  <input id="setting-clock-seconds" type="checkbox" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
 
-            <p class="settings-help clock-system-help">
-              12進/16進表示は24・60・60の単位を維持します。完全12進は12×12×12、十進時法は10×100×100、完全16進は1日を16⁴分割した .hhhh 表記です。完全16進では秒表示OFFで下位2桁を省略します。
-            </p>
+              <label class="control-row">
+                <span class="control-label">点滅を倍速</span>
+                <span class="switch">
+                  <input id="setting-clock-fast-blink" type="checkbox" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
 
-            <label class="control-row">
-              <span class="control-label">英字を大文字化</span>
-              <span class="switch">
-                <input id="setting-clock-uppercase" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
-
-            <label class="control-row control-row-select">
-              <span class="control-label">時計フォント</span>
-              <select id="setting-clock-font" class="select-control" aria-label="時計フォント"></select>
-            </label>
-
-            <label class="control-row">
-              <span class="control-label">時計文字サイズ</span>
-              <span class="slider-control">
-                <input id="setting-clock-size" type="range" aria-label="時計文字サイズ" />
-                <output id="setting-clock-size-value" class="slider-value">100%</output>
-              </span>
-            </label>
-
-            <label class="control-row">
-              <span class="control-label">時計字間</span>
-              <span class="slider-control">
-                <input id="setting-clock-letter-spacing" type="range" aria-label="時計字間" />
-                <output id="setting-clock-letter-spacing-value" class="slider-value">0.00em</output>
-              </span>
-            </label>
-          </section>
-
-          <section class="settings-section">
-            <h2>表記設定</h2>
-
-            <div class="control-row">
-              <span class="control-label">年表示</span>
-              <div class="segmented-control" role="radiogroup" aria-label="年表示">
-                <label class="segment">
-                  <input type="radio" name="year-system" value="wareki" />
-                  <span>和暦</span>
-                </label>
-                <label class="segment">
-                  <input type="radio" name="year-system" value="western" />
-                  <span>西暦</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="control-row">
-              <span class="control-label">字体</span>
-              <div class="segmented-control" role="radiogroup" aria-label="字体">
-                <label class="segment">
-                  <input type="radio" name="character-style" value="new" />
-                  <span>新字体</span>
-                </label>
-                <label class="segment">
-                  <input type="radio" name="character-style" value="old" />
-                  <span>旧字体</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="control-row">
-              <span class="control-label">書字方向</span>
-              <div class="segmented-control" role="radiogroup" aria-label="書字方向">
-                <label class="segment">
-                  <input type="radio" name="writing-mode" value="horizontal" />
-                  <span>横書き</span>
-                </label>
-                <label class="segment">
-                  <input type="radio" name="writing-mode" value="vertical" />
-                  <span>縦書き</span>
-                </label>
-              </div>
-            </div>
-
-            <label class="control-row control-row-select">
-              <span class="control-label">日本語フォント</span>
-              <select id="setting-text-font" class="select-control" aria-label="日本語フォント"></select>
-            </label>
-          </section>
-
-          <section class="settings-section">
-            <h2>表示情報</h2>
-
-            <label class="control-row">
-              <span class="control-label">天気</span>
-              <span class="switch">
-                <input id="setting-visibility-weather" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
-
-            <label class="control-row">
-              <span class="control-label">月齢</span>
-              <span class="switch">
-                <input id="setting-visibility-moon" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
-
-            <label class="control-row">
-              <span class="control-label">六曜</span>
-              <span class="switch">
-                <input id="setting-visibility-rokuyo" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
-          </section>
-
-          <section class="settings-section">
-            <h2>色設定</h2>
-
-            <label class="control-row color-row">
-              <span class="control-label">背景色</span>
-              <span class="color-control">
-                <div id="color-picker-background" class="color-picker" aria-label="背景色を選択"></div>
-                <input id="setting-color-background" class="native-color-input" type="color" aria-label="背景色" />
-                <output id="setting-color-background-value" class="color-value">#000000</output>
-              </span>
-            </label>
-
-            <label class="control-row color-row">
-              <span class="control-label">文字色</span>
-              <span class="color-control">
-                <div id="color-picker-text" class="color-picker" aria-label="文字色を選択"></div>
-                <input id="setting-color-text" class="native-color-input" type="color" aria-label="文字色" />
-                <output id="setting-color-text-value" class="color-value">#ffffff</output>
-              </span>
-            </label>
-
-            <label class="control-row color-row">
-              <span class="control-label">時計色</span>
-              <span class="color-control">
-                <div id="color-picker-clock" class="color-picker" aria-label="時計色を選択"></div>
-                <input id="setting-color-clock" class="native-color-input" type="color" aria-label="時計色" />
-                <output id="setting-color-clock-value" class="color-value">#70b8ff</output>
-              </span>
-            </label>
-          </section>
-
-          <section class="settings-section random-colors-section">
-            <h2>毎日のランダム色</h2>
-            <p class="settings-help">
-              有効にすると、日付ごとに時計色と文字色を安定したランダム値へ変更します。背景色は別スイッチで変更できます。
-            </p>
-
-            <label class="control-row">
-              <span class="control-label">毎日ランダム</span>
-              <span class="switch">
-                <input id="setting-random-colors" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
-
-            <label class="control-row">
-              <span class="control-label">背景色も変更</span>
-              <span class="switch">
-                <input id="setting-random-background" type="checkbox" />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-              </span>
-            </label>
-
-            <div class="random-color-targets">
-              <div class="random-color-target">
-                <h3>時計色</h3>
-                <div class="range-pair">
-                  <label>色相 <output id="setting-random-clock-hue-value"></output></label>
-                  <div class="range-row">
-                    <input id="setting-random-clock-hue-min" class="hue-range" type="range" min="0" max="360" step="1" aria-label="時計色の色相下限" />
-                    <input id="setting-random-clock-hue-max" class="hue-range" type="range" min="0" max="360" step="1" aria-label="時計色の色相上限" />
-                  </div>
+              <div class="control-row">
+                <span class="control-label">時間形式</span>
+                <div class="segmented-control" role="radiogroup" aria-label="時間形式" aria-describedby="hour-format-help">
+                  <label class="segment">
+                    <input type="radio" name="hour-format" value="24" />
+                    <span>24時間</span>
+                  </label>
+                  <label class="segment">
+                    <input type="radio" name="hour-format" value="12" />
+                    <span>12時間</span>
+                  </label>
                 </div>
-                <div class="range-pair">
-                  <label>明度 <output id="setting-random-clock-lightness-value"></output></label>
-                  <div class="range-row">
-                    <input id="setting-random-clock-lightness-min" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="時計色の明度下限" />
-                    <input id="setting-random-clock-lightness-max" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="時計色の明度上限" />
-                  </div>
+              </div>
+              <p id="hour-format-help" class="settings-help control-helper" hidden>
+                この時計方式では時間形式を切り替えません。
+              </p>
+
+              <label class="control-row">
+                <span class="control-label">英字を大文字化</span>
+                <span class="switch">
+                  <input id="setting-clock-uppercase" type="checkbox" aria-describedby="uppercase-help" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
+              <p id="uppercase-help" class="settings-help control-helper" hidden>
+                英字桁を使わない時計方式では設定を保持したまま無効になります。
+              </p>
+
+              <label class="control-row control-row-select">
+                <span class="control-label">時計フォント</span>
+                <select id="setting-clock-font" class="select-control" aria-label="時計フォント"></select>
+              </label>
+
+              <label class="control-row">
+                <span class="control-label">時計文字サイズ</span>
+                <span class="slider-control">
+                  <input id="setting-clock-size" type="range" aria-label="時計文字サイズ" />
+                  <output id="setting-clock-size-value" class="slider-value">100%</output>
+                </span>
+              </label>
+
+              <label class="control-row">
+                <span class="control-label">時計字間</span>
+                <span class="slider-control">
+                  <input id="setting-clock-letter-spacing" type="range" aria-label="時計字間" />
+                  <output id="setting-clock-letter-spacing-value" class="slider-value">0.00em</output>
+                </span>
+              </label>
+            </section>
+
+            <section class="settings-pane" data-settings-pane="notation" aria-labelledby="settings-category-notation" hidden>
+              <h2>表記</h2>
+
+              <div class="control-row">
+                <span class="control-label">年表示</span>
+                <div class="segmented-control" role="radiogroup" aria-label="年表示">
+                  <label class="segment">
+                    <input type="radio" name="year-system" value="wareki" />
+                    <span>和暦</span>
+                  </label>
+                  <label class="segment">
+                    <input type="radio" name="year-system" value="western" />
+                    <span>西暦</span>
+                  </label>
                 </div>
               </div>
 
-              <div class="random-color-target">
-                <h3>文字色</h3>
-                <div class="range-pair">
-                  <label>色相 <output id="setting-random-text-hue-value"></output></label>
-                  <div class="range-row">
-                    <input id="setting-random-text-hue-min" class="hue-range" type="range" min="0" max="360" step="1" aria-label="文字色の色相下限" />
-                    <input id="setting-random-text-hue-max" class="hue-range" type="range" min="0" max="360" step="1" aria-label="文字色の色相上限" />
-                  </div>
-                </div>
-                <div class="range-pair">
-                  <label>明度 <output id="setting-random-text-lightness-value"></output></label>
-                  <div class="range-row">
-                    <input id="setting-random-text-lightness-min" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="文字色の明度下限" />
-                    <input id="setting-random-text-lightness-max" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="文字色の明度上限" />
-                  </div>
+              <div class="control-row">
+                <span class="control-label">字体</span>
+                <div class="segmented-control" role="radiogroup" aria-label="字体">
+                  <label class="segment">
+                    <input type="radio" name="character-style" value="new" />
+                    <span>新字体</span>
+                  </label>
+                  <label class="segment">
+                    <input type="radio" name="character-style" value="old" />
+                    <span>旧字体</span>
+                  </label>
                 </div>
               </div>
 
-              <div class="random-color-target">
-                <h3>背景色</h3>
-                <div class="range-pair">
-                  <label>色相 <output id="setting-random-background-hue-value"></output></label>
-                  <div class="range-row">
-                    <input id="setting-random-background-hue-min" class="hue-range" type="range" min="0" max="360" step="1" aria-label="背景色の色相下限" />
-                    <input id="setting-random-background-hue-max" class="hue-range" type="range" min="0" max="360" step="1" aria-label="背景色の色相上限" />
-                  </div>
-                </div>
-                <div class="range-pair">
-                  <label>明度 <output id="setting-random-background-lightness-value"></output></label>
-                  <div class="range-row">
-                    <input id="setting-random-background-lightness-min" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="背景色の明度下限" />
-                    <input id="setting-random-background-lightness-max" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="背景色の明度上限" />
-                  </div>
+              <div class="control-row">
+                <span class="control-label">書字方向</span>
+                <div class="segmented-control" role="radiogroup" aria-label="書字方向">
+                  <label class="segment">
+                    <input type="radio" name="writing-mode" value="horizontal" />
+                    <span>横書き</span>
+                  </label>
+                  <label class="segment">
+                    <input type="radio" name="writing-mode" value="vertical" />
+                    <span>縦書き</span>
+                  </label>
                 </div>
               </div>
-            </div>
-          </section>
 
-          <section class="settings-section">
-            <h2>その他</h2>
+              <label class="control-row control-row-select">
+                <span class="control-label">日本語フォント</span>
+                <select id="setting-text-font" class="select-control" aria-label="日本語フォント"></select>
+              </label>
+            </section>
 
-            <div class="action-column">
-              <button id="settings-copy-url" class="action-button" type="button">
-                URLコピー
-              </button>
-              <button id="settings-reset" class="action-button action-button-danger" type="button">
-                初期化
-              </button>
-              <a id="settings-legacy" class="action-button" href="?mode=legacy">軽量版を開く</a>
-            </div>
-          </section>
+            <section class="settings-pane" data-settings-pane="display" aria-labelledby="settings-category-display" hidden>
+              <h2>表示</h2>
+
+              <label class="control-row">
+                <span class="control-label">天気</span>
+                <span class="switch">
+                  <input id="setting-visibility-weather" type="checkbox" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
+
+              <label class="control-row">
+                <span class="control-label">月齢</span>
+                <span class="switch">
+                  <input id="setting-visibility-moon" type="checkbox" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
+
+              <label class="control-row">
+                <span class="control-label">六曜</span>
+                <span class="switch">
+                  <input id="setting-visibility-rokuyo" type="checkbox" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
+
+              <div id="settings-display-diagnostics" class="settings-subsection settings-diagnostic-block">
+                <h3>位置情報</h3>
+                <p id="location-status" class="settings-help settings-diagnostic-status" role="status" aria-live="polite">
+                  位置情報: 天気・月齢を有効にすると現在地を取得します。
+                </p>
+                <button id="location-retry" class="action-button action-button-compact" type="button" hidden>
+                  再試行
+                </button>
+              </div>
+            </section>
+
+            <section class="settings-pane" data-settings-pane="color" aria-labelledby="settings-category-color" hidden>
+              <h2>色</h2>
+
+              <label class="control-row color-row">
+                <span class="control-label">背景色</span>
+                <span class="color-control">
+                  <div id="color-picker-background" class="color-picker" aria-label="背景色を選択"></div>
+                  <input id="setting-color-background" class="native-color-input" type="color" aria-label="背景色" />
+                  <output id="setting-color-background-value" class="color-value">#000000</output>
+                </span>
+              </label>
+
+              <label class="control-row color-row">
+                <span class="control-label">文字色</span>
+                <span class="color-control">
+                  <div id="color-picker-text" class="color-picker" aria-label="文字色を選択"></div>
+                  <input id="setting-color-text" class="native-color-input" type="color" aria-label="文字色" />
+                  <output id="setting-color-text-value" class="color-value">#ffffff</output>
+                </span>
+              </label>
+
+              <label class="control-row color-row">
+                <span class="control-label">時計色</span>
+                <span class="color-control">
+                  <div id="color-picker-clock" class="color-picker" aria-label="時計色を選択"></div>
+                  <input id="setting-color-clock" class="native-color-input" type="color" aria-label="時計色" />
+                  <output id="setting-color-clock-value" class="color-value">#70b8ff</output>
+                </span>
+              </label>
+
+              <div class="settings-subsection">
+                <h3>毎日のランダム色</h3>
+                <p class="settings-help">
+                  日付ごとに同じランダム色を使います。背景色は別スイッチで指定できます。
+                </p>
+
+                <label class="control-row">
+                  <span class="control-label">毎日ランダム</span>
+                  <span class="switch">
+                    <input id="setting-random-colors" type="checkbox" />
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </span>
+                </label>
+
+                <label class="control-row">
+                  <span class="control-label">背景色も変更</span>
+                  <span class="switch">
+                    <input id="setting-random-background" type="checkbox" />
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </span>
+                </label>
+
+                <details id="settings-random-advanced" class="settings-disclosure">
+                  <summary>詳細範囲</summary>
+                  <div class="random-color-targets">
+                    <div class="random-color-target">
+                      <h4>時計色</h4>
+                      <div class="range-pair">
+                        <label>色相 <output id="setting-random-clock-hue-value"></output></label>
+                        <div class="range-row">
+                          <input id="setting-random-clock-hue-min" class="hue-range" type="range" min="0" max="360" step="1" aria-label="時計色の色相下限" />
+                          <input id="setting-random-clock-hue-max" class="hue-range" type="range" min="0" max="360" step="1" aria-label="時計色の色相上限" />
+                        </div>
+                      </div>
+                      <div class="range-pair">
+                        <label>明度 <output id="setting-random-clock-lightness-value"></output></label>
+                        <div class="range-row">
+                          <input id="setting-random-clock-lightness-min" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="時計色の明度下限" />
+                          <input id="setting-random-clock-lightness-max" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="時計色の明度上限" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="random-color-target">
+                      <h4>文字色</h4>
+                      <div class="range-pair">
+                        <label>色相 <output id="setting-random-text-hue-value"></output></label>
+                        <div class="range-row">
+                          <input id="setting-random-text-hue-min" class="hue-range" type="range" min="0" max="360" step="1" aria-label="文字色の色相下限" />
+                          <input id="setting-random-text-hue-max" class="hue-range" type="range" min="0" max="360" step="1" aria-label="文字色の色相上限" />
+                        </div>
+                      </div>
+                      <div class="range-pair">
+                        <label>明度 <output id="setting-random-text-lightness-value"></output></label>
+                        <div class="range-row">
+                          <input id="setting-random-text-lightness-min" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="文字色の明度下限" />
+                          <input id="setting-random-text-lightness-max" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="文字色の明度上限" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="random-color-target">
+                      <h4>背景色</h4>
+                      <div class="range-pair">
+                        <label>色相 <output id="setting-random-background-hue-value"></output></label>
+                        <div class="range-row">
+                          <input id="setting-random-background-hue-min" class="hue-range" type="range" min="0" max="360" step="1" aria-label="背景色の色相下限" />
+                          <input id="setting-random-background-hue-max" class="hue-range" type="range" min="0" max="360" step="1" aria-label="背景色の色相上限" />
+                        </div>
+                      </div>
+                      <div class="range-pair">
+                        <label>明度 <output id="setting-random-background-lightness-value"></output></label>
+                        <div class="range-row">
+                          <input id="setting-random-background-lightness-min" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="背景色の明度下限" />
+                          <input id="setting-random-background-lightness-max" class="lightness-range" type="range" min="0" max="100" step="1" aria-label="背景色の明度上限" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <section class="settings-pane" data-settings-pane="system" aria-labelledby="settings-category-system" hidden>
+              <h2>システム</h2>
+
+              <div class="settings-subsection">
+                <h3>共有</h3>
+                <button id="settings-copy-url" class="action-button" type="button">URLコピー</button>
+              </div>
+
+              <div id="settings-system-diagnostics" class="settings-subsection settings-diagnostic-block">
+                <h3>診断</h3>
+                <p id="wake-lock-status" class="settings-help settings-diagnostic-status" role="status" aria-live="polite">
+                  画面スリープ防止: 状態を確認中…
+                </p>
+                <button id="wake-lock-retry" class="action-button action-button-compact" type="button" hidden>
+                  再試行
+                </button>
+              </div>
+
+              <div class="settings-subsection">
+                <h3>互換</h3>
+                <a id="settings-legacy" class="action-button" href="?mode=legacy">軽量版を開く</a>
+              </div>
+
+              <div class="settings-subsection settings-danger-zone">
+                <h3>Danger Zone</h3>
+                <p class="settings-help">設定をすべて既定値へ戻します。</p>
+                <button id="settings-reset" class="action-button action-button-danger" type="button">初期化</button>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
-    </div>
+    </aside>
 
     <noscript>時計を動かすにはJavaScriptを有効にしてください。</noscript>
     <script src="assets/vendor/iro.min.js"></script>

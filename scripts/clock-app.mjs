@@ -60,7 +60,6 @@ export function createClockApp({
   const settingsUi = createSettingsUi(document, {
     onOpen: openSettings,
     onClose: closeSettings,
-    onToggleView: toggleSettingsView,
     onSettingChange: handleSettingChange,
     onCopyUrl: copyCurrentSettingsUrl,
     onReset: resetSettings,
@@ -446,23 +445,15 @@ export function createClockApp({
   function openSettings() {
     clearTriggerHideTimer();
     state.uiState.settingsOpen = true;
-    state.uiState.settingsView = "fullscreen";
     state.uiState.triggerVisible = false;
     renderSettingsUi();
   }
 
   function closeSettings() {
     state.uiState.settingsOpen = false;
-    state.uiState.settingsView = "fullscreen";
     state.uiState.triggerVisible = true;
     renderSettingsUi();
     scheduleTriggerHide();
-  }
-
-  function toggleSettingsView() {
-    state.uiState.settingsView =
-      state.uiState.settingsView === "fullscreen" ? "compact" : "fullscreen";
-    renderSettingsUi();
   }
 
   async function copyCurrentSettingsUrl() {

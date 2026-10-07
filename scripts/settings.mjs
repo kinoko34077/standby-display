@@ -20,7 +20,6 @@ export function cloneSettings(settings = DEFAULT_SETTINGS) {
 export function createDefaultUiState() {
   return {
     settingsOpen: false,
-    settingsView: "fullscreen",
     triggerVisible: true,
     statusMessage: "",
     locationStatus: "idle",
