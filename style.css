@@ -179,12 +179,19 @@ body {
 
 .seconds {
   position: absolute;
-  left: calc(100% + clamp(0.6rem, 1.4vw, 1.8rem));
-  right: auto;
-  bottom: 0.06em;
+  right: 2vw;
+  bottom: 5%;
   font-size: var(--seconds-size);
   letter-spacing: var(--app-clock-secondary-letter-spacing);
   opacity: 0.4;
+}
+
+body[data-clock-font="dseg7-classic-mini-bold"] .seconds {
+  left: auto;
+  right: 0;
+  top: 100%;
+  bottom: auto;
+  margin-top: clamp(0.2rem, 0.45vw, 0.6rem);
 }
 
 .seconds[hidden],

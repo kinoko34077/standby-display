@@ -95,6 +95,7 @@ export function createRenderer(documentObject) {
       TEXT_FONT_MAP.get(settings.typography.font) || TEXT_FONT_MAP.get("noto-sans"),
     );
     rootElement.dataset.writingMode = settings.typography.writingMode;
+    rootElement.dataset.clockFont = settings.clock.font;
   }
 
   function renderTime(timeView) {
