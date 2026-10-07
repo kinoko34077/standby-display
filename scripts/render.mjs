@@ -18,6 +18,7 @@ export function resolveClockTypography(settings) {
       option.normalization.trackingEm + settings.clock.letterSpacingEm,
       3,
     ),
+    secondsLetterSpacingEm: roundMetric(settings.clock.letterSpacingEm, 3),
   };
 }
 
@@ -29,6 +30,7 @@ function roundMetric(value, decimals) {
 export function createRenderer(documentObject) {
   const rootElement = documentObject.body;
   const elements = {
+    prefix: documentObject.getElementById("clock-prefix"),
     hour: documentObject.getElementById("hour"),
     minute: documentObject.getElementById("minute"),
     seconds: documentObject.getElementById("seconds"),
@@ -79,6 +81,10 @@ export function createRenderer(documentObject) {
       `${clockTypography.letterSpacingEm}em`,
     );
     rootElement.style.setProperty(
+      "--app-seconds-letter-spacing",
+      `${clockTypography.secondsLetterSpacingEm}em`,
+    );
+    rootElement.style.setProperty(
       "--app-text-font",
       TEXT_FONT_MAP.get(settings.typography.font) || TEXT_FONT_MAP.get("noto-sans"),
     );
@@ -86,10 +92,18 @@ export function createRenderer(documentObject) {
   }
 
   function renderTime(timeView) {
+    setText(elements.prefix, timeView.prefixText ?? "");
     setText(elements.hour, timeView.hourText);
     setText(elements.minute, timeView.minuteText);
     setText(elements.seconds, timeView.secondText);
     setText(elements.colon, timeView.separatorText);
+
+    if (elements.prefix) {
+      elements.prefix.hidden = !timeView.showPrefix;
+      elements.prefix.style.visibility = timeView.prefixVisible
+        ? "visible"
+        : "hidden";
+    }
 
     if (elements.seconds) {
       elements.seconds.hidden = !timeView.showSeconds;

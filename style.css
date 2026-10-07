@@ -53,6 +53,7 @@
   --app-clock-font-weight: 400;
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
+  --app-seconds-letter-spacing: 0em;
   --app-text-font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --color-weekday: #8b8b8b;
   --color-weekday-sunday: #ff7878;
@@ -164,18 +165,30 @@ body {
   font-size: var(--clock-size);
   color: var(--app-clock);
   line-height: 1;
-  letter-spacing: var(--app-clock-letter-spacing);
   text-align: center;
   white-space: nowrap;
   transform: scale(var(--app-clock-size-scale));
   transform-origin: center center;
 }
 
+.time-line {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  letter-spacing: var(--app-clock-letter-spacing);
+}
+
+.clock-prefix {
+  display: inline-block;
+}
+
 .seconds {
-  position: absolute;
-  right: 2vw;
-  bottom: 5%;
+  position: static;
+  align-self: flex-end;
+  margin-top: 0.18em;
   font-size: var(--seconds-size);
+  line-height: 1;
+  letter-spacing: var(--app-seconds-letter-spacing);
   opacity: 0.4;
 }
 
@@ -774,8 +787,7 @@ body[data-settings-open="true"] .settings-trigger-layer {
   }
 
   .seconds {
-    right: 0;
-    bottom: -8vh;
+    margin-top: 0.22em;
   }
 
   .settings-shell {
