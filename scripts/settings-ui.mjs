@@ -16,18 +16,33 @@ import {
   renderRandomColorControls,
 } from "./color-controls.mjs";
 
+export const SETTINGS_CATEGORIES = ["clock", "notation", "display", "color", "system"];
+const SETTINGS_NARROW_QUERY = "(max-width: 800px)";
+
 export function createSettingsUi(documentObject, callbacks, colorPickerLibrary = globalThis.iro) {
   const overlay = documentObject.getElementById("settings-overlay");
   const triggerLayer = documentObject.querySelector(".settings-trigger-layer");
   const triggerButton = documentObject.getElementById("settings-open");
   const closeButton = documentObject.getElementById("settings-close");
-  const viewToggleButton = documentObject.getElementById("settings-view-toggle");
   const copyUrlButton = documentObject.getElementById("settings-copy-url");
   const resetButton = documentObject.getElementById("settings-reset");
   const statusElement = documentObject.getElementById("settings-status");
   const locationStatusElement = documentObject.getElementById("location-status");
   const locationRetryButton = documentObject.getElementById("location-retry");
+  const hourFormatHelp = documentObject.getElementById("hour-format-help");
+  const uppercaseHelp = documentObject.getElementById("uppercase-help");
+  const settingsContent = documentObject.getElementById("settings-content");
+  const categoryButtons = Array.from(
+    documentObject.querySelectorAll("[data-settings-category]"),
+  );
+  const categoryPanes = Array.from(
+    documentObject.querySelectorAll("[data-settings-pane]"),
+  );
+  const mainLayout = documentObject.querySelector(".main-layout");
   const rootElement = documentObject.body;
+  const narrowMedia = documentObject.defaultView?.matchMedia?.(
+    SETTINGS_NARROW_QUERY,
+  );
 
   const controls = {
     showSeconds: documentObject.getElementById("setting-clock-seconds"),
@@ -81,7 +96,6 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
 
   triggerButton.addEventListener("click", callbacks.onOpen);
   closeButton.addEventListener("click", callbacks.onClose);
-  viewToggleButton.addEventListener("click", callbacks.onToggleView);
   copyUrlButton.addEventListener("click", callbacks.onCopyUrl);
   resetButton.addEventListener("click", () => {
     if (confirmReset()) {
@@ -90,16 +104,66 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   });
   locationRetryButton?.addEventListener("click", callbacks.onRetryLocation);
 
-  overlay.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      callbacks.onClose();
+  let settingsOpen = false;
+  let activeCategory = SETTINGS_CATEGORIES[0];
+  const categoryScrollPositions = new Map();
+
+  function syncCategoryPresentation({ restoreScroll = false } = {}) {
+    for (const button of categoryButtons) {
+      const isActive = button.dataset.settingsCategory === activeCategory;
+      if (isActive) {
+        button.setAttribute("aria-current", "page");
+      } else {
+        button.removeAttribute("aria-current");
+      }
+    }
+
+    for (const pane of categoryPanes) {
+      pane.hidden = pane.dataset.settingsPane !== activeCategory;
+    }
+
+    if (restoreScroll && settingsContent) {
+      settingsContent.scrollTop =
+        categoryScrollPositions.get(activeCategory) ?? 0;
+    }
+  }
+
+  function selectCategory(nextCategory) {
+    if (!SETTINGS_CATEGORIES.includes(nextCategory)) {
       return;
     }
 
-    if (event.key === "Tab") {
-      trapFocus(event, overlay);
+    if (settingsContent) {
+      categoryScrollPositions.set(activeCategory, settingsContent.scrollTop);
+    }
+
+    activeCategory = nextCategory;
+    syncCategoryPresentation({ restoreScroll: true });
+  }
+
+  for (const button of categoryButtons) {
+    button.addEventListener("click", () => {
+      selectCategory(button.dataset.settingsCategory);
+    });
+  }
+
+  documentObject.addEventListener("keydown", (event) => {
+    if (settingsOpen && event.key === "Escape") {
+      callbacks.onClose();
     }
   });
+
+  function syncBackgroundInteractivity() {
+    const narrow = Boolean(narrowMedia?.matches);
+    rootElement.dataset.settingsLayout = narrow ? "narrow" : "wide";
+
+    if (mainLayout) {
+      mainLayout.inert = settingsOpen && narrow;
+    }
+  }
+
+  narrowMedia?.addEventListener?.("change", syncBackgroundInteractivity);
+  syncCategoryPresentation();
 
   controls.showSeconds.addEventListener("change", (event) => {
     callbacks.onSettingChange({
@@ -242,18 +306,13 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   let wasOpen = false;
 
   function render(settings, uiState) {
-    overlay.hidden = !uiState.settingsOpen;
-    overlay.dataset.view = uiState.settingsView;
-    const shouldShowTrigger = !uiState.settingsOpen && uiState.triggerVisible;
+    settingsOpen = uiState.settingsOpen;
+    overlay.hidden = !settingsOpen;
+    const shouldShowTrigger = !settingsOpen && uiState.triggerVisible;
     triggerLayer.hidden = !shouldShowTrigger;
     triggerLayer.setAttribute("aria-hidden", shouldShowTrigger ? "false" : "true");
-    rootElement.dataset.settingsOpen = uiState.settingsOpen ? "true" : "false";
-    viewToggleButton.textContent =
-      uiState.settingsView === "fullscreen" ? "部分" : "全画面";
-    viewToggleButton.setAttribute(
-      "aria-label",
-      uiState.settingsView === "fullscreen" ? "部分表示へ切替" : "全画面表示へ切替",
-    );
+    rootElement.dataset.settingsOpen = settingsOpen ? "true" : "false";
+    syncBackgroundInteractivity();
     statusElement.textContent = uiState.statusMessage;
 
     if (locationStatusElement) {
@@ -275,6 +334,9 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     controls.uppercaseDigits
       .closest(".control-row")
       ?.classList.toggle("is-disabled", uppercaseDisabled);
+    if (uppercaseHelp) {
+      uppercaseHelp.hidden = !uppercaseDisabled;
+    }
     controls.clockFont.value = settings.clock.font;
     controls.clockSize.value = String(settings.clock.sizePercent);
     controls.clockSizeValue.textContent = `${settings.clock.sizePercent}%`;
@@ -297,8 +359,13 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     renderRandomColorControls(randomControls, settings.randomColors, documentObject);
 
     setRadioValue(documentObject, "hour-format", settings.clock.hourFormat);
+    const hourFormatDisabled =
+      !clockSystemUsesHourFormat(settings.clock.timeSystem);
     for (const input of documentObject.querySelectorAll('input[name="hour-format"]')) {
-      input.disabled = !clockSystemUsesHourFormat(settings.clock.timeSystem);
+      input.disabled = hourFormatDisabled;
+    }
+    if (hourFormatHelp) {
+      hourFormatHelp.hidden = !hourFormatDisabled;
     }
     setRadioValue(documentObject, "year-system", settings.calendar.yearSystem);
     setRadioValue(
@@ -312,13 +379,14 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
       settings.typography.writingMode,
     );
 
-    if (uiState.settingsOpen && !wasOpen) {
+    if (settingsOpen && !wasOpen) {
+      syncCategoryPresentation({ restoreScroll: true });
       closeButton.focus();
-    } else if (!uiState.settingsOpen && wasOpen) {
+    } else if (!settingsOpen && wasOpen) {
       triggerButton.focus();
     }
 
-    wasOpen = uiState.settingsOpen;
+    wasOpen = settingsOpen;
   }
 
   return { render };
@@ -359,29 +427,5 @@ function setRadioValue(documentObject, name, value) {
   );
   if (targetInput) {
     targetInput.checked = true;
-  }
-}
-
-function trapFocus(event, rootElement) {
-  const focusableElements = Array.from(
-    rootElement.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    ),
-  ).filter((element) => !element.hidden);
-
-  if (focusableElements.length === 0) {
-    return;
-  }
-
-  const firstElement = focusableElements[0];
-  const lastElement = focusableElements[focusableElements.length - 1];
-  const activeElement = rootElement.ownerDocument.activeElement;
-
-  if (event.shiftKey && activeElement === firstElement) {
-    event.preventDefault();
-    lastElement.focus();
-  } else if (!event.shiftKey && activeElement === lastElement) {
-    event.preventDefault();
-    firstElement.focus();
   }
 }
