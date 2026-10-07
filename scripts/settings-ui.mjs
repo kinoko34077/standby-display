@@ -6,6 +6,7 @@ import {
 } from "./constants.mjs";
 import {
   CLOCK_SYSTEM_OPTIONS,
+  clockSystemSupportsLetterCase,
   clockSystemUsesHourFormat,
 } from "./time-systems.mjs";
 import {
@@ -31,6 +32,7 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   const controls = {
     showSeconds: documentObject.getElementById("setting-clock-seconds"),
     timeSystem: documentObject.getElementById("setting-clock-system"),
+    uppercaseDigits: documentObject.getElementById("setting-clock-uppercase"),
     clockFont: documentObject.getElementById("setting-clock-font"),
     clockSize: documentObject.getElementById("setting-clock-size"),
     clockSizeValue: documentObject.getElementById("setting-clock-size-value"),
@@ -111,6 +113,14 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
       group: "clock",
       key: "timeSystem",
       value: event.target.value,
+    });
+  });
+
+  controls.uppercaseDigits.addEventListener("change", (event) => {
+    callbacks.onSettingChange({
+      group: "clock",
+      key: "uppercaseDigits",
+      value: event.target.checked,
     });
   });
 
@@ -248,6 +258,9 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
 
     controls.showSeconds.checked = settings.clock.showSeconds;
     controls.timeSystem.value = settings.clock.timeSystem;
+    controls.uppercaseDigits.checked = settings.clock.uppercaseDigits;
+    controls.uppercaseDigits.disabled =
+      !clockSystemSupportsLetterCase(settings.clock.timeSystem);
     controls.clockFont.value = settings.clock.font;
     controls.clockSize.value = String(settings.clock.sizePercent);
     controls.clockSizeValue.textContent = `${settings.clock.sizePercent}%`;

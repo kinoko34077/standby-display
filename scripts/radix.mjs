@@ -1,6 +1,10 @@
 const DIGITS = "0123456789abcdef";
 
-export function formatRadixInteger(value, radix, { minWidth = 0 } = {}) {
+export function formatRadixInteger(
+  value,
+  radix,
+  { minWidth = 0, uppercase = false } = {},
+) {
   if (!Number.isInteger(radix) || radix < 2 || radix > 16) {
     throw new RangeError("radix must be an integer from 2 through 16");
   }
@@ -17,5 +21,6 @@ export function formatRadixInteger(value, radix, { minWidth = 0 } = {}) {
     result = DIGITS[remaining % radix] + result;
     remaining = Math.floor(remaining / radix);
   }
-  return result.padStart(minWidth, "0");
+  const padded = result.padStart(minWidth, "0");
+  return uppercase ? padded.toUpperCase() : padded;
 }

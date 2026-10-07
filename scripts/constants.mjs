@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     hourFormat: "24",
     font: "d7",
     timeSystem: "civil",
+    uppercaseDigits: false,
     sizePercent: 100,
     letterSpacingEm: 0,
   },
