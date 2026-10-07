@@ -160,6 +160,7 @@ body {
 
 .clock-block {
   position: relative;
+  width: max-content;
   font-family: var(--app-clock-font);
   font-weight: var(--app-clock-font-weight);
   font-size: var(--clock-size);
@@ -170,6 +171,12 @@ body {
   white-space: nowrap;
   transform: scale(var(--app-clock-size-scale));
   transform-origin: center center;
+}
+
+.time-line {
+  width: max-content;
+  margin-inline: auto;
+  text-align: center;
 }
 
 .clock-prefix {
@@ -184,19 +191,15 @@ body {
 
 .seconds {
   position: absolute;
-  right: 2vw;
-  bottom: 5%;
-  font-size: var(--seconds-size);
-  letter-spacing: var(--app-clock-secondary-letter-spacing);
-  opacity: 0.4;
-}
-
-body[data-clock-font="dseg7-classic-mini-bold"] .seconds {
   left: auto;
   right: 0;
   top: 100%;
   bottom: auto;
   margin-top: clamp(0.2rem, 0.45vw, 0.6rem);
+  font-size: var(--seconds-size);
+  letter-spacing: var(--app-clock-secondary-letter-spacing);
+  text-align: right;
+  opacity: 0.4;
 }
 
 .seconds[hidden],
@@ -791,11 +794,6 @@ body[data-settings-open="true"] .settings-trigger-layer {
 
   .clock-block {
     margin: 0 auto;
-  }
-
-  .seconds {
-    right: 0;
-    bottom: -8vh;
   }
 
   .settings-shell {

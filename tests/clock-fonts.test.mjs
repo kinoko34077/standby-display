@@ -176,37 +176,31 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-secondary-letter-spacing/);
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?display:\s*none/);
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?min-width:\s*0/);
-  assert.match(
-    css,
-    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?top:\s*100%/,
-  );
-  assert.match(
-    css,
-    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?right:\s*0/,
-  );
-  assert.match(
-    css,
-    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?bottom:\s*auto/,
-  );
+  assert.match(css, /\.clock-block\s*\{[\s\S]*?width:\s*max-content/);
+  assert.match(css, /\.time-line\s*\{[\s\S]*?width:\s*max-content/);
+  assert.match(css, /\.time-line\s*\{[\s\S]*?text-align:\s*center/);
+  assert.match(css, /\.seconds\s*\{[\s\S]*?right:\s*0/);
+  assert.match(css, /\.seconds\s*\{[\s\S]*?top:\s*100%/);
+  assert.match(css, /\.seconds\s*\{[\s\S]*?text-align:\s*right/);
   assert.match(css, /--app-clock-secondary-letter-spacing/);
   assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);
 });
 
 
-test("DSEG secondary seconds use a below-right region without shifting the primary clock", async () => {
-  const [renderer, css] = await Promise.all([
-    readFile(new URL("scripts/render.mjs", root), "utf8"),
-    readFile(new URL("style.css", root), "utf8"),
-  ]);
+test("secondary seconds align to the centered primary clock without affecting its width", async () => {
+  const css = await readFile(new URL("style.css", root), "utf8");
 
-  assert.match(renderer, /dataset\.clockFont = settings\.clock\.font/);
   assert.match(
     css,
-    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?left:\s*auto;[\s\S]*?right:\s*0;[\s\S]*?top:\s*100%;[\s\S]*?bottom:\s*auto;/,
+    /\.clock-block\s*\{[\s\S]*?width:\s*max-content/,
+  );
+  assert.match(
+    css,
+    /\.seconds\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*0;[\s\S]*?top:\s*100%;[\s\S]*?bottom:\s*auto;/,
   );
   assert.doesNotMatch(
     css,
-    /body\[data-clock-font="dseg7-classic-mini-bold"\] \.seconds\s*\{[\s\S]*?left:\s*calc\(100%/,
+    /@media \(max-aspect-ratio: 1 \/ 1\)[\s\S]*?\.seconds\s*\{[\s\S]*?bottom:\s*-8vh/,
   );
 });
 
