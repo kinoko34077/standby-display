@@ -370,7 +370,7 @@ export function createClockApp({
   }
 
   function persistSettings() {
-    saveSettings(storage, state.settings);
+    return saveSettings(storage, state.settings);
   }
 
   function setStatusMessage(message) {
@@ -392,9 +392,15 @@ export function createClockApp({
     const nextSettings = cloneSettings(state.settings);
     mutator(nextSettings);
     state.settings = sanitizeSettings(nextSettings);
-    persistSettings();
+    const settingsSaved = persistSettings();
     renderClockView();
     renderSettingsUi();
+
+    if (!settingsSaved) {
+      setStatusMessage(
+        "設定は反映されましたが、自動保存に失敗しました。ブラウザの保存設定を確認してください。",
+      );
+    }
 
     if (options.refreshCalendar) {
       void refreshCalendarData();
@@ -480,12 +486,16 @@ export function createClockApp({
 
   function resetSettings() {
     state.settings = cloneSettings(DEFAULT_SETTINGS);
-    persistSettings();
+    const settingsSaved = persistSettings();
     startClockLoop();
     renderSettingsUi();
     void refreshCalendarData();
     void refreshLocationBoundData();
-    setStatusMessage("既定値へ戻しました");
+    setStatusMessage(
+      settingsSaved
+        ? "既定値へ戻しました"
+        : "既定値へ戻しましたが、自動保存に失敗しました。ブラウザの保存設定を確認してください。",
+    );
   }
 
   async function start(onReady = () => {}) {

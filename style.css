@@ -875,6 +875,11 @@ body[data-settings-open="true"] .settings-trigger-layer {
   .settings-disclosure summary {
     min-height: 44px;
   }
+
+  .slider-control input[type="range"],
+  .range-row input[type="range"] {
+    min-height: 44px;
+  }
 }
 
 @media (max-aspect-ratio: 1 / 1) {

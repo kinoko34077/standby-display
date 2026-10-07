@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { installWakeLock } from "../scripts/browser-features.mjs";
+import { saveSettings } from "../scripts/settings.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (file) => readFile(new URL(file, root), "utf8");
@@ -184,4 +185,23 @@ test("disabled clock-mode controls expose contextual helper text", async () => {
   assert.match(html, /id="uppercase-help"/);
   assert.match(source, /hourFormatHelp\.hidden = !hourFormatDisabled/);
   assert.match(source, /uppercaseHelp\.hidden = !uppercaseDisabled/);
+});
+
+
+test("settings persistence reports success or failure instead of silently swallowing save errors", async () => {
+  const successStorage = {
+    setItem() {},
+  };
+  const failingStorage = {
+    setItem() {
+      throw new Error("blocked");
+    },
+  };
+
+  assert.equal(saveSettings(successStorage, {}), true);
+  assert.equal(saveSettings(failingStorage, {}), false);
+
+  const clockSource = await read("scripts/clock-app.mjs");
+  assert.match(clockSource, /自動保存に失敗しました/);
+  assert.match(clockSource, /ブラウザの保存設定を確認してください/);
 });
