@@ -1,6 +1,8 @@
 @font-face {
-  font-family: "D7";
-  src: url("assets/fonts/digital-7.ttf") format("truetype");
+  font-family: "DSEG7-Modern";
+  src: url("https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -49,7 +51,7 @@
   --app-background: #050505;
   --app-text: #f1ede4;
   --app-clock: #70b8ff;
-  --app-clock-font: "D7", "Rajdhani", sans-serif;
+  --app-clock-font: "DSEG7-Modern", "DSEG7-Classic-MINI", "Rajdhani", sans-serif;
   --app-clock-font-weight: 400;
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
