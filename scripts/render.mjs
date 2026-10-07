@@ -10,12 +10,19 @@ const TEXT_FONT_MAP = new Map(
 export function resolveClockTypography(settings) {
   const option = CLOCK_FONT_MAP.get(settings.clock.font) || CLOCK_FONT_MAP.get("d7");
   const userScale = settings.clock.sizePercent / 100;
+  const secondaryTracking =
+    option.normalization.secondaryTrackingEm ??
+    option.normalization.trackingEm;
   return {
     family: option.family,
     weight: option.weight,
     sizeScale: roundMetric(option.normalization.sizeScale * userScale, 4),
     letterSpacingEm: roundMetric(
       option.normalization.trackingEm + settings.clock.letterSpacingEm,
+      3,
+    ),
+    secondaryLetterSpacingEm: roundMetric(
+      secondaryTracking + settings.clock.letterSpacingEm,
       3,
     ),
   };
@@ -29,6 +36,7 @@ function roundMetric(value, decimals) {
 export function createRenderer(documentObject) {
   const rootElement = documentObject.body;
   const elements = {
+    prefix: documentObject.getElementById("clock-prefix"),
     hour: documentObject.getElementById("hour"),
     minute: documentObject.getElementById("minute"),
     seconds: documentObject.getElementById("seconds"),
@@ -79,6 +87,10 @@ export function createRenderer(documentObject) {
       `${clockTypography.letterSpacingEm}em`,
     );
     rootElement.style.setProperty(
+      "--app-clock-secondary-letter-spacing",
+      `${clockTypography.secondaryLetterSpacingEm}em`,
+    );
+    rootElement.style.setProperty(
       "--app-text-font",
       TEXT_FONT_MAP.get(settings.typography.font) || TEXT_FONT_MAP.get("noto-sans"),
     );
@@ -86,6 +98,7 @@ export function createRenderer(documentObject) {
   }
 
   function renderTime(timeView) {
+    setText(elements.prefix, timeView.prefixText);
     setText(elements.hour, timeView.hourText);
     setText(elements.minute, timeView.minuteText);
     setText(elements.seconds, timeView.secondText);
@@ -93,6 +106,10 @@ export function createRenderer(documentObject) {
 
     if (elements.seconds) {
       elements.seconds.hidden = !timeView.showSeconds;
+    }
+
+    if (elements.prefix) {
+      elements.prefix.style.opacity = timeView.showPrefix ? "1" : "0";
     }
 
     if (elements.colon) {

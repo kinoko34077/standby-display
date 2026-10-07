@@ -104,6 +104,7 @@ function formatCivilRadix(now, settings, radix) {
     }),
     now,
     showSeconds: settings.showSeconds,
+    fastBlink: settings.fastBlink,
   });
 }
 
@@ -121,6 +122,7 @@ function formatDuodecimalDay(now, settings) {
     }),
     now,
     showSeconds: settings.showSeconds,
+    fastBlink: settings.fastBlink,
   });
 }
 
@@ -132,6 +134,7 @@ function formatDecimalTime(now, settings) {
     secondText: String(total % 100).padStart(2, "0"),
     now,
     showSeconds: settings.showSeconds,
+    fastBlink: settings.fastBlink,
   });
 }
 
