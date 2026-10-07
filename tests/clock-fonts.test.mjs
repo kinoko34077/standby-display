@@ -187,18 +187,26 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-prefix-shift/);
   assert.match(
     css,
-    /\.clock-prefix\s*\{[\s\S]*?transform:\s*translateX\(var\(--app-clock-prefix-shift\)\)/,
+    /\.clock-prefix\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?letter-spacing:\s*0;[\s\S]*?transform:\s*translateX\(var\(--app-clock-prefix-shift\)\)/,
   );
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?display:\s*none/);
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?min-width:\s*0/);
   assert.match(css, /\.clock-block\s*\{[\s\S]*?width:\s*max-content/);
+  assert.match(
+    css,
+    /\.clock-block\s*\{[\s\S]*?transform:\s*scale\(var\(--app-clock-size-scale\)\)\s*translateX\(calc\(var\(--app-clock-letter-spacing\) \/ 2\)\)/,
+  );
+  assert.match(css, /\.time-line\s*\{[\s\S]*?position:\s*relative/);
   assert.match(css, /\.time-line\s*\{[\s\S]*?width:\s*max-content/);
   assert.match(css, /\.time-line\s*\{[\s\S]*?text-align:\s*center/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?right:\s*0/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?top:\s*100%/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?text-align:\s*right/);
   assert.match(css, /--app-clock-secondary-letter-spacing/);
-  assert.match(css, /transform: scale\(var\(--app-clock-size-scale\)\)/);
+  assert.match(
+    css,
+    /transform:\s*scale\(var\(--app-clock-size-scale\)\)\s*translateX\(calc\(var\(--app-clock-letter-spacing\) \/ 2\)\)/,
+  );
 });
 
 
