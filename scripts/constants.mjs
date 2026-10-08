@@ -114,7 +114,7 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
-      prefixShiftEm: 0.015,
+      prefixShiftEm: -0.006,
     }),
   },
   {
@@ -126,7 +126,7 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
-      prefixShiftEm: 0.015,
+      prefixShiftEm: -0.006,
     }),
   },
   {
@@ -137,7 +137,7 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     normalization: Object.freeze({
       sizeScale: 1.018,
       trackingEm: -0.07,
-      prefixShiftEm: 0.11,
+      prefixShiftEm: -0.041,
     }),
   },
   {
@@ -148,7 +148,7 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     normalization: Object.freeze({
       sizeScale: 0.907,
       trackingEm: -0.183,
-      prefixShiftEm: 0.27,
+      prefixShiftEm: -0.047,
     }),
   },
 ]);
