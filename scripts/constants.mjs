@@ -102,11 +102,23 @@ export const MOON_PHASE_EMOJIS = Object.freeze([
 ]);
 
 export const CLOCK_FONT_OPTIONS = Object.freeze([
-  // Normalization basis: the accepted segmented-clock reference box.
-  // The legacy id "d7" is retained for persisted settings/URL compatibility,
-  // but now resolves to the openly licensed DSEG7 Modern family.
+  // d7 again means the original Style-7 Digital-7 glyphs, restored through
+  // external webfont CSS with no font binary bundled into this repository.
+  // The licensed OFL DSEG7 Modern variant is independently selectable.
   {
     id: "d7",
+    label: "Digital-7 (Style-7 / 外部)",
+    family: "\"Digital-7\", \"DSEG7-Modern\", \"DSEG7-Classic-MINI\", \"Rajdhani\", sans-serif",
+    weight: 400,
+    normalization: Object.freeze({
+      sizeScale: 1,
+      trackingEm: 0,
+      // Adjust the synthetic hex prefix for original Digital-7's wider bearings.
+      prefixShiftEm: -0.063,
+    }),
+  },
+  {
+    id: "dseg7-modern",
     label: "DSEG7 Modern",
     family: "\"DSEG7-Modern\", \"DSEG7-Classic-MINI\", \"Rajdhani\", sans-serif",
     weight: 400,

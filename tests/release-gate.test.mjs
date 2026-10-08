@@ -19,7 +19,7 @@ test("Workers Builds documentation names the verify command", () => {
   assert.match(readme, /Workers Builds[\s\S]*npm run verify/);
 });
 
-test("canonical metadata stays on Workers and the only external runtime asset is pinned DSEG", () => {
+test("canonical metadata stays on Workers and external runtime fonts are explicitly allowlisted", () => {
   assert.match(indexHtml, /rel="canonical" href="https:\/\/standby-display\.kinotch\.workers\.dev\//);
   assert.match(indexHtml, /property="og:url"[\s\S]*standby-display\.kinotch\.workers\.dev/);
   assert.match(indexHtml, /property="og:image"[\s\S]*standby-display\.kinotch\.workers\.dev/);
@@ -29,6 +29,7 @@ test("canonical metadata stays on Workers and the only external runtime asset is
     ...styleCss.matchAll(/https?:\/\/[^"')]+/g),
   ].map((match) => match[0]);
   assert.deepEqual(externalStyleUrls, [
+    "https://fonts.cdnfonts.com/css/digital-7-mono",
     "https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2",
   ]);
   assert.doesNotMatch(legacyStyleCss, /https?:\/\//);

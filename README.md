@@ -65,9 +65,13 @@ GitHub Pages版（`https://kinoko34077.github.io/standby-display/`）も同じ�
 
 色選択には、タッチスクリーン対応・HSL/HSV 対応の [iro.js](https://iro.js.org/) 5.5.2 を
 `assets/vendor/iro.min.js`へ同梱して使用します。読み込み失敗時は標準カラーピッカーへ戻ります。
-時計フォントの旧`d7`設定IDは互換性のため維持しつつ、表示書体を **DSEG7 Modern（SIL Open Font License 1.1）** に変更しています。旧Digital-7のフォントファイルはリポジトリから除外しました。DSEG7 Modernはバージョン固定の `dseg@0.46.0` を外部CDNから取得し、対応するPWAではService Workerのキャッシュを利用します。新規インストール時には外部取得が必要なため、オンライン接続のない初回起動では代替フォントにフォールバックする可能性があります。
-DSEG7 Classic Mini Bold、Rajdhani、IBM Plex Mono、Noto Sans JPは`assets/fonts/`に同梱しています。SIL Open Font License 1.1の表示・再配布条件は`assets/fonts/`の各LICENSEに記録しています。
-時計のサイズ・字間はフォントごとの補正値とユーザー設定を組み合わせます。旧Digital-7で測定したglyph値を新しいDSEG7 Modernにそのまま当てはめて正当化せず、フォント差替え後は別途ブラウザの実描画検証を必要とします。秒表示は中央基準の時分表示の下・右端に独立配置し、点滅時に数字が移動しない構造を維持します。
+時計フォントの旧`d7`設定IDは**元のDigital-7（Style-7 / Sizenko Alexander）**に復元しています。フォントファイルの直接同梱・再配布はせず、[CDNFonts](https://www.cdnfonts.com/digital-7-mono.font) の公開Webフォント用CSS（`https://fonts.cdnfonts.com/css/digital-7-mono`）からブラウザが読み込みます。`dseg7-modern`は別の選択肢として維持し、外部Digital-7が使えない環境ではOFLのDSEG7 Modern等へフォールバックします。
+
+**Digital-7の使用条件：** 著作者は Sizenko Alexander / Style-7 です。作者の付属readmeは、作者のクレジットを伴うフリーウェア利用と埋め込みを認めていますが、商用・事業利用には別途許諾を要求しています。<https://urbanfonts.com/free-font/digital-7-1>。第三者のCDNから配信されていること自体は権利の拡大を意味しません。商用化する際は、サイトの収益化形態も含めて権利確認・許諾が必要です。CDNの利用可否や配信状態は提供元に依存し、初回オフライン時はDigital-7以外の書体へフォールバックする可能性があります。
+
+DSEG7 ModernはSIL Open Font License 1.1で、バージョン固定の `dseg@0.46.0` を外部CDNから取得し、Service Workerでオフラインキャッシュできます。DSEG7 Classic Mini Bold、Rajdhani、IBM Plex Mono、Noto Sans JPは`assets/fonts/`に同梱し、各ライセンス情報を併記しています。
+
+時計のサイズ・字間はフォントごとの補正値とユーザー設定を組み合わせます。フォントを変更した場合も、主時計の視覚中心・完全16進ピリオド・秒の位置はChrome実描画テストで検証します。
 
 ## 今後の課題
 

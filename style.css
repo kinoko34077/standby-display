@@ -1,3 +1,7 @@
+/* Style-7 Digital-7: provider-hosted CSS. Freeware use requires author credit;
+   commercial/business use requires separate permission. No binary is bundled. */
+@import url("https://fonts.cdnfonts.com/css/digital-7-mono");
+
 @font-face {
   font-family: "DSEG7-Modern";
   src: url("https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2") format("woff2");
@@ -51,7 +55,7 @@
   --app-background: #050505;
   --app-text: #f1ede4;
   --app-clock: #70b8ff;
-  --app-clock-font: "DSEG7-Modern", "DSEG7-Classic-MINI", "Rajdhani", sans-serif;
+  --app-clock-font: "Digital-7", "DSEG7-Modern", "DSEG7-Classic-MINI", "Rajdhani", sans-serif;
   --app-clock-font-weight: 400;
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;

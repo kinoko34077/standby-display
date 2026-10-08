@@ -21,6 +21,11 @@ test("clock fonts carry explicit normalization metadata", () => {
 
   assert.deepEqual(metrics, {
     d7: {
+      sizeScale: 1,
+      trackingEm: 0,
+      prefixShiftEm: -0.063,
+    },
+    "dseg7-modern": {
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
@@ -45,28 +50,32 @@ test("clock fonts carry explicit normalization metadata", () => {
   });
 });
 
-test("legacy d7 id now resolves to externally hosted OFL DSEG7 Modern", async () => {
-  const option = CLOCK_FONT_OPTIONS.find((candidate) => candidate.id === "d7");
-  assert.equal(option?.label, "DSEG7 Modern");
-  assert.match(option?.family ?? "", /DSEG7-Modern/);
-  assert.doesNotMatch(option?.family ?? "", /"D7"/);
+test("original Digital-7 is externally available as d7, with separate OFL Modern fallback", async () => {
+  const original = CLOCK_FONT_OPTIONS.find((candidate) => candidate.id === "d7");
+  const modern = CLOCK_FONT_OPTIONS.find((candidate) => candidate.id === "dseg7-modern");
+  assert.match(original?.label ?? "", /Digital-7.*Style-7/);
+  assert.match(original?.family ?? "", /"Digital-7"/);
+  assert.equal(original?.normalization.sizeScale, 1);
+  assert.equal(modern?.label, "DSEG7 Modern");
+  assert.match(modern?.family ?? "", /"DSEG7-Modern"/);
 
   const css = await readFile(new URL("style.css", root), "utf8");
+  assert.match(css, /@import url\("https:\/\/fonts\.cdnfonts\.com\/css\/digital-7-mono"\)/);
   assert.match(css, /font-family: "DSEG7-Modern"/);
-  assert.match(
-    css,
-    /https:\/\/unpkg\.com\/dseg@0\.46\.0\/fonts\/DSEG7-Modern\/DSEG7Modern-Regular\.woff2/,
-  );
+  assert.match(css, /https:\/\/unpkg\.com\/dseg@0\.46\.0\/fonts\/DSEG7-Modern\/DSEG7Modern-Regular\.woff2/);
   assert.doesNotMatch(css, /digital-7\.ttf/);
+
+  const html = await readFile(new URL("index.html", root), "utf8");
+  assert.match(html, /Digital-7 © Sizenko Alexander \/ Style-7/);
+  assert.match(html, /商用・事業用途は別途許諾/);
 
   const worker = await readFile(new URL("service-worker.js", root), "utf8");
   assert.match(worker, /DSEG7Modern-Regular\.woff2/);
-  assert.doesNotMatch(worker, /digital-7\.ttf/);
+  assert.doesNotMatch(worker, /digital-7\.ttf|digital-7-mono/);
+  await assert.rejects(readFile(new URL("assets/fonts/digital-7.ttf", root)), /ENOENT/);
 
-  await assert.rejects(
-    readFile(new URL("assets/fonts/digital-7.ttf", root)),
-    /ENOENT/,
-  );
+  assert.equal(parseSettingsFromSearch("?clockfont=d7").clock.font, "d7");
+  assert.equal(parseSettingsFromSearch("?clockfont=dseg7-modern").clock.font, "dseg7-modern");
 });
 
 test("DSEG7 Classic Mini Bold remains a selectable bundled clock font", async () => {
