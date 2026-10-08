@@ -24,4 +24,10 @@ jobs:
       - run: npm ci
       - run: npm run verify
       - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rendered-clock-screenshots
+          path: .clock-visual-artifacts/
+          if-no-files-found: warn
       - run: npx wrangler deploy --dry-run
