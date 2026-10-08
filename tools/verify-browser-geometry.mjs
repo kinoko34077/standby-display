@@ -293,7 +293,7 @@ async function waitProbe(client,font) {
 }
 function assert(condition,message) {if(!condition) throw Error(message);}
 const cases=[];
-for(const font of ["d7","dseg7-classic-mini-bold","rajdhani","mono"])
+for(const font of ["d7","dseg7-modern","dseg7-classic-mini-bold","rajdhani","mono"])
   for(const viewport of [{width:390,height:844},{width:1100,height:650}])
     for(const mode of ["civil","hex"])
       cases.push({font,viewport,mode,size:100,tracking:0});
