@@ -236,8 +236,10 @@ function png(data) {
 }
 
 function sampleClock(picture,line) {
-  const y0=Math.max(0,Math.floor(line.top)-24);
-  const y1=Math.min(picture.height-1,Math.ceil(line.bottom)+24);
+  // Restrict ink detection to the primary line. Secondary seconds are
+  // absolutely positioned just below it and must not bias the center check.
+  const y0=Math.max(0,Math.floor(line.top));
+  const y1=Math.min(picture.height-1,Math.ceil(line.bottom)-1);
   let left=Infinity,right=-Infinity;
   const pixels=new Set();
   for(let y=y0;y<=y1;y++) for(let x=0;x<picture.width;x++){
