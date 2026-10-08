@@ -1,4 +1,7 @@
 const CACHE_NAME = "wafu-clock-compat-v2";
+const REMOTE_FONT_URLS = [
+  "https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2",
+];
 const PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -14,7 +17,7 @@ const PRECACHE_URLS = [
   "./manifest.json",
   "./icon-192.png",
   "./assets/vendor/iro.min.js",
-  "./assets/fonts/digital-7.ttf",
+  "./assets/settings-trigger.png",
   "./assets/fonts/dseg7-classic-mini-bold.woff2",
   "./assets/fonts/ibm-plex-mono-latin-400-normal.woff2",
   "./assets/fonts/rajdhani-latin-500-normal.woff2",
@@ -35,6 +38,7 @@ const PRECACHE_URLS = [
   "./scripts/settings.mjs",
   "./scripts/settings-ui.mjs",
   "./scripts/color-controls.mjs",
+  ...REMOTE_FONT_URLS,
 ];
 
 const PRECACHE_URL_SET = new Set(
@@ -54,14 +58,23 @@ function reconcileActiveCache() {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) =>
-        cache.addAll(
-          PRECACHE_URLS.map((url) => new Request(url, { cache: "reload" })),
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Keep the local app shell install-atomic. The external font is an
+      // enhancement: a transient CDN outage must not prevent PWA updates.
+      const localUrls = PRECACHE_URLS.filter((url) => !REMOTE_FONT_URLS.includes(url));
+      await cache.addAll(
+        localUrls.map((url) =>
+          new Request(new URL(url, self.location.href), { cache: "reload" }),
         ),
-      )
-      .then(() => self.skipWaiting()),
+      );
+      await Promise.all(REMOTE_FONT_URLS.map(async (url) => {
+        try {
+          await cache.add(new Request(url, { cache: "reload" }));
+        } catch (error) {
+          console.warn("Optional remote font precache failed", error);
+        }
+      }));
+    }).then(() => self.skipWaiting()),
   );
 });
 
@@ -86,7 +99,30 @@ self.addEventListener("fetch", (event) => {
   }
 
   const requestUrl = new URL(event.request.url);
-  if (requestUrl.origin !== self.location.origin) {
+  const isAllowedRemoteFont = REMOTE_FONT_URLS.includes(requestUrl.href);
+  if (requestUrl.origin !== self.location.origin && !isAllowedRemoteFont) {
+    return;
+  }
+
+  if (isAllowedRemoteFont) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
+        return fetch(event.request).then((networkResponse) => {
+          if (!networkResponse || !networkResponse.ok) {
+            return networkResponse;
+          }
+          const responseToCache = networkResponse.clone();
+          const cacheUpdate = caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(event.request, responseToCache));
+          if (typeof event.waitUntil === "function") {
+            event.waitUntil(cacheUpdate);
+          }
+          return networkResponse;
+        });
+      }),
+    );
     return;
   }
 

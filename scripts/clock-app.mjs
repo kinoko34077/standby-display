@@ -20,6 +20,7 @@ import {
   cloneSettings,
   createDefaultUiState,
   loadStoredSettings,
+  mergeSettings,
   parseSettingsFromSearch,
   saveSettings,
   sanitizeSettings,
@@ -42,6 +43,26 @@ export function createLatestRequestFence(getCurrentKey) {
         },
       };
     },
+  };
+}
+
+export function createSingleFlightRunner() {
+  let current = null;
+
+  return function run(task) {
+    if (current) {
+      return current;
+    }
+
+    const promise = Promise.resolve()
+      .then(task)
+      .finally(() => {
+        if (current === promise) {
+          current = null;
+        }
+      });
+    current = promise;
+    return promise;
   };
 }
 
@@ -93,25 +114,6 @@ export function createClockApp({
     },
   };
 
-  function mergeSettings(...settingsParts) {
-    const nextSettings = cloneSettings(DEFAULT_SETTINGS);
-    for (const part of settingsParts) {
-      if (!part) {
-        continue;
-      }
-      for (const [groupKey, groupValue] of Object.entries(part)) {
-        if (!groupValue || typeof groupValue !== "object") {
-          continue;
-        }
-        nextSettings[groupKey] = {
-          ...nextSettings[groupKey],
-          ...groupValue,
-        };
-      }
-    }
-    return nextSettings;
-  }
-
   function getNow() {
     return new Date(Date.now() + state.clockOffsetMs);
   }
@@ -127,6 +129,8 @@ export function createClockApp({
   const rokuyoRequestFence = createLatestRequestFence(() =>
     getDayKey(getNow()),
   );
+  const runTimeSync = createSingleFlightRunner();
+  const runExternalDataRefresh = createSingleFlightRunner();
 
   function hasLocationBoundVisibility() {
     return state.settings.visibility.weather || state.settings.visibility.moon;
@@ -270,7 +274,7 @@ export function createClockApp({
     }
   }
 
-  async function ensureLocation() {
+  async function ensureLocation({ force = false } = {}) {
     if (!hasLocationBoundVisibility()) {
       setLocationStatus(
         "idle",
@@ -279,15 +283,10 @@ export function createClockApp({
       return null;
     }
 
-    if (state.location) {
-      setLocationStatus("active", "位置情報: 取得済みです。");
-      return state.location;
-    }
-
     setLocationStatus("loading", "位置情報: 取得中…");
 
     try {
-      state.location = await locationService.getCurrentPosition();
+      state.location = await locationService.getCurrentPosition({ force });
       setLocationStatus("active", "位置情報: 取得済みです。");
     } catch (error) {
       console.warn("Location lookup failed", error);
@@ -300,7 +299,8 @@ export function createClockApp({
 
   async function retryLocation() {
     state.location = null;
-    await refreshLocationBoundData();
+    locationService.invalidate();
+    await refreshLocationBoundData(getNow(), { forceLocation: true });
   }
 
   async function refreshCalendarData(now = getNow()) {
@@ -321,7 +321,10 @@ export function createClockApp({
     renderClockView(now);
   }
 
-  async function refreshLocationBoundData(now = getNow()) {
+  async function refreshLocationBoundData(
+    now = getNow(),
+    { forceLocation = false } = {},
+  ) {
     if (!hasLocationBoundVisibility()) {
       setLocationStatus(
         "idle",
@@ -331,7 +334,7 @@ export function createClockApp({
       return;
     }
 
-    const location = await ensureLocation();
+    const location = await ensureLocation({ force: forceLocation });
     if (!location) {
       renderClockView(now);
       return;
@@ -361,11 +364,11 @@ export function createClockApp({
 
   function scheduleRecurringWork() {
     state.timers.timeSync = timers.setInterval(() => {
-      void syncClockOffset();
+      void runTimeSync(syncClockOffset);
     }, CLOCK_SYNC_INTERVAL_MS);
 
     state.timers.externalData = timers.setInterval(() => {
-      void refreshLocationBoundData();
+      void runExternalDataRefresh(() => refreshLocationBoundData());
     }, DATA_REFRESH_INTERVAL_MS);
   }
 
@@ -508,22 +511,25 @@ export function createClockApp({
       renderClockView();
     });
     renderSettingsUi();
-    void refreshLocationBoundData();
     scheduleTriggerHide();
     startClockLoop();
     scheduleRecurringWork();
     // A slow/offline API must not be mistaken for an incompatible browser.
     onReady();
 
-    await syncClockOffset();
+    const startupTasks = [runTimeSync(syncClockOffset)];
 
     if (state.settings.visibility.rokuyo) {
-      await refreshCalendarData();
+      startupTasks.push(refreshCalendarData());
     }
 
     if (hasLocationBoundVisibility()) {
-      await refreshLocationBoundData();
+      startupTasks.push(
+        runExternalDataRefresh(() => refreshLocationBoundData()),
+      );
     }
+
+    await Promise.allSettled(startupTasks);
   }
 
   return { start };

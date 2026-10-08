@@ -4,11 +4,17 @@ import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 
 const workerSource = await readFile(new URL("../service-worker.js", import.meta.url), "utf8");
+const indexHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const styleCss = await readFile(new URL("../style.css", import.meta.url), "utf8");
+const REMOTE_DSEG_MODERN =
+  "https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2";
 
 function createWorker({ cached = [], fetchImpl } = {}) {
   const listeners = {};
   const entries = new Map(cached.map(([url, response]) => [url, response]));
   const deletedCaches = [];
+  const addedLocal = [];
+  let installed = false;
   const cache = {
     match(request) {
       return Promise.resolve(entries.get(request.url));
@@ -17,8 +23,15 @@ function createWorker({ cached = [], fetchImpl } = {}) {
       entries.set(request.url, response);
       return Promise.resolve();
     },
-    addAll() {
+    addAll(requests) {
+      addedLocal.push(...requests.map((request) => request.url));
       return Promise.resolve();
+    },
+    async add(request) {
+      if (!fetchImpl) throw new Error("Optional font unavailable");
+      const response = await fetchImpl(request);
+      if (!response?.ok) throw new Error("Optional font fetch failed");
+      entries.set(request.url, response.clone());
     },
     keys() {
       return Promise.resolve([...entries.keys()].map((url) => new Request(url)));
@@ -45,7 +58,7 @@ function createWorker({ cached = [], fetchImpl } = {}) {
   const self = {
     location: { origin: "https://example.test", href: "https://example.test/service-worker.js" },
     clients: { claim() { return Promise.resolve(); } },
-    skipWaiting() { return Promise.resolve(); },
+    skipWaiting() { installed = true; return Promise.resolve(); },
     addEventListener(type, listener) {
       listeners[type] = listener;
     },
@@ -62,6 +75,8 @@ function createWorker({ cached = [], fetchImpl } = {}) {
   return {
     entries,
     deletedCaches,
+    addedLocal,
+    wasInstalled() { return installed; },
     waitForBackground() {
       return lastWaitPromise || Promise.resolve();
     },
@@ -200,4 +215,74 @@ test("activation evicts removed same-generation assets before network fallback c
   const response = await worker.dispatch("fetch", request("/removed-script.js"));
   assert.equal(response.status, 404);
   assert.equal(await response.text(), "not found");
+});
+
+
+test("runtime-critical same-origin shell assets are represented in the precache", () => {
+  const htmlRefs = [...indexHtml.matchAll(/(?:src|href)="([^"]+)"/g)]
+    .map((match) => match[1])
+    .filter((value) => !/^(?:https?:|#|\?)/.test(value))
+    .map((value) => value.replace(/^\.\//, ""));
+  const cssRefs = [...styleCss.matchAll(/url\(["']?([^"')]+)["']?\)/g)]
+    .map((match) => match[1])
+    .filter((value) => !/^https?:/.test(value))
+    .map((value) => value.replace(/^\.\//, ""));
+  const runtimeRefs = [...new Set([...htmlRefs, ...cssRefs])];
+
+  for (const asset of runtimeRefs) {
+    assert.equal(
+      workerSource.includes(`"./${asset}"`),
+      true,
+      `missing runtime asset from precache: ${asset}`,
+    );
+  }
+
+  assert.equal(runtimeRefs.includes("assets/settings-trigger.png"), true);
+});
+
+test("external font CDN outage does not block the local PWA install", async () => {
+  const worker = createWorker({
+    fetchImpl: async () => {
+      throw new Error("CDN offline");
+    },
+  });
+
+  await worker.dispatch("install");
+  await worker.waitForBackground();
+
+  assert.equal(worker.wasInstalled(), true);
+  assert.equal(worker.addedLocal.includes("https://example.test/index.html"), true);
+  assert.equal(worker.addedLocal.includes("https://example.test/assets/settings-trigger.png"), true);
+  assert.equal(worker.addedLocal.includes(REMOTE_DSEG_MODERN), false);
+});
+
+test("pinned external DSEG Modern font is allowlisted and cache-first", async () => {
+  let networkCalls = 0;
+  const worker = createWorker({
+    fetchImpl: async () => {
+      networkCalls += 1;
+      return new Response("remote-font", { status: 200 });
+    },
+  });
+
+  const onlineRequest = new Request(REMOTE_DSEG_MODERN);
+  const online = await worker.dispatch("fetch", onlineRequest);
+  assert.equal(await online.text(), "remote-font");
+  assert.equal(networkCalls, 1);
+  await worker.waitForBackground();
+
+  const offlineWorker = createWorker({
+    cached: [[REMOTE_DSEG_MODERN, new Response("cached-font", { status: 200 })]],
+    fetchImpl: async () => {
+      throw new Error("offline");
+    },
+  });
+  const offline = await offlineWorker.dispatch(
+    "fetch",
+    new Request(REMOTE_DSEG_MODERN),
+  );
+  assert.equal(await offline.text(), "cached-font");
+  assert.match(workerSource, /REMOTE_FONT_URLS/);
+  assert.match(workerSource, /DSEG7Modern-Regular\.woff2/);
+  assert.doesNotMatch(workerSource, /digital-7\.ttf/);
 });

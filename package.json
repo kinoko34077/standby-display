@@ -11,10 +11,14 @@
     "pretest": "npm run check:text-client",
     "test": "node --test tests/*.test.mjs",
     "dev": "npm run build && wrangler dev",
-    "deploy": "npm run verify && wrangler deploy"
+    "deploy": "npm run verify && wrangler deploy",
+    "test:browser": "node tools/verify-browser-geometry.mjs"
   },
   "devDependencies": {
     "acorn": "8.15.0",
-    "wrangler": "4.129.0"
+    "wrangler": "4.148.0"
+  },
+  "overrides": {
+    "sharp": "0.35.5"
   }
 }

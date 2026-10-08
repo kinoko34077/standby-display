@@ -19,12 +19,17 @@ test("Workers Builds documentation names the verify command", () => {
   assert.match(readme, /Workers Builds[\s\S]*npm run verify/);
 });
 
-test("canonical metadata and runtime assets stay on the offline Workers origin", () => {
+test("canonical metadata stays on Workers and the only external runtime asset is pinned DSEG", () => {
   assert.match(indexHtml, /rel="canonical" href="https:\/\/standby-display\.kinotch\.workers\.dev\//);
   assert.match(indexHtml, /property="og:url"[\s\S]*standby-display\.kinotch\.workers\.dev/);
   assert.match(indexHtml, /property="og:image"[\s\S]*standby-display\.kinotch\.workers\.dev/);
   assert.match(indexHtml, /src="assets\/vendor\/iro\.min\.js"/);
   assert.doesNotMatch(indexHtml, /fonts\.googleapis\.com|cdn\.jsdelivr\.net/);
-  assert.doesNotMatch(styleCss, /https?:\/\//);
+  const externalStyleUrls = [
+    ...styleCss.matchAll(/https?:\/\/[^"')]+/g),
+  ].map((match) => match[0]);
+  assert.deepEqual(externalStyleUrls, [
+    "https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2",
+  ]);
   assert.doesNotMatch(legacyStyleCss, /https?:\/\//);
 });

@@ -1,6 +1,8 @@
 @font-face {
-  font-family: "D7";
-  src: url("assets/fonts/digital-7.ttf") format("truetype");
+  font-family: "DSEG7-Modern";
+  src: url("https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Modern/DSEG7Modern-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -49,7 +51,7 @@
   --app-background: #050505;
   --app-text: #f1ede4;
   --app-clock: #70b8ff;
-  --app-clock-font: "D7", "Rajdhani", sans-serif;
+  --app-clock-font: "DSEG7-Modern", "DSEG7-Classic-MINI", "Rajdhani", sans-serif;
   --app-clock-font-weight: 400;
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
@@ -190,7 +192,22 @@ body {
   display: inline-block;
   min-width: 0;
   letter-spacing: 0;
+  /* Font punctuation has inconsistent bearings, and DSEG's period can
+     have zero advance. The blink wrapper retains a stable anchor while
+     the period itself is rendered independently of the chosen font. */
+  color: transparent;
   transform: translateX(var(--app-clock-prefix-shift));
+}
+
+.clock-prefix::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  bottom: 0.08em;
+  width: 0.1em;
+  height: 0.1em;
+  background: var(--app-clock);
+  border-radius: 1px;
 }
 
 .clock-prefix[hidden] {
@@ -927,7 +944,9 @@ body[data-settings-open="true"] .settings-trigger-layer {
   }
 
   .clock-block {
-    margin: 0 auto;
+    /* With a wide segmented glyph run, auto margins resolve to zero on
+       negative free space and left-anchor an overflowing flex child. */
+    margin: 0;
   }
 
 }
