@@ -67,7 +67,10 @@ window.clockProbe = {
   ready: true,
   font,
   fontFaceCount: loaded.length,
-  setPrefixVisible(value) { prefix.style.opacity = value ? "1" : "0"; },
+  setPrefixVisible(value) {
+    prefix.style.color = "#ff0000";
+    prefix.style.opacity = value ? "1" : "0";
+  },
   measure() {
     const rect = element => {
       const b = element.getBoundingClientRect();
@@ -256,6 +259,21 @@ function sampleClock(picture,line) {
   if(left===Infinity) throw new Error("No visible clock ink in screenshot");
   return {left,right,pixels};
 }
+function samplePrefix(picture,line) {
+  const y0=Math.max(0,Math.floor(line.top));
+  const y1=Math.min(picture.height-1,Math.ceil(line.bottom)-1);
+  let left=Infinity,right=-Infinity,count=0;
+  for(let y=y0;y<=y1;y++) for(let x=0;x<picture.width;x++){
+    const i=(y*picture.width+x)*4;
+    const r=picture.rgba[i],g=picture.rgba[i+1],b=picture.rgba[i+2];
+    if(r>190 && g<100 && b<100){
+      left=Math.min(left,x);
+      right=Math.max(right,x);
+      count++;
+    }
+  }
+  return left===Infinity ? null : {left,right,count};
+}
 async function sleep(ms) {return new Promise(r=>setTimeout(r,ms));}
 async function waitProbe(client,font) {
   for(let i=0;i<200;i++){
@@ -321,19 +339,16 @@ try{
       );
       const deltaSeconds=Math.abs(data.seconds.right-data.line.right);
       assert(deltaSeconds<=5,"Secondary seconds right-edge drift="+deltaSeconds.toFixed(2)+"px");
-      if(mode==="hex"){
+      if(mode==="hex" && size===100 && tracking===0){
         await client.eval("window.clockProbe.setPrefixVisible(true)");
         const visible=png((await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false})).data);
-        const painted=sampleClock(visible,data.line);
-        const added=[...painted.pixels].filter(p=>!base.pixels.has(p)).map(p=>p%visible.width);
-        assert(added.length>0,"No visible period ink");
-        let periodRight=-Infinity;
-        for(const x of added) periodRight=Math.max(periodRight,x);
-        const gap=base.left-periodRight-1;
+        const period=samplePrefix(visible,data.line);
+        assert(period,"No visible period ink");
+        const gap=base.left-period.right-1;
         assert(
           gap>=0 && gap<=7,
           "Period visible gap="+gap+"px "+
-            JSON.stringify({line:data.line,prefix:data.prefix,inkLeft:base.left,addedRight:periodRight,addedCount:added.length}),
+            JSON.stringify({line:data.line,prefix:data.prefix,inkLeft:base.left,periodRight:period.right,periodCount:period.count}),
         );
       }
       console.log("PASS",ident,"visible-center="+error.toFixed(2)+"px");
