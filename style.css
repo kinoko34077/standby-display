@@ -929,7 +929,9 @@ body[data-settings-open="true"] .settings-trigger-layer {
   }
 
   .clock-block {
-    margin: 0 auto;
+    /* With a wide segmented glyph run, auto margins resolve to zero on
+       negative free space and left-anchor an overflowing flex child. */
+    margin: 0;
   }
 
 }
