@@ -314,7 +314,11 @@ try{
       const base=sampleClock(hidden,data.line);
       const center=(base.left+base.right)/2;
       const error=center-data.width/2;
-      assert(Math.abs(error)<=4, "Visible glyph center error="+error.toFixed(2)+"px");
+      assert(
+        Math.abs(error)<=4,
+        "Visible glyph center error="+error.toFixed(2)+"px "+
+          JSON.stringify({panel:data.panel,line:data.line,ink:[base.left,base.right]}),
+      );
       const deltaSeconds=Math.abs(data.seconds.right-data.line.right);
       assert(deltaSeconds<=5,"Secondary seconds right-edge drift="+deltaSeconds.toFixed(2)+"px");
       if(mode==="hex"){
@@ -326,7 +330,11 @@ try{
         let periodRight=-Infinity;
         for(const x of added) periodRight=Math.max(periodRight,x);
         const gap=base.left-periodRight-1;
-        assert(gap>=0 && gap<=7,"Period visible gap="+gap+"px");
+        assert(
+          gap>=0 && gap<=7,
+          "Period visible gap="+gap+"px "+
+            JSON.stringify({line:data.line,prefix:data.prefix,inkLeft:base.left,addedRight:periodRight,addedCount:added.length}),
+        );
       }
       console.log("PASS",ident,"visible-center="+error.toFixed(2)+"px");
     }catch(e){
