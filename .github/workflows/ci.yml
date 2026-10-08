@@ -24,7 +24,24 @@ jobs:
       # Temporary on #50 only: materialize the lockfile for the supported Wrangler
       # upgrade in CI, then replace this step with normal npm ci after the artifact
       # has been committed to the branch.
+      - run: cp package-lock.json /tmp/standby-lock-before.json
       - run: npm install --package-lock-only --ignore-scripts
+      - name: Emit temporary lockfile patch
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          const before = JSON.parse(readFileSync("/tmp/standby-lock-before.json", "utf8"));
+          const after = JSON.parse(readFileSync("package-lock.json", "utf8"));
+          const changed = {};
+          for (const [key, value] of Object.entries(after.packages)) {
+            if (JSON.stringify(before.packages[key]) !== JSON.stringify(value)) {
+              changed[key] = value;
+            }
+          }
+          const removed = Object.keys(before.packages).filter(key => !(key in after.packages));
+          const patch = { changed, removed, lockfileVersion: after.lockfileVersion };
+          console.log("LOCK_CHANGE_START" + JSON.stringify(patch) + "LOCK_CHANGE_END");
+          NODE
       - uses: actions/upload-artifact@v4
         with:
           name: package-lock-audit-remediation
