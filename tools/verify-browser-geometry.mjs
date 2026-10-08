@@ -149,7 +149,9 @@ async function serve() {
 
 async function inspectChrome(temp) {
   const path = join(temp, "DevToolsActivePort");
-  for (let i=0;i<160;i++) {
+  // The Actions Ubuntu image may need substantially more than 16s to start
+  // Chrome in a fresh profile. Keep polling while the process is alive.
+  for (let i=0;i<600;i++) {
     try {
       const content = await readFile(path, "utf8");
       const port = Number(content.split("\n")[0]);
