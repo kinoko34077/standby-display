@@ -29,5 +29,6 @@ jobs:
         with:
           name: rendered-clock-screenshots
           path: .clock-visual-artifacts/
-          if-no-files-found: warn
+          include-hidden-files: true
+          if-no-files-found: error
       - run: npx wrangler deploy --dry-run
