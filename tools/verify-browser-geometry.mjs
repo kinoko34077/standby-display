@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { createReadStream, existsSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -299,6 +299,8 @@ for(const tracking of [-0.2,0.2])
   for(const viewport of [{width:390,height:844},{width:1100,height:650}])
     cases.push({font:"d7",viewport,mode:"hex",size:120,tracking});
 
+const artifactDir=join(root,".clock-visual-artifacts");
+await mkdir(artifactDir,{recursive:true});
 const {server,url}=await serve();
 const temp=await mkdtemp(join(tmpdir(),"standby-visual-ci-"));
 const browser=spawn(findBrowser(),[
@@ -306,11 +308,17 @@ const browser=spawn(findBrowser(),[
   "--no-first-run","--no-default-browser-check","--hide-scrollbars",
   "--remote-allow-origins=*","--remote-debugging-port=0",
   "--user-data-dir="+temp,"about:blank",
-],{stdio:"ignore"});
+],{stdio:["ignore","ignore","pipe"]});
+let chromeStderr="";
+browser.stderr?.on("data",chunk=>{
+  chromeStderr=(chromeStderr+chunk.toString()).slice(-5000);
+});
 let failed=0;
 let client=null;
 try{
-  const wsUrl=await inspectChrome(temp);
+  const wsUrl=await inspectChrome(temp).catch(error=>{
+    throw new Error(error.message+" (Chrome exited="+browser.exitCode+") "+chromeStderr);
+  });
   const ws=new WebSocket(wsUrl);
   await new Promise((resolve,reject)=>{
     ws.addEventListener("open",resolve,{once:true});
@@ -332,7 +340,11 @@ try{
       assert(data.width===viewport.width && data.height===viewport.height,"Viewport emulation mismatch");
       assert(data.fontFaceCount>0,"Expected font was not loaded: "+data.fontName);
       await client.eval("window.clockProbe.setPrefixVisible(false)");
-      const hidden=png((await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false})).data);
+      const hiddenCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
+      const hidden=png(hiddenCapture.data);
+      if(size===100 && tracking===0 && mode==="civil") {
+        await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-civil.png"),Buffer.from(hiddenCapture.data,"base64"));
+      }
       const base=sampleClock(hidden,data.line);
       const center=(base.left+base.right)/2;
       const error=center-data.width/2;
@@ -345,7 +357,9 @@ try{
       assert(deltaSeconds<=5,"Secondary seconds right-edge drift="+deltaSeconds.toFixed(2)+"px");
       if(mode==="hex" && size===100 && tracking===0){
         await client.eval("window.clockProbe.setPrefixVisible(true)");
-        const visible=png((await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false})).data);
+        const visibleCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
+        const visible=png(visibleCapture.data);
+        await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-hex.png"),Buffer.from(visibleCapture.data,"base64"));
         const period=samplePrefix(visible,data.line);
         assert(period,"No visible period ink");
         const gap=base.left-period.right-1;
