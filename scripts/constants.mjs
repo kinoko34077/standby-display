@@ -113,7 +113,8 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
     normalization: Object.freeze({
       sizeScale: 1,
       trackingEm: 0,
-      prefixShiftEm: -0.006,
+      // Adjust the synthetic hex prefix for original Digital-7's wider bearings.
+      prefixShiftEm: -0.063,
     }),
   },
   {
