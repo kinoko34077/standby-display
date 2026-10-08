@@ -17,14 +17,16 @@ const html = String.raw`<!doctype html>
 </head>
 <body>
 <main class="main-layout">
-  <section class="clock-panel block">
-    <div class="clock-block">
+  <section class="date-panel"></section>
+  <section class="clock-panel">
+    <div class="block clock-block">
       <div class="time-line">
         <span id="clock-prefix" class="clock-prefix" aria-hidden="true" hidden></span><span id="hour">21</span><span class="colon">:</span><span id="minute">12</span>
       </div>
-      <span id="seconds" class="seconds">:34</span>
+      <div id="seconds" class="seconds">:34</div>
     </div>
   </section>
+  <section class="extra-panel"></section>
 </main>
 <script type="module">
 import { CLOCK_FONT_OPTIONS } from "/scripts/constants.mjs";
@@ -321,7 +323,8 @@ try{
         const painted=sampleClock(visible,data.line);
         const added=[...painted.pixels].filter(p=>!base.pixels.has(p)).map(p=>p%visible.width);
         assert(added.length>0,"No visible period ink");
-        const periodRight=Math.max(...added);
+        let periodRight=-Infinity;
+        for(const x of added) periodRight=Math.max(periodRight,x);
         const gap=base.left-periodRight-1;
         assert(gap>=0 && gap<=7,"Period visible gap="+gap+"px");
       }
@@ -334,7 +337,15 @@ try{
 }finally{
   browser.kill();
   server.close();
-  await rm(temp,{recursive:true,force:true});
+  for(let attempt=0;attempt<10;attempt++){
+    try {
+      await rm(temp,{recursive:true,force:true});
+      break;
+    } catch (error) {
+      if(error?.code!=="ENOTEMPTY" || attempt===9) throw error;
+      await sleep(100);
+    }
+  }
 }
 if(failed) {
   console.error("Browser geometry failures:",failed,"/",cases.length);
