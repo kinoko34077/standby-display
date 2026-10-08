@@ -192,7 +192,22 @@ body {
   display: inline-block;
   min-width: 0;
   letter-spacing: 0;
+  /* Font punctuation has inconsistent bearings, and DSEG's period can
+     have zero advance. The blink wrapper retains a stable anchor while
+     the period itself is rendered independently of the chosen font. */
+  color: transparent;
   transform: translateX(var(--app-clock-prefix-shift));
+}
+
+.clock-prefix::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  bottom: 0.08em;
+  width: 0.1em;
+  height: 0.1em;
+  background: var(--app-clock);
+  border-radius: 1px;
 }
 
 .clock-prefix[hidden] {
