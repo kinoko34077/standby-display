@@ -52,6 +52,11 @@ root.style.setProperty("--app-clock-center-shift", typography.centerShiftEm + "e
 root.style.setProperty("--app-clock-prefix-shift", typography.prefixShiftEm + "em");
 root.style.setProperty("--app-clock", "#70b8ff");
 const prefix = document.getElementById("clock-prefix");
+// Color only the synthetic period red in the probe. Do not reveal the
+// hidden font glyph by changing the wrapper's transparent text color.
+const probeStyle = document.createElement("style");
+probeStyle.textContent = ".clock-prefix::after { background:#ff0000 !important; }";
+document.head.appendChild(probeStyle);
 if (hex) {
   prefix.hidden = false;
   prefix.textContent = ".";
@@ -68,7 +73,6 @@ window.clockProbe = {
   font,
   fontFaceCount: loaded.length,
   setPrefixVisible(value) {
-    prefix.style.color = "#ff0000";
     prefix.style.opacity = value ? "1" : "0";
   },
   measure() {
