@@ -63,7 +63,9 @@ self.addEventListener("install", (event) => {
       // enhancement: a transient CDN outage must not prevent PWA updates.
       const localUrls = PRECACHE_URLS.filter((url) => !REMOTE_FONT_URLS.includes(url));
       await cache.addAll(
-        localUrls.map((url) => new Request(url, { cache: "reload" })),
+        localUrls.map((url) =>
+          new Request(new URL(url, self.location.href), { cache: "reload" }),
+        ),
       );
       await Promise.all(REMOTE_FONT_URLS.map(async (url) => {
         try {
