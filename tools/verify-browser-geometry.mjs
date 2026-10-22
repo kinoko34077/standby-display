@@ -17,7 +17,7 @@ const html = String.raw`<!doctype html>
 </head>
 <body>
 <main class="main-layout">
-  <section class="date-panel"></section>
+  <section class="date-panel">令和八年十月</section>
   <section class="clock-panel">
     <div class="block clock-block">
       <div class="time-line">
@@ -26,7 +26,7 @@ const html = String.raw`<!doctype html>
       <div id="seconds" class="seconds">:34</div>
     </div>
   </section>
-  <section class="extra-panel"></section>
+  <section class="extra-panel">晴 22℃</section>
 </main>
 <script type="module">
 import { CLOCK_FONT_OPTIONS } from "/scripts/constants.mjs";
@@ -75,6 +75,19 @@ window.clockProbe = {
   fontFaceCount: loaded.length,
   setPrefixVisible(value) {
     prefix.style.opacity = value ? "1" : "0";
+  },
+  checkAuxiliaryInvariance() {
+    const anchor = selector => {
+      const el = document.querySelector(selector), box = el.getBoundingClientRect(), css = getComputedStyle(el);
+      return {x:box.x,y:box.y,width:box.width,height:box.height,fontSize:css.fontSize};
+    };
+    const before = [anchor(".date-panel"), anchor(".extra-panel")];
+    root.style.setProperty("--app-clock-size-scale", String(typography.sizeScale * 1.25));
+    centerClockInk(document);
+    const after = [anchor(".date-panel"), anchor(".extra-panel")];
+    root.style.setProperty("--app-clock-size-scale", String(typography.sizeScale));
+    centerClockInk(document);
+    return {before,after};
   },
   measure() {
     const rect = element => {
@@ -344,6 +357,18 @@ try{
       const data=await waitProbe(client,font);
       assert(data.width===viewport.width && data.height===viewport.height,"Viewport emulation mismatch");
       assert(data.fontFaceCount>0,"Expected font was not loaded: "+data.fontName);
+      if(size===100 && tracking===0 && mode==="civil"){
+        const ancillary=await client.eval("window.clockProbe.checkAuxiliaryInvariance()");
+        const dist=(v,w)=>Math.abs(v-w);
+        for(let i=0;i<ancillary.before.length;i++){
+          for(const key of ["x","y","width","height"]) {
+            assert(dist(ancillary.before[i][key],ancillary.after[i][key])<0.02,
+              "Supplementary UI "+i+" "+key+" unexpectedly changed with clock scale: "+JSON.stringify(ancillary));
+          }
+          assert(ancillary.before[i].fontSize===ancillary.after[i].fontSize,
+            "Supplementary UI font-size changed with clock scale");
+        }
+      }
       await client.eval("window.clockProbe.setPrefixVisible(false)");
       const hiddenCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
       const hidden=png(hiddenCapture.data);
