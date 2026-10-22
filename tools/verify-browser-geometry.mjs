@@ -251,7 +251,7 @@ function sampleClock(picture,line) {
   // absolutely positioned just below it and must not bias the center check.
   const y0=Math.max(0,Math.floor(line.top));
   const y1=Math.min(picture.height-1,Math.ceil(line.bottom)-1);
-  let left=Infinity,right=-Infinity;
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
   const pixels=new Set();
   for(let y=y0;y<=y1;y++) for(let x=0;x<picture.width;x++){
     const i=(y*picture.width+x)*4;
@@ -259,11 +259,13 @@ function sampleClock(picture,line) {
     if(r>=45 && r<190 && g>r+35 && b>g+30 && b>170){
       left=Math.min(left,x);
       right=Math.max(right,x);
+      top=Math.min(top,y);
+      bottom=Math.max(bottom,y);
       pixels.add(y*picture.width+x);
     }
   }
   if(left===Infinity) throw new Error("No visible clock ink in screenshot");
-  return {left,right,pixels};
+  return {left,right,top,bottom,pixels};
 }
 function samplePrefix(picture,line) {
   const y0=Math.max(0,Math.floor(line.top));
@@ -350,6 +352,10 @@ try{
       const base=sampleClock(hidden,data.line);
       const center=(base.left+base.right)/2;
       const error=center-data.width/2;
+      const inkY=(base.top+base.bottom)/2;
+      const boxY=(data.line.top+data.line.bottom)/2;
+      const verticalError=inkY-boxY;
+      console.log("MEASURE glyph-y", ident, JSON.stringify({inkY,boxY,verticalError,inkBounds:[base.top,base.bottom],line:data.line,panel:data.panel,fontFaceCount:data.fontFaceCount}));
       assert(
         Math.abs(error)<=4,
         "Visible glyph center error="+error.toFixed(2)+"px "+
