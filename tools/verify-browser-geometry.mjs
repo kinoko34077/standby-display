@@ -356,6 +356,15 @@ try{
       const boxY=(data.line.top+data.line.bottom)/2;
       const verticalError=inkY-boxY;
       console.log("MEASURE glyph-y", ident, JSON.stringify({inkY,boxY,verticalError,inkBounds:[base.top,base.bottom],line:data.line,panel:data.panel,fontFaceCount:data.fontFaceCount}));
+      // Existing X-only acceptance missed primary digit placement on Y. Limit
+      // vertical optical drift for the original Digital-7 without rejecting
+      // unrelated fonts that have not been optically calibrated here.
+      if(font==="d7") {
+        const maxVerticalDrift=Math.max(6,data.line.height*0.02);
+        assert(Math.abs(verticalError)<=maxVerticalDrift,
+          "Digital-7 visible glyph vertical drift="+verticalError.toFixed(2)+"px"+
+          " exceeds "+maxVerticalDrift.toFixed(2)+"px ("+ident+")");
+      }
       assert(
         Math.abs(error)<=4,
         "Visible glyph center error="+error.toFixed(2)+"px "+
