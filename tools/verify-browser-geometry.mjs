@@ -21,7 +21,7 @@ const html = String.raw`<!doctype html>
   <section class="clock-panel">
     <div class="block clock-block">
       <div class="time-line">
-        <span id="clock-prefix" class="clock-prefix" aria-hidden="true" hidden></span><span id="hour">21</span><span class="colon">:</span><span id="minute">12</span>
+        <span id="clock-prefix" class="clock-prefix" aria-hidden="true" hidden></span><span id="hour">21</span><span class="colon">:</span><span id="minute">12</span><span class="clock-baseline-marker" aria-hidden="true"></span>
       </div>
       <div id="seconds" class="seconds">:34</div>
     </div>
@@ -31,7 +31,7 @@ const html = String.raw`<!doctype html>
 <script type="module">
 import { CLOCK_FONT_OPTIONS } from "/scripts/constants.mjs";
 import { sanitizeSettings } from "/scripts/settings.mjs";
-import { resolveClockTypography } from "/scripts/render.mjs";
+import { resolveClockTypography, centerClockInk } from "/scripts/render.mjs";
 
 const params = new URLSearchParams(location.search);
 const font = params.get("font") ?? "d7";
@@ -48,14 +48,14 @@ root.style.setProperty("--app-clock-font-weight", String(typography.weight));
 root.style.setProperty("--app-clock-size-scale", String(typography.sizeScale));
 root.style.setProperty("--app-clock-letter-spacing", typography.letterSpacingEm + "em");
 root.style.setProperty("--app-clock-secondary-letter-spacing", typography.secondaryLetterSpacingEm + "em");
-root.style.setProperty("--app-clock-center-shift", typography.centerShiftEm + "em");
-root.style.setProperty("--app-clock-prefix-shift", typography.prefixShiftEm + "em");
+root.style.setProperty("--app-clock-ink-shift-x", "0px");
+root.style.setProperty("--app-clock-ink-shift-y", "0px");
+root.style.setProperty("--app-clock-prefix-shift", "0px");
 root.style.setProperty("--app-clock", "#70b8ff");
 const prefix = document.getElementById("clock-prefix");
-// Color only the synthetic period red in the probe. Do not reveal the
-// hidden font glyph by changing the wrapper's transparent text color.
+// Distinguish the REAL selected-font punctuation from blue main digits.
 const probeStyle = document.createElement("style");
-probeStyle.textContent = ".clock-prefix::after { background:#ff0000 !important; }";
+probeStyle.textContent = ".clock-prefix { color:#ff0000 !important; }";
 document.head.appendChild(probeStyle);
 if (hex) {
   prefix.hidden = false;
@@ -67,6 +67,7 @@ if (hex) {
 const fontName = typography.family.split(",")[0].trim();
 const loaded = await document.fonts.load(typography.weight + ' 32px ' + fontName);
 await document.fonts.ready;
+centerClockInk(document);
 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 window.clockProbe = {
   ready: true,
@@ -251,7 +252,7 @@ function sampleClock(picture,line) {
   // absolutely positioned just below it and must not bias the center check.
   const y0=Math.max(0,Math.floor(line.top));
   const y1=Math.min(picture.height-1,Math.ceil(line.bottom)-1);
-  let left=Infinity,right=-Infinity;
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
   const pixels=new Set();
   for(let y=y0;y<=y1;y++) for(let x=0;x<picture.width;x++){
     const i=(y*picture.width+x)*4;
@@ -259,11 +260,13 @@ function sampleClock(picture,line) {
     if(r>=45 && r<190 && g>r+35 && b>g+30 && b>170){
       left=Math.min(left,x);
       right=Math.max(right,x);
+      top=Math.min(top,y);
+      bottom=Math.max(bottom,y);
       pixels.add(y*picture.width+x);
     }
   }
   if(left===Infinity) throw new Error("No visible clock ink in screenshot");
-  return {left,right,pixels};
+  return {left,right,top,bottom,pixels};
 }
 function samplePrefix(picture,line) {
   const y0=Math.max(0,Math.floor(line.top));
@@ -350,6 +353,10 @@ try{
       const base=sampleClock(hidden,data.line);
       const center=(base.left+base.right)/2;
       const error=center-data.width/2;
+      const yCenter=(base.top+base.bottom)/2;
+      const yError=yCenter-data.height/2;
+      assert(Math.abs(yError)<=4,
+        "Painted main glyph Y center error="+yError.toFixed(2)+"px "+JSON.stringify({inkY:[base.top,base.bottom],line:data.line}));
       assert(
         Math.abs(error)<=4,
         "Visible glyph center error="+error.toFixed(2)+"px "+
@@ -366,12 +373,12 @@ try{
         assert(period,"No visible period ink");
         const gap=base.left-period.right-1;
         assert(
-          gap>=0 && gap<=7,
+          gap>=-1 && gap<=3,
           "Period visible gap="+gap+"px "+
             JSON.stringify({line:data.line,prefix:data.prefix,inkLeft:base.left,periodRight:period.right,periodCount:period.count}),
         );
       }
-      console.log("PASS",ident,"visible-center="+error.toFixed(2)+"px");
+      console.log("PASS",ident,"ink-center-x="+error.toFixed(2)+"px","ink-center-y="+yError.toFixed(2)+"px");
     }catch(e){
       failed++;console.error("FAIL",ident,e.message);
     }
