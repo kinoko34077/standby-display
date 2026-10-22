@@ -387,8 +387,15 @@ try{
       await client.call("Page.navigate",{url:new URL("/index.html",url).href});
       const snapshots=await client.eval(`(async () => {
         const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-        const overlay=document.getElementById("settings-overlay");
-        const entry=document.getElementById("settings-open");
+        let overlay,entry;
+        // Page.navigate returns before DOM parsing and module listener setup.
+        for(let i=0;i<120;i++){
+          overlay=document.getElementById("settings-overlay");
+          entry=document.getElementById("settings-open");
+          if(overlay && entry)break;
+          await sleep(100);
+        }
+        if(!overlay || !entry)throw Error("Settings controls missing after navigation");
         for(let i=0;i<100 && overlay.hidden;i++){
           entry.click();
           if(!overlay.hidden)break;
