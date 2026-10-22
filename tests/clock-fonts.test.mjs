@@ -24,6 +24,7 @@ test("clock fonts carry explicit normalization metadata", () => {
       sizeScale: 1,
       trackingEm: 0,
       prefixShiftEm: -0.063,
+      verticalShiftEm: -0.125,
     },
     "dseg7-modern": {
       sizeScale: 0.655,
@@ -161,6 +162,7 @@ test("font normalization and user adjustment compose in one render calculation",
     centerShiftEm: -0.0255,
     secondaryLetterSpacingEm: 0.03,
     prefixShiftEm: -0.006,
+    verticalShiftEm: 0,
   });
 });
 
@@ -203,6 +205,7 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-secondary-letter-spacing/);
   assert.match(css, /--app-clock-center-shift/);
   assert.match(css, /--app-clock-prefix-shift/);
+  assert.match(css, /--app-clock-vertical-shift/);
   assert.match(
     css,
     /\.clock-prefix\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?letter-spacing:\s*0;[\s\S]*?transform:\s*translateX\(var\(--app-clock-prefix-shift\)\)/,

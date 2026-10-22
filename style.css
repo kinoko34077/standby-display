@@ -178,7 +178,8 @@ body {
   text-align: center;
   white-space: nowrap;
   transform: scale(var(--app-clock-size-scale))
-    translateX(var(--app-clock-center-shift));
+    translateX(var(--app-clock-center-shift))
+    translateY(var(--app-clock-vertical-shift, 0em));
   transform-origin: center center;
 }
 

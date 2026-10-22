@@ -28,6 +28,7 @@ export function resolveClockTypography(settings) {
       3,
     ),
     prefixShiftEm: option.normalization.prefixShiftEm ?? 0,
+    verticalShiftEm: option.normalization.verticalShiftEm ?? 0,
   };
 }
 
@@ -100,6 +101,10 @@ export function createRenderer(documentObject) {
     rootElement.style.setProperty(
       "--app-clock-prefix-shift",
       `${clockTypography.prefixShiftEm}em`,
+    );
+    rootElement.style.setProperty(
+      "--app-clock-vertical-shift",
+      `${clockTypography.verticalShiftEm}em`,
     );
     rootElement.style.setProperty(
       "--app-text-font",

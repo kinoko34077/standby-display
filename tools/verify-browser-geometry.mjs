@@ -50,6 +50,7 @@ root.style.setProperty("--app-clock-letter-spacing", typography.letterSpacingEm 
 root.style.setProperty("--app-clock-secondary-letter-spacing", typography.secondaryLetterSpacingEm + "em");
 root.style.setProperty("--app-clock-center-shift", typography.centerShiftEm + "em");
 root.style.setProperty("--app-clock-prefix-shift", typography.prefixShiftEm + "em");
+root.style.setProperty("--app-clock-vertical-shift", typography.verticalShiftEm + "em");
 root.style.setProperty("--app-clock", "#70b8ff");
 const prefix = document.getElementById("clock-prefix");
 // Color only the synthetic period red in the probe. Do not reveal the
@@ -352,7 +353,10 @@ try{
       const base=sampleClock(hidden,data.line);
       const center=(base.left+base.right)/2;
       const error=center-data.width/2;
-      console.log('VERTICAL INK',ident,((base.top+base.bottom)/2-data.height/2).toFixed(2));
+      const verticalError=(base.top+base.bottom)/2-data.height/2;
+      console.log("VERTICAL INK",ident,verticalError.toFixed(2));
+      if(font==="d7") assert(Math.abs(verticalError)<=5,
+        "Digital-7 optical center drift="+verticalError.toFixed(2)+"px");
       assert(
         Math.abs(error)<=4,
         "Visible glyph center error="+error.toFixed(2)+"px "+
@@ -368,6 +372,7 @@ try{
         const period=samplePrefix(visible,data.line);
         assert(period,"No visible period ink");
         const gap=base.left-period.right-1;
+        console.log("PREFIX GAP",ident,gap);
         assert(
           gap>=0 && gap<=7,
           "Period visible gap="+gap+"px "+
