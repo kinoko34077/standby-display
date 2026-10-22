@@ -179,6 +179,14 @@ export function createClockApp({
       return;
     }
 
+    // Coarse-pointer devices must always retain an obvious reopen path.
+    // Previously the button auto-hid 3s after an unintended settings close.
+    if (document.defaultView?.matchMedia?.("(pointer: coarse)")?.matches) {
+      state.uiState.triggerVisible = true;
+      renderSettingsUi();
+      return;
+    }
+
     state.timers.triggerVisibility = timers.setTimeout(() => {
       const settingsTrigger = document.getElementById("settings-open");
       if (document.activeElement === settingsTrigger) {

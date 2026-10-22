@@ -216,3 +216,15 @@ test("iro color picker keeps native color input as a keyboard-accessible alterna
     /const picker = new colorPickerLibrary\.ColorPicker[\s\S]*?bindColorControl\(input, onChange\)[\s\S]*?picker\.on\("color:change"/,
   );
 });
+
+
+test("native color picker Escape does not close settings and touch users retain a reopen path", async () => {
+  const [ui, app] = await Promise.all([
+    read("scripts/settings-ui.mjs"),
+    read("scripts/clock-app.mjs"),
+  ]);
+
+  assert.match(ui, /event\.target\?\.type !== "color"/);
+  assert.match(app, /matchMedia\?\.\("\(pointer: coarse\)"\)/);
+  assert.match(app, /state\.uiState\.triggerVisible = true;/);
+});

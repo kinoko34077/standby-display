@@ -157,7 +157,9 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   closeButton.addEventListener("click", requestClose);
 
   documentObject.addEventListener("keydown", (event) => {
-    if (settingsOpen && event.key === "Escape") {
+    // Escape belongs to an open native color picker first. Do not accidentally
+    // close the entire settings surface when Safari dismisses that picker.
+    if (settingsOpen && event.key === "Escape" && event.target?.type !== "color") {
       requestClose();
     }
   });
