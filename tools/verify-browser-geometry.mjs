@@ -379,6 +379,53 @@ try{
       failed++;console.error("FAIL",ident,e.message);
     }
   }
+
+  // Exercise the real settings surface: random color toggles must not close
+  // the editing session or make the settings trigger unreachable.
+  try {
+    await client.call("Emulation.setDeviceMetricsOverride",{
+      width:390,height:844,deviceScaleFactor:1,mobile:true,
+    });
+    await client.call("Page.navigate",{url:new URL("/index.html?weather=0&moon=0&rokuyo=0",url).href});
+    let mounted=false;
+    for(let i=0;i<100;i++){
+      mounted=await client.eval("!!document.getElementById('setting-random-background')").catch(()=>false);
+      if(mounted)break;
+      await sleep(100);
+    }
+    assert(mounted,"Settings HTML did not mount");
+    const events=await client.eval(`(async()=>{
+      const snapshot=(label)=>({
+        label,
+        overlayHidden:document.getElementById('settings-overlay').hidden,
+        overlayDisplay:getComputedStyle(document.getElementById('settings-overlay')).display,
+        open:document.body.dataset.settingsOpen,
+        category:document.querySelector('[data-settings-category][aria-current="page"]')?.dataset.settingsCategory
+      });
+      const result=[];
+      document.getElementById('settings-open').click();
+      document.getElementById('settings-category-color').click();
+      result.push(snapshot('before'));
+      document.getElementById('setting-random-colors').click();
+      result.push(snapshot('daily-random'));
+      document.getElementById('setting-random-background').click();
+      result.push(snapshot('background-random'));
+      document.getElementById('settings-random-advanced').open=true;
+      const range=document.getElementById('setting-random-background-lightness-max');
+      range.value='25';range.dispatchEvent(new Event('input',{bubbles:true}));
+      result.push(snapshot('background-range'));
+      await new Promise(resolve=>setTimeout(resolve,100));
+      result.push(snapshot('settled'));
+      return result;
+    })()`);
+    console.log("RANDOM SETTINGS UI",JSON.stringify(events));
+    for(const entry of events) {
+      assert(!entry.overlayHidden && entry.overlayDisplay!=="none" && entry.open==="true",
+        "Settings disappeared during "+entry.label+": "+JSON.stringify(entry));
+    }
+  }catch(e){
+    failed++;console.error("FAIL random settings interaction",e.message);
+  }
   ws.close();
 }finally{
   browser.kill();
