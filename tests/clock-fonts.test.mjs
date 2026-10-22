@@ -196,13 +196,14 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-secondary-letter-spacing/);
   assert.match(css, /--app-clock-ink-shift-x/);
   assert.match(css, /--app-clock-ink-shift-y/);
+  assert.match(css, /--app-clock-effective-scale/);
   assert.match(css, /--app-clock-prefix-shift/);
   assert.match(css, /\.clock-prefix\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*0;[\s\S]*?left:\s*0;[\s\S]*?color:\s*var\(--app-clock\)/);
   assert.doesNotMatch(css, /\.clock-prefix::after\s*\{/);
   assert.match(css, /\.clock-baseline-marker\s*\{[\s\S]*?vertical-align:\s*baseline/);
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?display:\s*none/);
   assert.match(css, /\.clock-block\s*\{[\s\S]*?width:\s*max-content/);
-  assert.match(css, /transform:\s*scale\(var\(--app-clock-size-scale\)\)\s*translate\(var\(--app-clock-ink-shift-x\), var\(--app-clock-ink-shift-y\)\)/);
+  assert.match(css, /transform:\s*scale\(var\(--app-clock-effective-scale\)\)\s*translate\(var\(--app-clock-ink-shift-x\), var\(--app-clock-ink-shift-y\)\)/);
   assert.match(css, /\.time-line\s*\{[\s\S]*?position:\s*relative/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?right:\s*0/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?top:\s*100%/);
@@ -259,6 +260,7 @@ test("painted-font geometry owns viewport centering and genuine punctuation plac
   assert.match(render, /actualBoundingBoxAscent/);
   assert.match(render, /clock-baseline-marker/);
   assert.match(render, /--app-clock-ink-shift-y/);
+  assert.match(render, /--app-clock-effective-scale/);
   assert.match(render, /--app-clock-prefix-shift/);
   assert.match(html, /class="clock-baseline-marker"/);
   assert.doesNotMatch(css, /\.clock-prefix::after\s*\{/);
