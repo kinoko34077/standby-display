@@ -60,6 +60,7 @@
   --app-clock-size-scale: 1;
   --app-clock-letter-spacing: 0em;
   --app-clock-secondary-letter-spacing: 0em;
+  --app-clock-effective-scale: var(--app-clock-size-scale);
   --app-clock-ink-shift-x: 0px;
   --app-clock-ink-shift-y: 0px;
   --app-clock-prefix-shift: 0px;
@@ -179,7 +180,7 @@ body {
   text-align: center;
   white-space: nowrap;
   /* Internal font layout stays stable; the entire clock scales together. */
-  transform: scale(var(--app-clock-size-scale))
+  transform: scale(var(--app-clock-effective-scale))
     translate(var(--app-clock-ink-shift-x), var(--app-clock-ink-shift-y));
   transform-origin: center center;
 }
