@@ -22,12 +22,10 @@ export function resolveClockTypography(settings) {
     weight: option.weight,
     sizeScale: roundMetric(option.normalization.sizeScale * userScale, 4),
     letterSpacingEm,
-    centerShiftEm: roundMetric(letterSpacingEm / 2, 4),
     secondaryLetterSpacingEm: roundMetric(
       secondaryTracking + settings.clock.letterSpacingEm,
       3,
     ),
-    prefixShiftEm: option.normalization.prefixShiftEm ?? 0,
   };
 }
 
