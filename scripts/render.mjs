@@ -81,6 +81,8 @@ export function centerClockInk(documentObject) {
 
   // Always start with uncorrected geometry; otherwise each measurement
   // feeds back into its own previous translation.
+  const requestedScale = Number.parseFloat(win.getComputedStyle(block).getPropertyValue("--app-clock-size-scale")) || 1;
+  root.style.setProperty("--app-clock-effective-scale", String(requestedScale));
   root.style.setProperty("--app-clock-ink-shift-x", "0px");
   root.style.setProperty("--app-clock-ink-shift-y", "0px");
   root.style.setProperty("--app-clock-prefix-shift", "0px");
@@ -125,9 +127,13 @@ export function centerClockInk(documentObject) {
   // touches the visible left edge of the main digits, irrespective of
   // variable-width font bearings. It never contributes to digit centering.
   const prefix = documentObject.getElementById("clock-prefix");
+  let auxiliaryPeriodWidth = 0;
   if (prefix && !prefix.hidden && prefix.textContent) {
     const period = ctx.measureText(prefix.textContent);
     if (period.actualBoundingBoxAscent + period.actualBoundingBoxDescent > 0) {
+      // Reserve the glyph's natural advance for viewport-fit calculations;
+      // the period itself remains out of the main clock's layout width.
+      auxiliaryPeriodWidth = Math.max(0, period.width);
       const lineLeft = (lineRect.left - blockRect.left) / scale;
       const visiblePeriodRight = paintedPeriodRight(documentObject, style, prefix.textContent, period.actualBoundingBoxRight);
       // The externally hosted Digital-7 period has a font-size-dependent
@@ -141,6 +147,19 @@ export function centerClockInk(documentObject) {
       const prefixX = left - lineLeft - visiblePeriodRight + d7PeriodHint;
       root.style.setProperty("--app-clock-prefix-shift", `${prefixX.toFixed(3)}px`);
     }
+  }
+  // Preserve the requested outer scale until it would clip glyph ink.
+  // Reduce only the clock's combined display scale; date/weather layout
+  // retains its independent sizes and coordinates.
+  const visibleWidth = right - left + auxiliaryPeriodWidth;
+  const visibleHeight = bottom - top;
+  const fittedScale = Math.min(
+    requestedScale,
+    (win.innerWidth - 8) / Math.max(1, visibleWidth),
+    (win.innerHeight - 8) / Math.max(1, visibleHeight),
+  );
+  if (Number.isFinite(fittedScale) && fittedScale > 0) {
+    root.style.setProperty("--app-clock-effective-scale", String(fittedScale));
   }
   return true;
 }
