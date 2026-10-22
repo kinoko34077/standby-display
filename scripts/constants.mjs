@@ -114,7 +114,7 @@ export const CLOCK_FONT_OPTIONS = Object.freeze([
       sizeScale: 1,
       trackingEm: 0,
       // Adjust the synthetic hex prefix for original Digital-7's wider bearings.
-      prefixShiftEm: -0.063,
+      prefixShiftEm: -0.057,
       // The external Style-7 glyph ink sits ~0.125em below the line box center.
       verticalShiftEm: -0.125,
     }),

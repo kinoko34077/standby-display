@@ -373,6 +373,8 @@ try{
         assert(period,"No visible period ink");
         const gap=base.left-period.right-1;
         console.log("PREFIX GAP",ident,gap);
+        if(font==="d7") assert(gap>=0 && gap<=3,
+          "Digital-7 period optical gap="+gap+"px");
         assert(
           gap>=0 && gap<=7,
           "Period visible gap="+gap+"px "+
@@ -415,6 +417,9 @@ try{
       result.push(snapshot('daily-random'));
       document.getElementById('setting-random-background').click();
       result.push(snapshot('background-random'));
+      const nativeColor=document.getElementById('setting-color-background');
+      nativeColor.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+      result.push(snapshot('native-color-escape'));
       document.getElementById('settings-random-advanced').open=true;
       const range=document.getElementById('setting-random-background-lightness-max');
       range.value='25';range.dispatchEvent(new Event('input',{bubbles:true}));

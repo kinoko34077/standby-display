@@ -23,7 +23,7 @@ test("clock fonts carry explicit normalization metadata", () => {
     d7: {
       sizeScale: 1,
       trackingEm: 0,
-      prefixShiftEm: -0.063,
+      prefixShiftEm: -0.057,
       verticalShiftEm: -0.125,
     },
     "dseg7-modern": {
