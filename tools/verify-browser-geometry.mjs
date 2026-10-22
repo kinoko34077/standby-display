@@ -55,7 +55,7 @@ root.style.setProperty("--app-clock", "#70b8ff");
 const prefix = document.getElementById("clock-prefix");
 // Distinguish the REAL selected-font punctuation from blue main digits.
 const probeStyle = document.createElement("style");
-probeStyle.textContent = ".clock-prefix { color:#ff0000 !important; }";
+probeStyle.textContent = ".clock-prefix { color:#ff0000 !important; } .date-panel,.extra-panel { color:#000 !important; }";
 document.head.appendChild(probeStyle);
 if (hex) {
   prefix.hidden = false;
