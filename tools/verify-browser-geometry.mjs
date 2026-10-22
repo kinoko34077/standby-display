@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, statSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve, sep } from "node:path";
@@ -135,7 +135,7 @@ async function serve() {
       return;
     }
     const full = resolve(root, "." + requestPath);
-    if (!full.startsWith(root + sep) || !existsSync(full)) {
+    if (!full.startsWith(root + sep) || !existsSync(full) || !statSync(full).isFile()) {
       res.writeHead(404);
       res.end("Not found");
       return;
