@@ -376,6 +376,64 @@ try{
       failed++;console.error("FAIL",ident,e.message);
     }
   }
+  // Real settings interaction regression: background-random changes must not
+  // unmount the inspector, and users must be able to close/reopen it.
+  for (const viewport of [{width:390,height:844},{width:1100,height:650}]) {
+    const ident="settings-random "+viewport.width+"x"+viewport.height;
+    try {
+      await client.call("Emulation.setDeviceMetricsOverride",{
+        width:viewport.width,height:viewport.height,deviceScaleFactor:1,mobile:true,
+      });
+      await client.call("Page.navigate",{url:new URL("/index.html",url).href});
+      const snapshots=await client.eval(`(async () => {
+        const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+        const overlay=document.getElementById("settings-overlay");
+        const entry=document.getElementById("settings-open");
+        for(let i=0;i<100 && overlay.hidden;i++){
+          entry.click();
+          if(!overlay.hidden)break;
+          await sleep(100);
+        }
+        const snapshots=[];
+        const snapshot=(phase)=>{
+          const shell=document.querySelector(".settings-shell");
+          snapshots.push({
+            phase,hidden:overlay.hidden,display:getComputedStyle(overlay).display,
+            shellWidth:shell.getBoundingClientRect().width,
+            mobileBlur:getComputedStyle(shell).backdropFilter,
+            state:document.body.dataset.settingsOpen,
+            random:document.getElementById("setting-random-colors").checked,
+            background:document.getElementById("setting-random-background").checked,
+          });
+        };
+        snapshot("open");
+        document.getElementById("settings-category-color").click();
+        document.getElementById("setting-random-colors").click();
+        await sleep(100);
+        snapshot("random");
+        document.getElementById("setting-random-background").click();
+        await sleep(100);
+        snapshot("background");
+        document.getElementById("settings-close").click();
+        snapshot("close");
+        document.getElementById("settings-open").click();
+        snapshot("reopen");
+        return snapshots;
+      })()`);
+      const visible=x=>!x.hidden&&x.display!=="none"&&x.shellWidth>0&&x.state==="true";
+      assert(snapshots.length===5 && visible(snapshots[0]) && visible(snapshots[1]) &&
+        visible(snapshots[2]) && visible(snapshots[4]),"Settings disappeared: "+JSON.stringify(snapshots));
+      assert(snapshots[3].hidden && snapshots[3].state==="false","Settings could not close");
+      assert(snapshots[0].random!==snapshots[1].random &&
+        snapshots[1].background!==snapshots[2].background,"Random control did not toggle");
+      if(viewport.width<=800){
+        assert(snapshots[2].mobileBlur==="none","Mobile fullscreen backdrop blur remains enabled");
+      }
+      console.log("PASS",ident,"random toggles and close/reopen");
+    }catch(error){
+      failed++;console.error("FAIL",ident,error.message);
+    }
+  }
   ws.close();
 }finally{
   browser.kill();
