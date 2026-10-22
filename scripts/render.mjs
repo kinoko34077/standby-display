@@ -35,6 +35,36 @@ function roundMetric(value, decimals) {
 }
 
 
+const periodInkCache = new Map();
+
+/** Sample the same font's real period in Canvas, avoiding broad outline
+ * metrics that include non-painted side bearings on some webfonts. */
+function paintedPeriodRight(documentObject, style, glyph, fallbackRight) {
+  const key = [style.fontStyle, style.fontWeight, style.fontSize, style.fontFamily, glyph].join("|");
+  if (periodInkCache.has(key)) return periodInkCache.get(key);
+  const fontPx = Number.parseFloat(style.fontSize);
+  if (!(fontPx > 0)) return fallbackRight;
+  const canvas = documentObject.createElement("canvas");
+  const extent = Math.max(64, Math.ceil(fontPx * 2.8));
+  canvas.width = extent;
+  canvas.height = extent;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return fallbackRight;
+  ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#fff";
+  const origin = Math.round(fontPx * 0.8);
+  ctx.fillText(glyph, origin, Math.round(fontPx * 1.5));
+  const rgba = ctx.getImageData(0, 0, extent, extent).data;
+  let right = -Infinity;
+  for (let i = 3; i < rgba.length; i += 4) {
+    if (rgba[i] >= 160) right = Math.max(right, ((i - 3) / 4) % extent);
+  }
+  const value = Number.isFinite(right) ? right - origin : fallbackRight;
+  periodInkCache.set(key, value);
+  return value;
+}
+
 /**
  * Center actual glyph ink against the viewport, not the CSS line box.
  * A zero-height inline baseline anchor plus Canvas TextMetrics keeps this
@@ -99,7 +129,8 @@ export function centerClockInk(documentObject) {
     const period = ctx.measureText(prefix.textContent);
     if (period.actualBoundingBoxAscent + period.actualBoundingBoxDescent > 0) {
       const lineLeft = (lineRect.left - blockRect.left) / scale;
-      const prefixX = left - lineLeft - period.actualBoundingBoxRight;
+      const visiblePeriodRight = paintedPeriodRight(documentObject, style, prefix.textContent, period.actualBoundingBoxRight);
+      const prefixX = left - lineLeft - visiblePeriodRight;
       root.style.setProperty("--app-clock-prefix-shift", `${prefixX.toFixed(3)}px`);
     }
   }
@@ -183,7 +214,10 @@ export function createRenderer(documentObject) {
       centerClockInk(documentObject);
     });
   }
-  documentObject.fonts?.addEventListener?.("loadingdone", scheduleInkCenter);
+  documentObject.fonts?.addEventListener?.("loadingdone", () => {
+    periodInkCache.clear();
+    scheduleInkCenter();
+  });
   documentObject.fonts?.ready?.then?.(scheduleInkCenter);
   documentObject.defaultView?.addEventListener?.("resize", scheduleInkCenter);
 
