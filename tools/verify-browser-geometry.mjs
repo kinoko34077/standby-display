@@ -389,7 +389,7 @@ try{
       );
       const deltaSeconds=Math.abs(data.seconds.right-data.line.right);
       assert(deltaSeconds<=5,"Secondary seconds right-edge drift="+deltaSeconds.toFixed(2)+"px");
-      if(mode==="hex" && size===100 && tracking===0){
+      if(mode==="hex"){
         await client.eval("window.clockProbe.setPrefixVisible(true)");
         const visibleCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
         const visible=png(visibleCapture.data);
