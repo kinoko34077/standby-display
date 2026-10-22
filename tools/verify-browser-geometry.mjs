@@ -372,6 +372,7 @@ try{
         const period=samplePrefix(visible,data.line);
         assert(period,"No visible period ink");
         const gap=base.left-period.right-1;
+        console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,period,inkLeft:base.left}));
         assert(
           gap>=-1 && gap<=3,
           "Period visible gap="+gap+"px "+
