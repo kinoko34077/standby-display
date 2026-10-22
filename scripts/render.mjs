@@ -130,7 +130,15 @@ export function centerClockInk(documentObject) {
     if (period.actualBoundingBoxAscent + period.actualBoundingBoxDescent > 0) {
       const lineLeft = (lineRect.left - blockRect.left) / scale;
       const visiblePeriodRight = paintedPeriodRight(documentObject, style, prefix.textContent, period.actualBoundingBoxRight);
-      const prefixX = left - lineLeft - visiblePeriodRight;
+      // The externally hosted Digital-7 period has a font-size-dependent
+      // horizontal hinting residual in Chrome (0px at 187px, ~7px at 528px).
+      // Correct ONLY this independently positioned X coordinate; never the
+      // font-size, vertical baseline or the four-digit centered run.
+      const fontPx = Number.parseFloat(style.fontSize);
+      const d7PeriodHint = style.fontFamily.startsWith('"Digital-7"')
+        ? Math.max(0, Math.min(7, (fontPx - 200) * 0.022))
+        : 0;
+      const prefixX = left - lineLeft - visiblePeriodRight + d7PeriodHint;
       root.style.setProperty("--app-clock-prefix-shift", `${prefixX.toFixed(3)}px`);
     }
   }
