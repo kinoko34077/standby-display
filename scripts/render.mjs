@@ -58,7 +58,7 @@ function paintedPeriodRight(documentObject, style, glyph, fallbackRight) {
   const rgba = ctx.getImageData(0, 0, extent, extent).data;
   let right = -Infinity;
   for (let i = 3; i < rgba.length; i += 4) {
-    if (rgba[i] >= 160) right = Math.max(right, ((i - 3) / 4) % extent);
+    if (rgba[i] >= 240) right = Math.max(right, ((i - 3) / 4) % extent);
   }
   const value = Number.isFinite(right) ? right - origin : fallbackRight;
   periodInkCache.set(key, value);
