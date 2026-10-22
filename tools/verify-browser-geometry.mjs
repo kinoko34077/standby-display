@@ -385,6 +385,17 @@ try{
         width:viewport.width,height:viewport.height,deviceScaleFactor:1,mobile:true,
       });
       await client.call("Page.navigate",{url:new URL("/index.html",url).href});
+      // CDP Page.navigate can return while the previous document's JS context
+      // still exists. Poll from the host so navigation invalidations are retried.
+      let ready=false;
+      for(let attempt=0;attempt<120;attempt++) {
+        try {
+          ready=Boolean(await client.eval('location.pathname === "/index.html" && document.readyState !== "loading" && document.getElementById("settings-overlay") && document.getElementById("settings-open")',3000));
+          if(ready)break;
+        }catch{}
+        await sleep(100);
+      }
+      assert(ready,"Settings destination document did not become ready");
       const snapshots=await client.eval(`(async () => {
         const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
         let overlay,entry;
