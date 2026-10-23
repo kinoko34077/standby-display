@@ -233,6 +233,7 @@ body {
   top: 50%;
   bottom: auto;
   margin: 0;
+  margin-top: clamp(0.2rem, 0.45vw, 0.6rem);
   font-family: var(--app-clock-font);
   font-weight: var(--app-clock-font-weight);
   font-size: var(--seconds-size);
