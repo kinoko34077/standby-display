@@ -418,6 +418,11 @@ try{
         await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-hex.png"),Buffer.from(visibleCapture.data,"base64"));
         const period=samplePrefix(visible,data.line);
         assert(period,"No visible period ink");
+        let actualOverlap=0;
+        for(const pixel of period.pixels) if(base.pixels.has(pixel)) actualOverlap++;
+        assert(actualOverlap===0,
+          "Real period strokes cover rendered digit ink (not merely CSS whitespace): "+actualOverlap+" pixels");
+
         if(size===100) assert(period.left>=1 && base.right<data.width-1,
           "Real prefix/digits clipped at viewport bounds: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
         const gap=base.left-period.right-1;
