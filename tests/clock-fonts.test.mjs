@@ -23,29 +23,24 @@ test("clock fonts carry explicit normalization metadata", () => {
     d7: {
       sizeScale: 1,
       trackingEm: 0,
-      prefixShiftEm: -0.063,
     },
     "dseg7-modern": {
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
-      prefixShiftEm: -0.006,
     },
     "dseg7-classic-mini-bold": {
       sizeScale: 0.655,
       trackingEm: -0.081,
       secondaryTrackingEm: 0,
-      prefixShiftEm: -0.006,
     },
     rajdhani: {
       sizeScale: 1.018,
       trackingEm: -0.07,
-      prefixShiftEm: -0.041,
     },
     mono: {
       sizeScale: 0.907,
       trackingEm: -0.183,
-      prefixShiftEm: -0.047,
     },
   });
 });
@@ -158,9 +153,7 @@ test("font normalization and user adjustment compose in one render calculation",
     weight: 700,
     sizeScale: 0.786,
     letterSpacingEm: -0.051,
-    centerShiftEm: -0.0255,
     secondaryLetterSpacingEm: 0.03,
-    prefixShiftEm: -0.006,
   });
 });
 
@@ -201,45 +194,28 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /--app-clock-size-scale/);
   assert.match(css, /--app-clock-letter-spacing/);
   assert.match(css, /--app-clock-secondary-letter-spacing/);
-  assert.match(css, /--app-clock-center-shift/);
+  assert.match(css, /--app-clock-ink-shift-x/);
+  assert.match(css, /--app-clock-ink-shift-y/);
+  assert.match(css, /--app-clock-effective-scale/);
   assert.match(css, /--app-clock-prefix-shift/);
-  assert.match(
-    css,
-    /\.clock-prefix\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?letter-spacing:\s*0;[\s\S]*?transform:\s*translateX\(var\(--app-clock-prefix-shift\)\)/,
-  );
-  assert.match(css, /\.clock-prefix::after\s*\{[\s\S]*?background:\s*var\(--app-clock\)/);
+  assert.match(css, /\.clock-prefix\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*0;[\s\S]*?left:\s*0;[\s\S]*?color:\s*var\(--app-clock\)/);
+  assert.doesNotMatch(css, /\.clock-prefix::after\s*\{/);
+  assert.match(css, /\.clock-baseline-marker\s*\{[\s\S]*?vertical-align:\s*baseline/);
   assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?display:\s*none/);
-  assert.match(css, /\.clock-prefix\[hidden\]\s*\{[\s\S]*?min-width:\s*0/);
   assert.match(css, /\.clock-block\s*\{[\s\S]*?width:\s*max-content/);
-  assert.match(
-    css,
-    /\.clock-block\s*\{[\s\S]*?transform:\s*scale\(var\(--app-clock-size-scale\)\)\s*translateX\(var\(--app-clock-center-shift\)\)/,
-  );
+  assert.match(css, /transform:\s*scale\(var\(--app-clock-effective-scale\)\)\s*translate\(var\(--app-clock-ink-shift-x\), var\(--app-clock-ink-shift-y\)\)/);
   assert.match(css, /\.time-line\s*\{[\s\S]*?position:\s*relative/);
-  assert.match(css, /\.time-line\s*\{[\s\S]*?width:\s*max-content/);
-  assert.match(css, /\.time-line\s*\{[\s\S]*?text-align:\s*center/);
-  assert.match(css, /\.seconds\s*\{[\s\S]*?right:\s*0/);
-  assert.match(css, /\.seconds\s*\{[\s\S]*?top:\s*100%/);
+  assert.match(css, /\.seconds\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?left:\s*50%;[\s\S]*?font-size:\s*var\(--seconds-size\)/);
+  assert.match(css, /\.seconds\s*\{[\s\S]*?transform:\s*translateX\(-100%\)/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?text-align:\s*right/);
-  assert.match(css, /--app-clock-secondary-letter-spacing/);
-  assert.match(
-    css,
-    /transform:\s*scale\(var\(--app-clock-size-scale\)\)\s*translateX\(var\(--app-clock-center-shift\)\)/,
-  );
 });
 
 
-test("portrait clock panel itself is centered in the padded grid", async () => {
+test("portrait clock floats at viewport center independently of grid rows", async () => {
   const css = await readFile(new URL("style.css", root), "utf8");
-
-  assert.match(
-    css,
-    /@media \(max-aspect-ratio: 1 \/ 1\)[\s\S]*?\.clock-panel\s*\{[\s\S]*?align-self:\s*center;[\s\S]*?justify-self:\s*center;/,
-  );
-  assert.doesNotMatch(
-    css,
-    /@media \(max-aspect-ratio: 1 \/ 1\)[\s\S]*?\.clock-panel\s*\{[\s\S]*?justify-self:\s*stretch;/,
-  );
+  assert.match(css, /@media \(max-aspect-ratio: 1 \/ 1\)[\s\S]*?\.clock-panel\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;[\s\S]*?max-width:\s*none;/);
+  assert.match(css, /\.date-panel \{ grid-row: 1; \}/);
+  assert.match(css, /\.extra-panel \{ grid-row: 3; \}/);
 });
 
 test("secondary seconds align to the centered primary clock without affecting its width", async () => {
@@ -251,7 +227,7 @@ test("secondary seconds align to the centered primary clock without affecting it
   );
   assert.match(
     css,
-    /\.seconds\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*0;[\s\S]*?top:\s*100%;[\s\S]*?bottom:\s*auto;/,
+    /\.seconds\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*auto;[\s\S]*?top:\s*50%;[\s\S]*?bottom:\s*auto;/,
   );
   assert.doesNotMatch(
     css,
@@ -269,4 +245,32 @@ test("DSEG secondary seconds avoid the main negative tracking compression", () =
   const typography = resolveClockTypography(defaults);
   assert.equal(typography.letterSpacingEm, -0.081);
   assert.equal(typography.secondaryLetterSpacingEm, 0);
+});
+
+
+test("painted-font geometry owns viewport centering and genuine punctuation placement", async () => {
+  const [render, css, html, browser] = await Promise.all([
+    readFile(new URL("scripts/render.mjs", root), "utf8"),
+    readFile(new URL("style.css", root), "utf8"),
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("tools/verify-browser-geometry.mjs", root), "utf8"),
+  ]);
+  assert.match(render, /export function centerClockInk\(documentObject\)/);
+  assert.match(render, /ctx\.measureText\(glyph\)/);
+  assert.match(render, /actualBoundingBoxAscent/);
+  assert.match(render, /clock-baseline-marker/);
+  assert.match(render, /--app-clock-ink-shift-y/);
+  assert.match(render, /--app-clock-effective-scale/);
+  assert.match(render, /--app-clock-prefix-shift/);
+  assert.match(render, /mainHalfWidth \+ auxiliaryPeriodWidth/);
+  assert.match(render, /paintedPeriodBounds/);
+  assert.doesNotMatch(render, /auxiliaryPeriodWidth = Math.max\(0, period.width\)/);
+  assert.match(html, /class="clock-baseline-marker"/);
+  assert.match(render, /seconds\.style\.visibility = "visible"/);
+  assert.match(render, /seconds\.style\.left =/);
+  assert.match(render, /seconds\.style\.top =/);
+  assert.doesNotMatch(css, /\.clock-prefix::after\s*\{/);
+  assert.match(browser, /Painted main glyph Y center error/);
+  assert.match(browser, /\.clock-prefix \{ color:#ff0000 !important; \}/);
+  assert.doesNotMatch(render, /verticalShiftEm/);
 });
