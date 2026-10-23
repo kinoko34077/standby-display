@@ -178,8 +178,9 @@ export function centerClockInk(documentObject) {
       const paintedMainLeft = win.innerWidth / 2 - (right - left) * requestedScale / 2;
       const periodPaintedLeft = paintedMainLeft -
         periodInkWidth * requestedScale + d7PeriodHint * requestedScale;
-      const edgeNudge = Math.max(0, (2 - periodPaintedLeft) / requestedScale);
-      const prefixX = spacedX + edgeNudge;
+      // Never push the period's painted ink into the first digit.
+      // Empty side-bearings may clip at extreme user-selected zoom.
+      const prefixX = spacedX;
       root.style.setProperty("--app-clock-prefix-shift", `${prefixX.toFixed(3)}px`);
     }
   }
