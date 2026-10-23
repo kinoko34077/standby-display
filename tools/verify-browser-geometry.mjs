@@ -362,6 +362,7 @@ try{
   for(const scenario of cases){
     const {font,viewport,mode,size,tracking}=scenario;
     const ident=font+" "+viewport.width+"x"+viewport.height+" "+mode+" size="+size+" tracking="+tracking;
+    const captureKey=[font,viewport.width+"x"+viewport.height,mode,"size"+size,"tracking"+tracking].join("-");
     try{
       await client.call("Emulation.setDeviceMetricsOverride",{
         width:viewport.width,height:viewport.height,deviceScaleFactor:1,mobile:true,
