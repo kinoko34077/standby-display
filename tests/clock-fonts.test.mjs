@@ -262,6 +262,9 @@ test("painted-font geometry owns viewport centering and genuine punctuation plac
   assert.match(render, /--app-clock-ink-shift-y/);
   assert.match(render, /--app-clock-effective-scale/);
   assert.match(render, /--app-clock-prefix-shift/);
+  assert.match(render, /mainHalfWidth \+ auxiliaryPeriodWidth/);
+  assert.match(render, /paintedPeriodBounds/);
+  assert.doesNotMatch(render, /auxiliaryPeriodWidth = Math.max\(0, period.width\)/);
   assert.match(html, /class="clock-baseline-marker"/);
   assert.match(render, /seconds\.style\.visibility = "visible"/);
   assert.match(render, /seconds\.style\.left =/);
