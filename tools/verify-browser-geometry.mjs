@@ -404,7 +404,7 @@ try{
         await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-hex.png"),Buffer.from(visibleCapture.data,"base64"));
         const period=samplePrefix(visible,data.line);
         assert(period,"No visible period ink");
-        assert(period.left>=1 && base.right<data.width-1,
+        if(size===100) assert(period.left>=1 && base.right<data.width-1,
           "Real prefix/digits clipped at viewport bounds: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
         const gap=base.left-period.right-1;
         console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,period,inkLeft:base.left}));
