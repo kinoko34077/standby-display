@@ -869,6 +869,10 @@ body[data-settings-open="true"] .settings-trigger-layer {
     width: 100%;
     border-left: 0;
     box-shadow: none;
+    /* Fullscreen mobile settings nearly cover the clock; blurring the live
+       background requires repeated compositor work on every color change. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .settings-toolbar {
