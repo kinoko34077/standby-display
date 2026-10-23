@@ -424,7 +424,8 @@ try{
           for(const pixel of period.pixels) if(base.pixels.has(pixel)) actualOverlap++;
           assert(actualOverlap===0,
             "Period ink covers painted digit ink (not empty font padding): "+actualOverlap+" pixels");
-          if(size===100) assert(period.left>=1 && base.left>=1 && base.right<data.width-1,
+          if(size===100) assert(period.left>=1 && base.left>=1 && base.right<data.width-1 &&
+            base.top>=1 && base.bottom<data.height-1,
             "Normal zoom painted clock ink is clipped: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
           const gap=base.left-period.right-1;
           console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,periodLeft:period.left,periodRight:period.right,inkLeft:base.left}));
