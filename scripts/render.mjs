@@ -39,28 +39,34 @@ const periodInkCache = new Map();
 
 /** Sample the same font's real period in Canvas, avoiding broad outline
  * metrics that include non-painted side bearings on some webfonts. */
-function paintedPeriodRight(documentObject, style, glyph, fallbackRight) {
+function paintedPeriodBounds(documentObject, style, glyph, fallbackBounds) {
   const key = [style.fontStyle, style.fontWeight, style.fontSize, style.fontFamily, glyph].join("|");
   if (periodInkCache.has(key)) return periodInkCache.get(key);
   const fontPx = Number.parseFloat(style.fontSize);
-  if (!(fontPx > 0)) return fallbackRight;
+  if (!(fontPx > 0)) return fallbackBounds;
   const canvas = documentObject.createElement("canvas");
   const extent = Math.max(64, Math.ceil(fontPx * 2.8));
   canvas.width = extent;
   canvas.height = extent;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return fallbackRight;
+  if (!ctx) return fallbackBounds;
   ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#fff";
   const origin = Math.round(fontPx * 0.8);
   ctx.fillText(glyph, origin, Math.round(fontPx * 1.5));
   const rgba = ctx.getImageData(0, 0, extent, extent).data;
-  let right = -Infinity;
+  let left = Infinity, right = -Infinity;
   for (let i = 3; i < rgba.length; i += 4) {
-    if (rgba[i] >= 240) right = Math.max(right, ((i - 3) / 4) % extent);
+    if (rgba[i] >= 240) {
+      const x = ((i - 3) / 4) % extent;
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+    }
   }
-  const value = Number.isFinite(right) ? right - origin : fallbackRight;
+  const value = Number.isFinite(right)
+    ? { left: left - origin, right: right - origin }
+    : fallbackBounds;
   periodInkCache.set(key, value);
   return value;
 }
@@ -131,11 +137,15 @@ export function centerClockInk(documentObject) {
   if (prefix && !prefix.hidden && prefix.textContent) {
     const period = ctx.measureText(prefix.textContent);
     if (period.actualBoundingBoxAscent + period.actualBoundingBoxDescent > 0) {
-      // Reserve the glyph's natural advance for viewport-fit calculations;
-      // the period itself remains out of the main clock's layout width.
-      auxiliaryPeriodWidth = Math.max(0, period.width);
+      // The true painted ink may be wide even when the font's period has
+      // ZERO advance (e.g. DSEG Classic), so never use period.width here.
+      const periodInk = paintedPeriodBounds(documentObject, style, prefix.textContent, {
+        left: -period.actualBoundingBoxLeft,
+        right: period.actualBoundingBoxRight,
+      });
+      auxiliaryPeriodWidth = Math.max(0, periodInk.right - periodInk.left);
       const lineLeft = (lineRect.left - blockRect.left) / scale;
-      const visiblePeriodRight = paintedPeriodRight(documentObject, style, prefix.textContent, period.actualBoundingBoxRight);
+      const visiblePeriodRight = periodInk.right;
       // The externally hosted Digital-7 period has a font-size-dependent
       // horizontal hinting residual in Chrome (0px at 187px, ~7px at 528px).
       // Correct ONLY this independently positioned X coordinate; never the
@@ -154,11 +164,15 @@ export function centerClockInk(documentObject) {
   // Preserve the requested outer scale until it would clip glyph ink.
   // Reduce only the clock's combined display scale; date/weather layout
   // retains its independent sizes and coordinates.
-  const visibleWidth = right - left + auxiliaryPeriodWidth;
+  const mainHalfWidth = (right - left) / 2;
+  // Four digits are independently centered. The prefix extends ONLY LEFT,
+  // so its ink width must fit inside the LEFT half of the viewport, not
+  // be split between the left and right margins (review P2 on PR #61).
+  const maxHorizontalExtent = Math.max(mainHalfWidth + auxiliaryPeriodWidth, mainHalfWidth);
   const visibleHeight = bottom - top;
   const fittedScale = Math.min(
     requestedScale,
-    (win.innerWidth - 8) / Math.max(1, visibleWidth),
+    (win.innerWidth / 2 - 4) / Math.max(1, maxHorizontalExtent),
     (win.innerHeight - 8) / Math.max(1, visibleHeight),
   );
   if (Number.isFinite(fittedScale) && fittedScale > 0) {
