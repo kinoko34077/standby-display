@@ -102,6 +102,8 @@ window.clockProbe = {
       width: innerWidth,
       height: innerHeight,
       fontFaceCount: loaded.length,
+      requestedScale: Number(getComputedStyle(document.querySelector(".clock-block")).getPropertyValue("--app-clock-size-scale")),
+      effectiveScale: Number(getComputedStyle(document.querySelector(".clock-block")).getPropertyValue("--app-clock-effective-scale")),
       panel:rect(document.querySelector(".clock-panel")),
       line:rect(document.querySelector(".time-line")),
       seconds:rect(document.querySelector(".seconds")),
@@ -287,16 +289,18 @@ function samplePrefix(picture,line) {
   const y0=Math.max(0,Math.floor(line.top));
   const y1=Math.min(picture.height-1,Math.ceil(line.bottom)-1);
   let left=Infinity,right=-Infinity,count=0;
+  const pixels=new Set();
   for(let y=y0;y<=y1;y++) for(let x=0;x<picture.width;x++){
     const i=(y*picture.width+x)*4;
     const r=picture.rgba[i],g=picture.rgba[i+1],b=picture.rgba[i+2];
     if(r>190 && g<100 && b<100){
       left=Math.min(left,x);
       right=Math.max(right,x);
+      pixels.add(y*picture.width+x);
       count++;
     }
   }
-  return left===Infinity ? null : {left,right,count};
+  return left===Infinity ? null : {left,right,count,pixels};
 }
 async function sleep(ms) {return new Promise(r=>setTimeout(r,ms));}
 async function waitProbe(client,font) {
@@ -312,7 +316,13 @@ async function waitProbe(client,font) {
 function assert(condition,message) {if(!condition) throw Error(message);}
 const cases=[];
 for(const font of ["d7","dseg7-modern","dseg7-classic-mini-bold","rajdhani","mono"])
-  for(const viewport of [{width:390,height:844},{width:1100,height:650}])
+  for(const viewport of [
+    {width:320,height:568},{width:360,height:640},
+    {width:375,height:812},{width:390,height:844},
+    {width:430,height:932},{width:768,height:1024},
+    {width:844,height:390},{width:1100,height:650},
+    {width:1440,height:900},{width:1920,height:1080},
+  ])
     for(const mode of ["civil","hex"])
       cases.push({font,viewport,mode,size:100,tracking:0});
 for(const tracking of [-0.2,0.2])
@@ -352,6 +362,7 @@ try{
   for(const scenario of cases){
     const {font,viewport,mode,size,tracking}=scenario;
     const ident=font+" "+viewport.width+"x"+viewport.height+" "+mode+" size="+size+" tracking="+tracking;
+    const captureKey=[font,viewport.width+"x"+viewport.height,mode,"size"+size,"tracking"+tracking].join("-");
     try{
       await client.call("Emulation.setDeviceMetricsOverride",{
         width:viewport.width,height:viewport.height,deviceScaleFactor:1,mobile:true,
@@ -361,6 +372,10 @@ try{
       const data=await waitProbe(client,font);
       assert(data.width===viewport.width && data.height===viewport.height,"Viewport emulation mismatch");
       assert(data.fontFaceCount>0,"Expected font was not loaded: "+data.fontName);
+      assert(Math.abs(data.requestedScale-data.effectiveScale)<0.00001,
+        "Window resized the user's selected scale: "+JSON.stringify({
+          requested:data.requestedScale,effective:data.effectiveScale,viewport
+        }));
       if(size===100 && tracking===0 && mode==="civil"){
         const ancillary=await client.eval("window.clockProbe.checkAuxiliaryInvariance()");
         const dist=(v,w)=>Math.abs(v-w);
@@ -381,17 +396,17 @@ try{
       const hiddenCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
       const hidden=png(hiddenCapture.data);
       if(size===100 && tracking===0 && mode==="civil") {
-        await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-civil.png"),Buffer.from(hiddenCapture.data,"base64"));
+        await writeFile(join(artifactDir,captureKey+"-digits.png"),Buffer.from(hiddenCapture.data,"base64"));
       }
       const base=sampleClock(hidden,data.line);
       const center=(base.left+base.right)/2;
       const error=center-data.width/2;
       const yCenter=(base.top+base.bottom)/2;
       const yError=yCenter-data.height/2;
-      assert(Math.abs(yError)<=4,
+      assert(Math.abs(yError)<=Math.max(4,0.006*data.height),
         "Painted main glyph Y center error="+yError.toFixed(2)+"px "+JSON.stringify({inkY:[base.top,base.bottom],line:data.line}));
       assert(
-        Math.abs(error)<=4,
+        Math.abs(error)<=Math.max(4,0.003*data.width),
         "Visible glyph center error="+error.toFixed(2)+"px "+
           JSON.stringify({panel:data.panel,line:data.line,ink:[base.left,base.right]}),
       );
@@ -401,18 +416,24 @@ try{
         await client.eval("window.clockProbe.setPrefixVisible(true)");
         const visibleCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
         const visible=png(visibleCapture.data);
-        await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-hex.png"),Buffer.from(visibleCapture.data,"base64"));
+        await writeFile(join(artifactDir,captureKey+"-period.png"),Buffer.from(visibleCapture.data,"base64"));
         const period=samplePrefix(visible,data.line);
-        assert(period,"No visible period ink");
-        assert(period.left>=1 && base.right<data.width-1,
-          "Real prefix/digits clipped at viewport bounds: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
-        const gap=base.left-period.right-1;
-        console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,period,inkLeft:base.left}));
-        assert(
-          gap>=-1 && gap<=3,
-          "Period visible gap="+gap+"px "+
-            JSON.stringify({line:data.line,prefix:data.prefix,inkLeft:base.left,periodRight:period.right,periodCount:period.count}),
-        );
+        if(size===100) assert(period,"Normal-size real period ink is not visible");
+        if(period){
+          let actualOverlap=0;
+          for(const pixel of period.pixels) if(base.pixels.has(pixel)) actualOverlap++;
+          assert(actualOverlap===0,
+            "Period ink covers painted digit ink (not empty font padding): "+actualOverlap+" pixels");
+          if(size===100) assert(period.left>=1 && base.left>=1 && base.right<data.width-1 &&
+            base.top>=1 && base.bottom<data.height-1,
+            "Normal zoom painted clock ink is clipped: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
+          const gap=base.left-period.right-1;
+          console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,periodLeft:period.left,periodRight:period.right,inkLeft:base.left}));
+          if(size===100 || (base.left>0 && base.right<data.width-1)) assert(
+            gap>=0 && gap<=Math.max(3,Math.ceil(0.005*data.width)),
+            "Period visible gap="+gap+"px "+JSON.stringify({line:data.line,inkLeft:base.left,periodRight:period.right}),
+          );
+        }else console.log("USER-SELECTED ZOOM: period extends beyond viewport",ident);
       }
       console.log("PASS",ident,"ink-center-x="+error.toFixed(2)+"px","ink-center-y="+yError.toFixed(2)+"px");
     }catch(e){
