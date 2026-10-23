@@ -104,6 +104,7 @@ export function centerClockInk(documentObject) {
   const lineRect = line.getBoundingClientRect();
   const baselineY = (baseline.getBoundingClientRect().top - blockRect.top) / scale;
   let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+  const digitGaps = [];
 
   // Measure individual glyphs at their DOM inline-span origin: unlike a
   // line-box rect this includes side bearings and font ascent/descent.
@@ -112,13 +113,21 @@ export function centerClockInk(documentObject) {
     const span = documentObject.querySelector(selector);
     if (!span?.textContent) continue;
     let cursor = (span.getBoundingClientRect().left - blockRect.left) / scale;
+    let previousDigitRight = null;
     for (const glyph of span.textContent) {
       const m = ctx.measureText(glyph);
       if (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent > 0) {
-        left = Math.min(left, cursor - m.actualBoundingBoxLeft);
-        right = Math.max(right, cursor + m.actualBoundingBoxRight);
+        const glyphLeft = cursor - m.actualBoundingBoxLeft;
+        const glyphRight = cursor + m.actualBoundingBoxRight;
+        left = Math.min(left, glyphLeft);
+        right = Math.max(right, glyphRight);
         top = Math.min(top, baselineY - m.actualBoundingBoxAscent);
         bottom = Math.max(bottom, baselineY + m.actualBoundingBoxDescent);
+        // Spacing between consecutive NUMERIC ink glyphs, not CSS boxes.
+        if ((selector === "#hour" || selector === "#minute") && previousDigitRight !== null) {
+          digitGaps.push(Math.max(0, glyphLeft - previousDigitRight));
+        }
+        if (selector === "#hour" || selector === "#minute") previousDigitRight = glyphRight;
       }
       cursor += m.width + tracking;
     }
@@ -133,7 +142,7 @@ export function centerClockInk(documentObject) {
   // touches the visible left edge of the main digits, irrespective of
   // variable-width font bearings. It never contributes to digit centering.
   const prefix = documentObject.getElementById("clock-prefix");
-  let auxiliaryPeriodWidth = 0;
+  const digitSpace = digitGaps.length ? digitGaps.reduce((sum, gap) => sum + gap, 0) / digitGaps.length : 0;
   if (prefix && !prefix.hidden && prefix.textContent) {
     const period = ctx.measureText(prefix.textContent);
     if (period.actualBoundingBoxAscent + period.actualBoundingBoxDescent > 0) {
@@ -143,7 +152,7 @@ export function centerClockInk(documentObject) {
         left: -period.actualBoundingBoxLeft,
         right: period.actualBoundingBoxRight,
       });
-      auxiliaryPeriodWidth = Math.max(0, periodInk.right - periodInk.left);
+      const periodInkWidth = Math.max(0, periodInk.right - periodInk.left);
       const lineLeft = (lineRect.left - blockRect.left) / scale;
       const visiblePeriodRight = periodInk.right;
       // The externally hosted Digital-7 period has a font-size-dependent
@@ -157,27 +166,24 @@ export function centerClockInk(documentObject) {
       const d7PeriodHint = originalDigital7Loaded && style.fontFamily.replace(/^['"]/, "").startsWith("Digital-7")
         ? Math.max(0, Math.min(7, (fontPx - 200) * 0.022))
         : 0;
-      const prefixX = left - lineLeft - visiblePeriodRight + d7PeriodHint;
+      // Shift the period right by the actual painted space between the
+      // digits, as requested, without changing any glyph size or clock anchor.
+      const spacedX = left - lineLeft - visiblePeriodRight + d7PeriodHint + digitSpace;
+      // If the viewport is narrower than the user's chosen magnification,
+      // rescue only the period from the left edge. Never secretly shrink
+      // the clock's requested scale on resize, zoom or orientation change.
+      const paintedMainLeft = win.innerWidth / 2 - (right - left) * requestedScale / 2;
+      const periodPaintedLeft = paintedMainLeft -
+        periodInkWidth * requestedScale + (d7PeriodHint + digitSpace) * requestedScale;
+      const edgeNudge = Math.max(0, (2 - periodPaintedLeft) / requestedScale);
+      const prefixX = spacedX + edgeNudge;
       root.style.setProperty("--app-clock-prefix-shift", `${prefixX.toFixed(3)}px`);
     }
   }
-  // Preserve the requested outer scale until it would clip glyph ink.
-  // Reduce only the clock's combined display scale; date/weather layout
-  // retains its independent sizes and coordinates.
-  const mainHalfWidth = (right - left) / 2;
-  // Four digits are independently centered. The prefix extends ONLY LEFT,
-  // so its ink width must fit inside the LEFT half of the viewport, not
-  // be split between the left and right margins (review P2 on PR #61).
-  const maxHorizontalExtent = Math.max(mainHalfWidth + auxiliaryPeriodWidth, mainHalfWidth);
-  const visibleHeight = bottom - top;
-  const fittedScale = Math.min(
-    requestedScale,
-    (win.innerWidth / 2 - 4) / Math.max(1, maxHorizontalExtent),
-    (win.innerHeight - 8) / Math.max(1, visibleHeight),
-  );
-  if (Number.isFinite(fittedScale) && fittedScale > 0) {
-    root.style.setProperty("--app-clock-effective-scale", String(fittedScale));
-  }
+  // The outer zoom is user-controlled. Never replace it with a
+  // viewport-fit value: the CSS base font is already responsive.
+  // Extreme user-selected zoom may exceed available screen space.
+  root.style.setProperty("--app-clock-effective-scale", String(requestedScale));
 
   // Supplemental seconds are a separate, unscaled layer. They follow the
   // visual primary clock's right/bottom edge but retain their own font size.
