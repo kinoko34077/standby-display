@@ -289,16 +289,18 @@ function samplePrefix(picture,line) {
   const y0=Math.max(0,Math.floor(line.top));
   const y1=Math.min(picture.height-1,Math.ceil(line.bottom)-1);
   let left=Infinity,right=-Infinity,count=0;
+  const pixels=new Set();
   for(let y=y0;y<=y1;y++) for(let x=0;x<picture.width;x++){
     const i=(y*picture.width+x)*4;
     const r=picture.rgba[i],g=picture.rgba[i+1],b=picture.rgba[i+2];
     if(r>190 && g<100 && b<100){
       left=Math.min(left,x);
       right=Math.max(right,x);
+      pixels.add(y*picture.width+x);
       count++;
     }
   }
-  return left===Infinity ? null : {left,right,count};
+  return left===Infinity ? null : {left,right,count,pixels};
 }
 async function sleep(ms) {return new Promise(r=>setTimeout(r,ms));}
 async function waitProbe(client,font) {
