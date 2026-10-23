@@ -225,16 +225,25 @@ body {
 }
 
 .seconds {
+  /* Independent floating overlay: does not inherit the primary display scale.
+     Runtime positions its right edge under the scaled primary clock. */
   position: absolute;
-  left: auto;
-  right: 0;
-  top: 100%;
+  left: 50%;
+  right: auto;
+  top: 50%;
   bottom: auto;
-  margin-top: clamp(0.2rem, 0.45vw, 0.6rem);
+  margin: 0;
+  font-family: var(--app-clock-font);
+  font-weight: var(--app-clock-font-weight);
   font-size: var(--seconds-size);
   letter-spacing: var(--app-clock-secondary-letter-spacing);
+  color: var(--app-clock);
+  line-height: 1;
   text-align: right;
+  white-space: nowrap;
+  transform: translateX(-100%);
   opacity: 0.4;
+  visibility: hidden;
 }
 
 .seconds[hidden],
