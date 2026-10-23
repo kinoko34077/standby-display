@@ -312,7 +312,13 @@ async function waitProbe(client,font) {
 function assert(condition,message) {if(!condition) throw Error(message);}
 const cases=[];
 for(const font of ["d7","dseg7-modern","dseg7-classic-mini-bold","rajdhani","mono"])
-  for(const viewport of [{width:390,height:844},{width:1100,height:650}])
+  for(const viewport of [
+    {width:320,height:568},{width:360,height:640},
+    {width:375,height:812},{width:390,height:844},
+    {width:430,height:932},{width:768,height:1024},
+    {width:844,height:390},{width:1100,height:650},
+    {width:1440,height:900},{width:1920,height:1080},
+  ])
     for(const mode of ["civil","hex"])
       cases.push({font,viewport,mode,size:100,tracking:0});
 for(const tracking of [-0.2,0.2])
