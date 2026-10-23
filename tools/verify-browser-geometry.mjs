@@ -102,6 +102,8 @@ window.clockProbe = {
       width: innerWidth,
       height: innerHeight,
       fontFaceCount: loaded.length,
+      requestedScale: Number(getComputedStyle(document.querySelector(".clock-block")).getPropertyValue("--app-clock-size-scale")),
+      effectiveScale: Number(getComputedStyle(document.querySelector(".clock-block")).getPropertyValue("--app-clock-effective-scale")),
       panel:rect(document.querySelector(".clock-panel")),
       line:rect(document.querySelector(".time-line")),
       seconds:rect(document.querySelector(".seconds")),
