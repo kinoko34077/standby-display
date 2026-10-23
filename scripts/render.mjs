@@ -152,7 +152,6 @@ export function centerClockInk(documentObject) {
         left: -period.actualBoundingBoxLeft,
         right: period.actualBoundingBoxRight,
       });
-      const periodInkWidth = Math.max(0, periodInk.right - periodInk.left);
       const lineLeft = (lineRect.left - blockRect.left) / scale;
       const visiblePeriodRight = periodInk.right;
       // The externally hosted Digital-7 period has a font-size-dependent
@@ -175,9 +174,6 @@ export function centerClockInk(documentObject) {
       // If the viewport is narrower than the user's chosen magnification,
       // rescue only the period from the left edge. Never secretly shrink
       // the clock's requested scale on resize, zoom or orientation change.
-      const paintedMainLeft = win.innerWidth / 2 - (right - left) * requestedScale / 2;
-      const periodPaintedLeft = paintedMainLeft -
-        periodInkWidth * requestedScale + d7PeriodHint * requestedScale;
       // Never push the period's painted ink into the first digit.
       // Empty side-bearings may clip at extreme user-selected zoom.
       const prefixX = spacedX;
