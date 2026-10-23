@@ -164,6 +164,18 @@ export function centerClockInk(documentObject) {
   if (Number.isFinite(fittedScale) && fittedScale > 0) {
     root.style.setProperty("--app-clock-effective-scale", String(fittedScale));
   }
+
+  // Supplemental seconds are a separate, unscaled layer. They follow the
+  // visual primary clock's right/bottom edge but retain their own font size.
+  const seconds = documentObject.getElementById("seconds");
+  const panel = documentObject.querySelector(".clock-panel");
+  if (seconds && panel) {
+    const primary = line.getBoundingClientRect();
+    const panelBox = panel.getBoundingClientRect();
+    seconds.style.left = `${(primary.right - panelBox.left).toFixed(3)}px`;
+    seconds.style.top = `${(primary.bottom - panelBox.top).toFixed(3)}px`;
+    seconds.style.visibility = "visible";
+  }
   return true;
 }
 
