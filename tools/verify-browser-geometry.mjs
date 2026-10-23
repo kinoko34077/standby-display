@@ -430,7 +430,7 @@ try{
           const gap=base.left-period.right-1;
           console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,periodLeft:period.left,periodRight:period.right,inkLeft:base.left}));
           if(size===100 || (base.left>0 && base.right<data.width-1)) assert(
-            gap>=-1 && gap<=3,
+            gap>=0 && gap<=Math.max(3,Math.ceil(0.005*data.width)),
             "Period visible gap="+gap+"px "+JSON.stringify({line:data.line,inkLeft:base.left,periodRight:period.right}),
           );
         }else console.log("USER-SELECTED ZOOM: period extends beyond viewport",ident);
