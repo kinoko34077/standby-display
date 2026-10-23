@@ -369,6 +369,10 @@ try{
       const data=await waitProbe(client,font);
       assert(data.width===viewport.width && data.height===viewport.height,"Viewport emulation mismatch");
       assert(data.fontFaceCount>0,"Expected font was not loaded: "+data.fontName);
+      assert(Math.abs(data.requestedScale-data.effectiveScale)<0.00001,
+        "Window resized the user's selected scale: "+JSON.stringify({
+          requested:data.requestedScale,effective:data.effectiveScale,viewport
+        }));
       if(size===100 && tracking===0 && mode==="civil"){
         const ancillary=await client.eval("window.clockProbe.checkAuxiliaryInvariance()");
         const dist=(v,w)=>Math.abs(v-w);
