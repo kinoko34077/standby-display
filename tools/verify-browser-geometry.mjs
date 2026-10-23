@@ -82,12 +82,14 @@ window.clockProbe = {
       return {x:box.x,y:box.y,width:box.width,height:box.height,fontSize:css.fontSize};
     };
     const before = [anchor(".date-panel"), anchor(".extra-panel")];
+    const originalSeconds = anchor(".seconds");
     root.style.setProperty("--app-clock-size-scale", String(typography.sizeScale * 1.25));
     centerClockInk(document);
     const after = [anchor(".date-panel"), anchor(".extra-panel")];
+    const changedSeconds = anchor(".seconds");
     root.style.setProperty("--app-clock-size-scale", String(typography.sizeScale));
     centerClockInk(document);
-    return {before,after};
+    return {before,after,originalSeconds,changedSeconds};
   },
   measure() {
     const rect = element => {
@@ -360,6 +362,10 @@ try{
       if(size===100 && tracking===0 && mode==="civil"){
         const ancillary=await client.eval("window.clockProbe.checkAuxiliaryInvariance()");
         const dist=(v,w)=>Math.abs(v-w);
+        for(const key of ["width","height","fontSize"]) {
+          assert(ancillary.originalSeconds[key]===ancillary.changedSeconds[key],
+            "Secondary seconds unexpectedly resized with main clock scale: "+JSON.stringify(ancillary));
+        }
         for(let i=0;i<ancillary.before.length;i++){
           for(const key of ["x","y","width","height"]) {
             assert(dist(ancillary.before[i][key],ancillary.after[i][key])<0.02,
