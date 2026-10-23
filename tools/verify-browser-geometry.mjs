@@ -23,8 +23,8 @@ const html = String.raw`<!doctype html>
       <div class="time-line">
         <span id="clock-prefix" class="clock-prefix" aria-hidden="true" hidden></span><span id="hour">21</span><span class="colon">:</span><span id="minute">12</span><span class="clock-baseline-marker" aria-hidden="true"></span>
       </div>
-      <div id="seconds" class="seconds">:34</div>
     </div>
+    <div id="seconds" class="seconds">:34</div>
   </section>
   <section class="extra-panel">晴 22℃</section>
 </main>
