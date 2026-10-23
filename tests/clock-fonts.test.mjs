@@ -264,7 +264,7 @@ test("painted-font geometry owns viewport centering and genuine punctuation plac
   assert.match(render, /--app-clock-prefix-shift/);
   assert.match(render, /const digitSpace = digitGaps\.length/);
   assert.match(render, /const spacedX = .* \+ digitSpace/);
-  assert.match(render, /const edgeNudge = Math\.max/);
+  assert.doesNotMatch(render, /const edgeNudge = Math\.max/);
   assert.doesNotMatch(render, /const fittedScale = Math\.min/);
   assert.match(render, /--app-clock-effective-scale", String\(requestedScale\)/);
   assert.match(render, /paintedPeriodBounds/);
