@@ -141,7 +141,10 @@ export function centerClockInk(documentObject) {
       // Correct ONLY this independently positioned X coordinate; never the
       // font-size, vertical baseline or the four-digit centered run.
       const fontPx = Number.parseFloat(style.fontSize);
-      const d7PeriodHint = style.fontFamily.replace(/^['"]/, "").startsWith("Digital-7")
+      const originalDigital7Loaded = Array.from(documentObject.fonts ?? []).some(face =>
+        face.family.replace(/^['"]|['"]$/g, "") === "Digital-7" && face.status === "loaded",
+      );
+      const d7PeriodHint = originalDigital7Loaded && style.fontFamily.replace(/^['"]/, "").startsWith("Digital-7")
         ? Math.max(0, Math.min(7, (fontPx - 200) * 0.022))
         : 0;
       const prefixX = left - lineLeft - visiblePeriodRight + d7PeriodHint;
