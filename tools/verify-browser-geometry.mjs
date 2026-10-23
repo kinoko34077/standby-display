@@ -396,7 +396,7 @@ try{
       const hiddenCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
       const hidden=png(hiddenCapture.data);
       if(size===100 && tracking===0 && mode==="civil") {
-        await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-civil.png"),Buffer.from(hiddenCapture.data,"base64"));
+        await writeFile(join(artifactDir,captureKey+"-digits.png"),Buffer.from(hiddenCapture.data,"base64"));
       }
       const base=sampleClock(hidden,data.line);
       const center=(base.left+base.right)/2;
@@ -416,7 +416,7 @@ try{
         await client.eval("window.clockProbe.setPrefixVisible(true)");
         const visibleCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
         const visible=png(visibleCapture.data);
-        await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-hex.png"),Buffer.from(visibleCapture.data,"base64"));
+        await writeFile(join(artifactDir,captureKey+"-period.png"),Buffer.from(visibleCapture.data,"base64"));
         const period=samplePrefix(visible,data.line);
         assert(period,"No visible period ink");
         let actualOverlap=0;
