@@ -166,15 +166,18 @@ export function centerClockInk(documentObject) {
       const d7PeriodHint = originalDigital7Loaded && style.fontFamily.replace(/^['"]/, "").startsWith("Digital-7")
         ? Math.max(0, Math.min(7, (fontPx - 200) * 0.022))
         : 0;
-      // Shift the period right by the actual painted space between the
-      // digits, as requested, without changing any glyph size or clock anchor.
-      const spacedX = left - lineLeft - visiblePeriodRight + d7PeriodHint + digitSpace;
+      // The punctuation's independent, natural leading position includes
+      // one measured inter-digit space. Move it RIGHT by that very space,
+      // leaving its painted ink next to (not on top of) the first digit.
+      const naturalLeadingX = left - lineLeft - visiblePeriodRight -
+        digitSpace + d7PeriodHint;
+      const spacedX = naturalLeadingX + digitSpace;
       // If the viewport is narrower than the user's chosen magnification,
       // rescue only the period from the left edge. Never secretly shrink
       // the clock's requested scale on resize, zoom or orientation change.
       const paintedMainLeft = win.innerWidth / 2 - (right - left) * requestedScale / 2;
       const periodPaintedLeft = paintedMainLeft -
-        periodInkWidth * requestedScale + (d7PeriodHint + digitSpace) * requestedScale;
+        periodInkWidth * requestedScale + d7PeriodHint * requestedScale;
       const edgeNudge = Math.max(0, (2 - periodPaintedLeft) / requestedScale);
       const prefixX = spacedX + edgeNudge;
       root.style.setProperty("--app-clock-prefix-shift", `${prefixX.toFixed(3)}px`);
