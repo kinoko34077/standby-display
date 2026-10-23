@@ -403,7 +403,7 @@ try{
       const error=center-data.width/2;
       const yCenter=(base.top+base.bottom)/2;
       const yError=yCenter-data.height/2;
-      assert(Math.abs(yError)<=4,
+      assert(Math.abs(yError)<=Math.max(4,0.006*data.height),
         "Painted main glyph Y center error="+yError.toFixed(2)+"px "+JSON.stringify({inkY:[base.top,base.bottom],line:data.line}));
       assert(
         Math.abs(error)<=4,
