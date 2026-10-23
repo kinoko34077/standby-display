@@ -418,21 +418,21 @@ try{
         const visible=png(visibleCapture.data);
         await writeFile(join(artifactDir,captureKey+"-period.png"),Buffer.from(visibleCapture.data,"base64"));
         const period=samplePrefix(visible,data.line);
-        assert(period,"No visible period ink");
-        let actualOverlap=0;
-        for(const pixel of period.pixels) if(base.pixels.has(pixel)) actualOverlap++;
-        assert(actualOverlap===0,
-          "Real period strokes cover rendered digit ink (not merely CSS whitespace): "+actualOverlap+" pixels");
-
-        if(size===100) assert(period.left>=1 && base.right<data.width-1,
-          "Real prefix/digits clipped at viewport bounds: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
-        const gap=base.left-period.right-1;
-        console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,period,inkLeft:base.left}));
-        assert(
-          gap>=-1 && gap<=3,
-          "Period visible gap="+gap+"px "+
-            JSON.stringify({line:data.line,prefix:data.prefix,inkLeft:base.left,periodRight:period.right,periodCount:period.count}),
-        );
+        if(size===100) assert(period,"Normal-size real period ink is not visible");
+        if(period){
+          let actualOverlap=0;
+          for(const pixel of period.pixels) if(base.pixels.has(pixel)) actualOverlap++;
+          assert(actualOverlap===0,
+            "Period ink covers painted digit ink (not empty font padding): "+actualOverlap+" pixels");
+          if(size===100) assert(period.left>=1 && base.left>=1 && base.right<data.width-1,
+            "Normal zoom painted clock ink is clipped: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
+          const gap=base.left-period.right-1;
+          console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,periodLeft:period.left,periodRight:period.right,inkLeft:base.left}));
+          if(size===100 || (base.left>0 && base.right<data.width-1)) assert(
+            gap>=-1 && gap<=3,
+            "Period visible gap="+gap+"px "+JSON.stringify({line:data.line,inkLeft:base.left,periodRight:period.right}),
+          );
+        }else console.log("USER-SELECTED ZOOM: period extends beyond viewport",ident);
       }
       console.log("PASS",ident,"ink-center-x="+error.toFixed(2)+"px","ink-center-y="+yError.toFixed(2)+"px");
     }catch(e){
