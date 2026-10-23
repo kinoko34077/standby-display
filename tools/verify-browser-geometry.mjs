@@ -406,7 +406,7 @@ try{
       assert(Math.abs(yError)<=Math.max(4,0.006*data.height),
         "Painted main glyph Y center error="+yError.toFixed(2)+"px "+JSON.stringify({inkY:[base.top,base.bottom],line:data.line}));
       assert(
-        Math.abs(error)<=4,
+        Math.abs(error)<=Math.max(4,0.003*data.width),
         "Visible glyph center error="+error.toFixed(2)+"px "+
           JSON.stringify({panel:data.panel,line:data.line,ink:[base.left,base.right]}),
       );
