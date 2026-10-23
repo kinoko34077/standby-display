@@ -176,7 +176,9 @@ export function centerClockInk(documentObject) {
       // the clock's requested scale on resize, zoom or orientation change.
       // Never push the period's painted ink into the first digit.
       // Empty side-bearings may clip at extreme user-selected zoom.
-      const prefixX = spacedX;
+      // Two rendered-pixel antialiasing clearance: CSS/Canvas glyph edges
+      // can differ by a pixel, but painted period and digit ink must not overlap.
+      const prefixX = spacedX - 2 / requestedScale;
       root.style.setProperty("--app-clock-prefix-shift", `${prefixX.toFixed(3)}px`);
     }
   }
