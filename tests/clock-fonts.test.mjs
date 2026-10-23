@@ -205,8 +205,8 @@ test("settings UI exposes immediate clock size and tracking sliders", async () =
   assert.match(css, /\.clock-block\s*\{[\s\S]*?width:\s*max-content/);
   assert.match(css, /transform:\s*scale\(var\(--app-clock-effective-scale\)\)\s*translate\(var\(--app-clock-ink-shift-x\), var\(--app-clock-ink-shift-y\)\)/);
   assert.match(css, /\.time-line\s*\{[\s\S]*?position:\s*relative/);
-  assert.match(css, /\.seconds\s*\{[\s\S]*?right:\s*0/);
-  assert.match(css, /\.seconds\s*\{[\s\S]*?top:\s*100%/);
+  assert.match(css, /\.seconds\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?left:\s*50%;[\s\S]*?font-size:\s*var\(--seconds-size\)/);
+  assert.match(css, /\.seconds\s*\{[\s\S]*?transform:\s*translateX\(-100%\)/);
   assert.match(css, /\.seconds\s*\{[\s\S]*?text-align:\s*right/);
 });
 
@@ -227,7 +227,7 @@ test("secondary seconds align to the centered primary clock without affecting it
   );
   assert.match(
     css,
-    /\.seconds\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*0;[\s\S]*?top:\s*100%;[\s\S]*?bottom:\s*auto;/,
+    /\.seconds\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*auto;[\s\S]*?top:\s*50%;[\s\S]*?bottom:\s*auto;/,
   );
   assert.doesNotMatch(
     css,
@@ -263,6 +263,9 @@ test("painted-font geometry owns viewport centering and genuine punctuation plac
   assert.match(render, /--app-clock-effective-scale/);
   assert.match(render, /--app-clock-prefix-shift/);
   assert.match(html, /class="clock-baseline-marker"/);
+  assert.match(render, /seconds\.style\.visibility = "visible"/);
+  assert.match(render, /seconds\.style\.left =/);
+  assert.match(render, /seconds\.style\.top =/);
   assert.doesNotMatch(css, /\.clock-prefix::after\s*\{/);
   assert.match(browser, /Painted main glyph Y center error/);
   assert.match(browser, /\.clock-prefix \{ color:#ff0000 !important; \}/);
