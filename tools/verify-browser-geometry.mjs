@@ -318,6 +318,8 @@ for(const font of ["d7","dseg7-modern","dseg7-classic-mini-bold","rajdhani","mon
 for(const tracking of [-0.2,0.2])
   for(const viewport of [{width:390,height:844},{width:1100,height:650}])
     cases.push({font:"d7",viewport,mode:"hex",size:120,tracking});
+for(const font of ["d7","dseg7-modern","dseg7-classic-mini-bold","rajdhani","mono"])
+  cases.push({font,viewport:{width:390,height:844},mode:"hex",size:140,tracking:0});
 
 const artifactDir=join(root,".clock-visual-artifacts");
 await mkdir(artifactDir,{recursive:true});
@@ -402,6 +404,8 @@ try{
         await writeFile(join(artifactDir,font+"-"+viewport.width+"x"+viewport.height+"-hex.png"),Buffer.from(visibleCapture.data,"base64"));
         const period=samplePrefix(visible,data.line);
         assert(period,"No visible period ink");
+        assert(period.left>=1 && base.right<data.width-1,
+          "Real prefix/digits clipped at viewport bounds: "+JSON.stringify({period,ink:[base.left,base.right],width:data.width}));
         const gap=base.left-period.right-1;
         console.log("PERIOD GLYPH GAP",ident,gap,JSON.stringify({font,period,inkLeft:base.left}));
         assert(
