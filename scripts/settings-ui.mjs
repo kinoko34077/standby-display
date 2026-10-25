@@ -418,6 +418,11 @@ export function bindNumericRangeControl(slider, field, config, defaultValue, onV
   const clamp = value => Math.min(config.max, Math.max(config.min, value));
   const round = value => Number(clamp(value).toFixed(digits));
   let committed = defaultValue;
+  let pointerSliding = false;
+  slider.addEventListener("pointerdown", () => { pointerSliding = true; });
+  slider.addEventListener("pointerup", () => { pointerSliding = false; });
+  slider.addEventListener("pointercancel", () => { pointerSliding = false; });
+  slider.addEventListener("blur", () => { pointerSliding = false; });
   const publish = value => {
     committed = round(value);
     slider.value = String(committed);
@@ -428,7 +433,7 @@ export function bindNumericRangeControl(slider, field, config, defaultValue, onV
     const value = Number(slider.value);
     // A gentle one-step magnetic target, only while sliding. Direct numeric
     // entry retains all valid values including small nonzero increments.
-    const snapped = Math.abs(value - defaultValue) <= config.step * 1.05
+    const snapped = pointerSliding && Math.abs(value - defaultValue) <= config.step * 1.05
       ? defaultValue : value;
     publish(snapped);
   });
