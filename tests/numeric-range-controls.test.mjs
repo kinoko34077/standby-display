@@ -31,7 +31,7 @@ test("the same numeric binding synchronizes clock size slider and direct edit", 
   slider.value="101";
   slider.emit("input");
   assert.equal(events.at(-1),101);
-  assert.equal(field.value,"100");
+  assert.equal(field.value,"101");
   field.value="300";
   field.emit("change");
   assert.equal(events.at(-1),CLOCK_SIZE_CONTROL.max);
