@@ -43,7 +43,8 @@
     if (number < 0 || number >= 100) return String(number);
     if (number < 10) return digits[number];
     var tens = Math.floor(number / 10);
-    return (tens === 1 ? "" : digits[tens]) + "十" + (number % 10 ? digits[number % 10] : "");
+    var tensText = tens === 2 ? "廿" : tens === 3 ? "丗" : (tens === 1 ? "" : digits[tens]) + "十";
+    return tensText + (number % 10 ? digits[number % 10] : "");
   }
   function request(url, callback) {
     try {

@@ -97,7 +97,7 @@ export function toKanjiNumber(number) {
 
   const tens = Math.floor(number / 10);
   const ones = number % 10;
-  const tensText = tens === 1 ? "十" : `${KANJI_DIGITS[tens]}十`;
+  const tensText = tens === 2 ? "廿" : tens === 3 ? "丗" : tens === 1 ? "十" : `${KANJI_DIGITS[tens]}十`;
   return `${tensText}${ones === 0 ? "" : KANJI_DIGITS[ones]}`;
 }
 
