@@ -233,7 +233,7 @@ body {
   top: 50%;
   bottom: auto;
   margin: 0;
-  margin-top: clamp(0.2rem, 0.45vw, 0.6rem);
+  margin-top: 0; /* top is anchored to the visible main glyph bottom */
   font-family: var(--app-clock-font);
   font-weight: var(--app-clock-font-weight);
   font-size: var(--seconds-size);
@@ -664,7 +664,7 @@ body[data-settings-open="true"] .settings-trigger-layer {
 
 .slider-control {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 5.25em;
+  grid-template-columns: minmax(0, 1fr) minmax(5.8em, auto);
   align-items: center;
   gap: 10px;
 }
@@ -677,10 +677,31 @@ body[data-settings-open="true"] .settings-trigger-layer {
 }
 
 .slider-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.2em;
   color: var(--overlay-subtle);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.slider-number {
+  width: 4.2em;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 4px 3px;
+  border: 1px solid var(--overlay-border);
+  border-radius: 5px;
+  background: rgba(248, 250, 252, 0.94);
+  color: #111827;
+  font: inherit;
   text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.slider-number:focus-visible {
+  outline: 2px solid var(--app-clock);
+  outline-offset: 2px;
 }
 
 .color-row {

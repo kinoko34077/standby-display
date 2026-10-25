@@ -194,8 +194,12 @@ export function centerClockInk(documentObject) {
   if (seconds && panel) {
     const primary = line.getBoundingClientRect();
     const panelBox = panel.getBoundingClientRect();
+    // Align seconds to the visible glyph ink rather than the often much
+    // lower font line-box edge (especially Digital-7 and DSEG fonts).
+    const paintedBottom = block.getBoundingClientRect().top +
+      bottom * requestedScale;
     seconds.style.left = `${(primary.right - panelBox.left).toFixed(3)}px`;
-    seconds.style.top = `${(primary.bottom - panelBox.top).toFixed(3)}px`;
+    seconds.style.top = `${(paintedBottom - panelBox.top).toFixed(3)}px`;
     seconds.style.visibility = "visible";
   }
   return true;

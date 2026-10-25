@@ -80,8 +80,13 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
   populateFontSelect(controls.timeSystem, CLOCK_SYSTEM_OPTIONS);
   populateFontSelect(controls.clockFont, CLOCK_FONT_OPTIONS);
   populateFontSelect(controls.textFont, TEXT_FONT_OPTIONS);
-  configureRangeControl(controls.clockSize, CLOCK_SIZE_CONTROL);
-  configureRangeControl(controls.clockLetterSpacing, CLOCK_LETTER_SPACING_CONTROL);
+  const numericBindings = [
+    bindNumericRangeControl(controls.clockSize, controls.clockSizeValue, CLOCK_SIZE_CONTROL, 100, value =>
+      callbacks.onSettingChange({ group: "clock", key: "sizePercent", value })),
+    bindNumericRangeControl(controls.clockLetterSpacing, controls.clockLetterSpacingValue,
+      CLOCK_LETTER_SPACING_CONTROL, 0, value =>
+        callbacks.onSettingChange({ group: "clock", key: "letterSpacingEm", value })),
+  ];
 
   const confirmReset = () => {
     const confirmFunction = documentObject.defaultView?.confirm;
@@ -218,22 +223,6 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
     });
   });
 
-  controls.clockSize.addEventListener("input", (event) => {
-    callbacks.onSettingChange({
-      group: "clock",
-      key: "sizePercent",
-      value: Number(event.target.value),
-    });
-  });
-
-  controls.clockLetterSpacing.addEventListener("input", (event) => {
-    callbacks.onSettingChange({
-      group: "clock",
-      key: "letterSpacingEm",
-      value: Number(event.target.value),
-    });
-  });
-
   controls.textFont.addEventListener("change", (event) => {
     callbacks.onSettingChange({
       group: "typography",
@@ -351,10 +340,8 @@ export function createSettingsUi(documentObject, callbacks, colorPickerLibrary =
       uppercaseHelp.hidden = !uppercaseDisabled;
     }
     controls.clockFont.value = settings.clock.font;
-    controls.clockSize.value = String(settings.clock.sizePercent);
-    controls.clockSizeValue.textContent = `${settings.clock.sizePercent}%`;
-    controls.clockLetterSpacing.value = String(settings.clock.letterSpacingEm);
-    controls.clockLetterSpacingValue.textContent = formatLetterSpacing(settings.clock.letterSpacingEm);
+    numericBindings[0].render(settings.clock.sizePercent, documentObject.activeElement);
+    numericBindings[1].render(settings.clock.letterSpacingEm, documentObject.activeElement);
     controls.textFont.value = settings.typography.font;
     controls.weather.checked = settings.visibility.weather;
     controls.moon.checked = settings.visibility.moon;
@@ -416,16 +403,66 @@ function bindRadioGroup(documentObject, name, onChange) {
   }
 }
 
-function configureRangeControl(input, config) {
-  input.min = String(config.min);
-  input.max = String(config.max);
-  input.step = String(config.step);
-}
-
-function formatLetterSpacing(value) {
-  const numericValue = Number(value);
-  const prefix = numericValue > 0 ? "+" : "";
-  return `${prefix}${numericValue.toFixed(2)}em`;
+/**
+ * Shared clock numeric field controller: one value for slider and editable
+ * number input, with native keyboard access, constrained commit and gentle
+ * snapping to the semantic default while dragging.
+ */
+export function bindNumericRangeControl(slider, field, config, defaultValue, onValue) {
+  for (const control of [slider, field]) {
+    control.min = String(config.min);
+    control.max = String(config.max);
+    control.step = String(config.step);
+  }
+  const digits = Math.max(0, String(config.step).split(".")[1]?.length ?? 0);
+  const clamp = value => Math.min(config.max, Math.max(config.min, value));
+  const round = value => Number(clamp(value).toFixed(digits));
+  let committed = defaultValue;
+  let pointerSliding = false;
+  slider.addEventListener("pointerdown", () => { pointerSliding = true; });
+  slider.addEventListener("pointerup", () => { pointerSliding = false; });
+  slider.addEventListener("pointercancel", () => { pointerSliding = false; });
+  slider.addEventListener("blur", () => { pointerSliding = false; });
+  const publish = value => {
+    committed = round(value);
+    slider.value = String(committed);
+    field.value = String(committed);
+    onValue(committed);
+  };
+  slider.addEventListener("input", () => {
+    const value = Number(slider.value);
+    // A gentle one-step magnetic target, only while sliding. Direct numeric
+    // entry retains all valid values including small nonzero increments.
+    const snapped = pointerSliding && Math.abs(value - defaultValue) <= config.step * 1.05
+      ? defaultValue : value;
+    publish(snapped);
+  });
+  const commit = () => {
+    const trimmed = field.value.trim();
+    const parsed = trimmed === "" ? NaN : Number(trimmed);
+    publish(Number.isFinite(parsed) ? parsed : committed);
+  };
+  field.addEventListener("change", commit);
+  field.addEventListener("blur", () => {
+    if (field.value.trim() === "" || !Number.isFinite(Number(field.value))) commit();
+  });
+  field.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      commit();
+      field.blur();
+    } else if (event.key === "Escape") {
+      field.value = String(committed);
+      field.blur();
+    }
+  });
+  return {
+    render(value, activeElement) {
+      committed = round(value);
+      slider.value = String(committed);
+      // Don't rewrite the in-progress partial value under the user's cursor.
+      if (activeElement !== field) field.value = String(committed);
+    },
+  };
 }
 
 function populateFontSelect(selectElement, options) {

@@ -412,6 +412,11 @@ try{
       );
       const deltaSeconds=Math.abs(data.seconds.right-data.line.right);
       assert(deltaSeconds<=5,"Secondary seconds right-edge drift="+deltaSeconds.toFixed(2)+"px");
+      // Secondary seconds attach to actual digit ink, not the lower
+      // line-box; no extra margin may push them further down.
+      const secondsGap=data.seconds.top-(base.bottom+1);
+      assert(Math.abs(secondsGap)<=6,
+        "Secondary seconds drift below visible glyph ink="+secondsGap.toFixed(2)+"px");
       if(mode==="hex"){
         await client.eval("window.clockProbe.setPrefixVisible(true)");
         const visibleCapture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
