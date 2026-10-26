@@ -216,3 +216,17 @@ test("iro color picker keeps native color input as a keyboard-accessible alterna
     /const picker = new colorPickerLibrary\.ColorPicker[\s\S]*?bindColorControl\(input, onChange\)[\s\S]*?picker\.on\("color:change"/,
   );
 });
+
+
+test("clock size and spacing numeric controls share invariant aligned box and unit columns", async () => {
+  const [css, html] = await Promise.all([read("style.css"), read("index.html")]);
+  assert.match(css, /\.slider-control\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 6\.6em;/s);
+  assert.match(css, /\.slider-value\s*\{[^}]*grid-template-columns:\s*minmax\(0, 4\.5em\) 1\.7em;/s);
+  assert.match(css, /\.slider-number\s*\{[^}]*width:\s*100%;/s);
+  assert.match(css, /\.slider-unit\s*\{[^}]*text-align:\s*left;/s);
+  for (const id of ["setting-clock-size-value", "setting-clock-letter-spacing-value"]) {
+    assert.match(html, new RegExp(`id="${id}"[^>]*class="slider-number"`));
+  }
+  assert.match(html, /class="slider-unit" aria-hidden="true">%<\/span>/);
+  assert.match(html, /class="slider-unit" aria-hidden="true">em<\/span>/);
+});

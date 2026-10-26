@@ -664,7 +664,7 @@ body[data-settings-open="true"] .settings-trigger-layer {
 
 .slider-control {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(5.8em, auto);
+  grid-template-columns: minmax(0, 1fr) 6.6em;
   align-items: center;
   gap: 10px;
 }
@@ -677,17 +677,18 @@ body[data-settings-open="true"] .settings-trigger-layer {
 }
 
 .slider-value {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: minmax(0, 4.5em) 1.7em;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.2em;
+  justify-content: end;
+  column-gap: 0.25em;
   color: var(--overlay-subtle);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .slider-number {
-  width: 4.2em;
+  width: 100%;
   min-width: 0;
   box-sizing: border-box;
   padding: 4px 3px;
@@ -698,6 +699,11 @@ body[data-settings-open="true"] .settings-trigger-layer {
   font: inherit;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+.slider-unit {
+  display: block;
+  min-width: 0;
+  text-align: left;
 }
 .slider-number:focus-visible {
   outline: 2px solid var(--app-clock);
