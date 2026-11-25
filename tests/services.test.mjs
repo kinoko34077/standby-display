@@ -318,28 +318,49 @@ test("fetchJson clears its timeout after a successful response", async () => {
 
 test("time sync rejects malformed success payloads rather than coercing a clock offset", async () => {
   for (const payload of [null, 0, false, [], {}, { serverTime: null }, { serverTime: "" },
-    { serverTime: false }, { serverTime: "123" }, { serverTime: [] },
+    { serverTime: false }, { serverTime: "123ms" }, { serverTime: "0x10" }, { serverTime: [] },
     { serverTime: NaN }, { serverTime: Infinity }]) {
     const service = createTimeSyncService(async () => ({ ok: true, json: async () => payload }));
     await assert.rejects(service.syncClockOffset(), /Invalid serverTime payload/);
   }
-  for (const serverTime of [0, Date.now()]) {
+  for (const serverTime of [0, Date.now(), String(Date.now())]) {
     const service = createTimeSyncService(async () => ({ ok: true, json: async () => ({ serverTime }) }));
     assert.ok(Number.isFinite(await service.syncClockOffset()));
   }
+  const impossible = createTimeSyncService(async () => ({ok:true,json:async()=>({serverTime:1e20})}));
+  await assert.rejects(impossible.syncClockOffset(), /usable Date range/);
 });
 
 test("invalid weather measurements do not create a false display or overwrite cached data", async () => {
   const saved = JSON.stringify({timestamp: Date.now() - 3600000, lat: 35, lon: 139, data: "☀21℃"});
-  for (const payload of [null, 0, false, [], {}, {temp:null}, {temp:""}, {temp:false}, {temp:"21"},
+  for (const payload of [null, 0, false, [], {}, {temp:null}, {temp:""}, {temp:false}, {temp:"21C"},
     {temp:[]}, {temp:NaN}, {temp:Infinity}]) {
     const storage = createStorage(saved);
     const service = createWeatherService(createWeatherFetch(payload).fetchImpl, storage);
-    assert.equal(await service.fetchWeather({lat:35,lon:139}), DEFAULT_SUPPLEMENTAL_DATA.weatherText);
+    const statuses = [];
+    assert.equal(await service.fetchWeather({lat:35,lon:139},{onStatus:s=>statuses.push(s)}), "☀21℃");
+    assert.deepEqual(statuses, ["天気：前回値（更新失敗）"]);
     assert.equal(storage.read(), saved);
+    assert.equal(await service.fetchWeather({lat:36,lon:140}), DEFAULT_SUPPLEMENTAL_DATA.weatherText);
   }
   const storage = createStorage();
   const service = createWeatherService(createWeatherFetch({temp:0,weather:"Clear"}).fetchImpl, storage);
   assert.equal(await service.fetchWeather({lat:35,lon:139}), "☀0℃");
   assert.equal(JSON.parse(storage.read()).data, "☀0℃");
+});
+
+test("weather recovery accepts decimal text, preserves in-memory good data when storage fails, and rejects another region", async () => {
+  let payload = {temp:"-2.5",weather:"Clear"};
+  const service = createWeatherService(async()=>({ok:true,json:async()=>payload}), {
+    getItem(){throw Error("blocked");}, setItem(){throw Error("quota");}
+  });
+  const status=[], loc={lat:35,lon:139};
+  assert.equal(await service.fetchWeather(loc,{onStatus:s=>status.push(s)}),"☀-2℃");
+  payload={temp:null};
+  // A fresh same-location cache remains usable even if persistence failed.
+  assert.equal(await service.fetchWeather(loc),"☀-2℃");
+  assert.equal(await service.fetchWeather({lat:36,lon:140},{onStatus:s=>status.push(s)}),DEFAULT_SUPPLEMENTAL_DATA.weatherText);
+  payload={temp:"13.5",weather:"Rain"};
+  assert.equal(await service.fetchWeather({lat:36,lon:140},{onStatus:s=>status.push(s)}),"🌧14℃");
+  assert.deepEqual(status,["","天気：未取得",""]);
 });

@@ -95,6 +95,10 @@ export function createClockApp({
     globalThis.StandbyConfig?.api?.textTransform,
   );
 
+  const config = globalThis.StandbyConfig;
+  const apiStatus = config.createApiStatus(document);
+  let timeSynced = false;
+  let weatherGeneration = 0;
   const state = {
     settings: sanitizeSettings(
       mergeSettings(DEFAULT_SETTINGS, persistedSettings, urlSettings),
@@ -115,7 +119,13 @@ export function createClockApp({
   };
 
   function getNow() {
-    return new Date(Date.now() + state.clockOffsetMs);
+    const now = Date.now();
+    if (!config.isUsableDate(now + state.clockOffsetMs)) {
+      state.clockOffsetMs = 0;
+      timeSynced = false;
+      apiStatus("clock", "時刻：端末時刻");
+    }
+    return new Date(now + state.clockOffsetMs);
   }
 
   function getMinuteKey(date) {
@@ -267,10 +277,15 @@ export function createClockApp({
 
   async function syncClockOffset() {
     try {
-      state.clockOffsetMs = await timeSyncService.syncClockOffset();
+      const offset = await timeSyncService.syncClockOffset();
+      if (!config.isUsableDate(Date.now() + offset)) throw new Error("Invalid effective time");
+      state.clockOffsetMs = offset;
+      timeSynced = true;
+      apiStatus("clock", "");
       startClockLoop();
     } catch (error) {
       console.warn("Clock sync failed", error);
+      apiStatus("clock", timeSynced ? "時刻：前回同期値" : "時刻：端末時刻");
     }
   }
 
@@ -325,7 +340,9 @@ export function createClockApp({
     now = getNow(),
     { forceLocation = false } = {},
   ) {
+    const request = ++weatherGeneration;
     if (!hasLocationBoundVisibility()) {
+      apiStatus("weather", "");
       setLocationStatus(
         "idle",
         "位置情報: 天気・月齢が無効のため取得していません。",
@@ -335,8 +352,13 @@ export function createClockApp({
     }
 
     const location = await ensureLocation({ force: forceLocation });
+    if (request !== weatherGeneration) return;
     if (!location) {
-      renderClockView(now);
+      if (state.settings.visibility.weather) {
+        state.supplemental.weatherText = DEFAULT_SUPPLEMENTAL_DATA.weatherText;
+        apiStatus("weather", "天気：位置情報未取得");
+      } else apiStatus("weather", "");
+      renderClockView();
       return;
     }
 
@@ -344,11 +366,15 @@ export function createClockApp({
 
     if (state.settings.visibility.weather) {
       tasks.push(
-        weatherService.fetchWeather(location).then((weatherText) => {
-          state.supplemental.weatherText = weatherText;
+        weatherService.fetchWeather(location, {
+          onStatus(message) {
+            if (request === weatherGeneration && state.settings.visibility.weather) apiStatus("weather", message);
+          },
+        }).then((weatherText) => {
+          if (request === weatherGeneration && state.settings.visibility.weather) state.supplemental.weatherText = weatherText;
         }),
       );
-    }
+    } else apiStatus("weather", "");
 
     if (state.settings.visibility.moon) {
       tasks.push(
@@ -359,7 +385,7 @@ export function createClockApp({
     }
 
     await Promise.all(tasks);
-    renderClockView(now);
+    if (request === weatherGeneration) renderClockView();
   }
 
   function scheduleRecurringWork() {

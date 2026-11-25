@@ -5,6 +5,10 @@
   var api = config.api;
   var settings = {};
   var offset = 0;
+  var timeSynced = false;
+  var lastWeather = null;
+  var weatherGeneration = 0;
+  var apiStatus = config.createApiStatus(document);
   var lastDay = "";
   var location = null;
   var locationAt = 0;
@@ -46,22 +50,29 @@
     var tensText = tens === 2 ? "廿" : tens === 3 ? "丗" : (tens === 1 ? "" : digits[tens]) + "十";
     return tensText + (number % 10 ? digits[number % 10] : "");
   }
-  function request(url, callback) {
+  function request(url, callback, failure) {
+    failure = failure || function () {};
     try {
       var xhr = new window.XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.timeout = 8000;
       xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
-          try { callback(JSON.parse(xhr.responseText)); } catch (error) {}
-        }
+          try { callback(JSON.parse(xhr.responseText)); } catch (error) { failure(); }
+        } else failure();
       };
-      xhr.onerror = xhr.ontimeout = function () {};
+      xhr.onerror = xhr.ontimeout = failure;
       xhr.send();
-    } catch (error) {}
+    } catch (error) { failure(); }
   }
   function updateClock() {
-    var now = new Date(new Date().getTime() + offset);
+    var localTime = new Date().getTime();
+    if (!config.isUsableDate(localTime + offset)) {
+      offset = 0;
+      timeSynced = false;
+      apiStatus("clock", "時刻：端末時刻");
+    }
+    var now = new Date(localTime + offset);
     var hour = now.getHours();
     var minutes = now.getMinutes();
     text("hour", pad(hourFormat === "12" ? ((hour + 11) % 12) + 1 : hour));
@@ -88,20 +99,43 @@
   }
   function syncTime() {
     var started = new Date().getTime();
+    function failed() { apiStatus("clock", timeSynced ? "時刻：前回同期値" : "時刻：端末時刻"); }
     request(api.clock, function (data) {
       var serverTime = config.readFiniteNumber(data, "serverTime");
-      if (serverTime === null) return;
       var received = new Date().getTime();
-      offset = serverTime + (received - started) / 2 - received;
+      var next = config.clockOffset(started, received, serverTime);
+      if (next === null) { failed(); return; }
+      offset = next;
+      timeSynced = true;
+      apiStatus("clock", "");
       updateClock();
-    });
+    }, failed);
   }
   function refreshForLocation() {
     var query = "lat=" + location.lat + "&lon=" + location.lon;
-    if (showWeather) request(api.weather + "?" + query, function (data) {
-      var temp = config.readFiniteNumber(data, "temp");
-      if (temp !== null) text("weather", (weatherIcons[data.weather] || "？") + Math.round(temp) + "℃");
-    });
+    var requested = {lat:Number(location.lat), lon:Number(location.lon)};
+    var generation = ++weatherGeneration;
+    if (showWeather) {
+      function failed() {
+        if (generation !== weatherGeneration) return;
+        var cached = lastWeather && config.nearbyWeatherLocation(lastWeather, requested);
+        text("weather", cached ? lastWeather.data : "⛅--℃");
+        apiStatus("weather", cached ? "天気：前回値（更新失敗）" : "天気：未取得");
+      }
+      // Do not keep showing another region while this request is pending.
+      if (!lastWeather || !config.nearbyWeatherLocation(lastWeather, requested)) {
+        text("weather", "⛅--℃");
+      }
+      request(api.weather + "?" + query, function (data) {
+        if (generation !== weatherGeneration) return;
+        var temp = config.readFiniteNumber(data, "temp");
+        if (temp === null) { failed(); return; }
+        var display = (weatherIcons[data.weather] || "？") + Math.round(temp) + "℃";
+        lastWeather = {lat:requested.lat, lon:requested.lon, data:display};
+        text("weather", display);
+        apiStatus("weather", "");
+      }, failed);
+    }
     if (showMoon) request(api.moon + "?" + query, function (data) {
       var age = data.result && data.result[0] ? parseFloat(data.result[0].age) : NaN;
       if (!isFinite(age)) return;
@@ -117,17 +151,27 @@
       refreshForLocation();
       return;
     }
-    if (!navigator.geolocation || locating) return;
+    function locationFailed() {
+      locating = false;
+      location = null;
+      weatherGeneration++;
+      if (showWeather) {
+        text("weather", "⛅--℃");
+        apiStatus("weather", "天気：位置情報未取得");
+      }
+    }
+    if (!navigator.geolocation) { locationFailed(); return; }
+    if (locating) return;
     locating = true;
     navigator.geolocation.getCurrentPosition(function (position) {
       locating = false;
       var lat = position.coords.latitude;
       var lon = position.coords.longitude;
-      if (!isFinite(lat) || !isFinite(lon)) return;
+      if (typeof lat !== "number" || typeof lon !== "number" || !isFinite(lat) || !isFinite(lon)) { locationFailed(); return; }
       location = { lat: lat.toFixed(4), lon: lon.toFixed(4) };
       locationAt = new Date().getTime();
       refreshForLocation();
-    }, function () { locating = false; }, {
+    }, locationFailed, {
       enableHighAccuracy: false,
       maximumAge: force ? 0 : LOCATION_MAX_AGE_MS,
       timeout: 8000
