@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { DEFAULT_SUPPLEMENTAL_DATA, WEATHER_CACHE_KEY } from "../scripts/constants.mjs";
+import { DEFAULT_SUPPLEMENTAL_DATA, WEATHER_CACHE_KEY, WEATHER_CACHE_LOCATION_TOLERANCE } from "../scripts/constants.mjs";
 import {
   createLocationService,
   createTimeSyncService,
@@ -363,4 +363,10 @@ test("weather recovery accepts decimal text, preserves in-memory good data when 
   payload={temp:"13.5",weather:"Rain"};
   assert.equal(await service.fetchWeather({lat:36,lon:140},{onStatus:s=>status.push(s)}),"🌧14℃");
   assert.deepEqual(status,["","天気：未取得",""]);
+});
+
+test("old module import remains available and uses the shared weather proximity contract",()=>{
+  assert.equal(WEATHER_CACHE_LOCATION_TOLERANCE,globalThis.StandbyConfig.weatherLocationTolerance);
+  assert.equal(globalThis.StandbyConfig.nearbyWeatherLocation({lat:0,lon:0},{lat:0.01,lon:0}),true);
+  assert.equal(globalThis.StandbyConfig.nearbyWeatherLocation({lat:0,lon:0},{lat:0.02,lon:0}),false);
 });

@@ -1,3 +1,5 @@
+import "../shared/config.js";
+
 export const DEFAULT_SETTINGS = Object.freeze({
   clock: {
     showSeconds: true,
@@ -63,6 +65,9 @@ export const DATA_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 export const WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
 export const LOCATION_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
 export const API_REQUEST_TIMEOUT_MS = 8000;
+// Compatibility export: older cached services still import this name.
+// The literal is solely a fallback for a cached pre-contract config.
+export const WEATHER_CACHE_LOCATION_TOLERANCE = (typeof window !== "undefined" ? window : globalThis).StandbyConfig?.weatherLocationTolerance ?? 0.01;
 export const WEATHER_CACHE_KEY = "standby-display:weather-cache";
 export const SETTINGS_STORAGE_KEY = "standby-display:settings";
 export const STATUS_MESSAGE_TIMEOUT_MS = 2200;

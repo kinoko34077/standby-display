@@ -26,11 +26,12 @@
     var offset = effective - received;
     return isUsableDate(effective) && isUsableDate(received + offset) ? offset : null;
   }
+  var weatherLocationTolerance = 0.01;
   function nearby(a, b) {
     return !!a && !!b && typeof a.lat === "number" && typeof a.lon === "number" &&
       typeof b.lat === "number" && typeof b.lon === "number" &&
       isFinite(a.lat) && isFinite(a.lon) && isFinite(b.lat) && isFinite(b.lon) &&
-      Math.abs(a.lat - b.lat) <= 0.01 && Math.abs(a.lon - b.lon) <= 0.01;
+      Math.abs(a.lat - b.lat) <= weatherLocationTolerance && Math.abs(a.lon - b.lon) <= weatherLocationTolerance;
   }
   function createApiStatus(document) {
     var messages = { clock: "", weather: "" };
@@ -54,6 +55,7 @@
     isUsableDate: isUsableDate,
     clockOffset: clockOffset,
     nearbyWeatherLocation: nearby,
+    weatherLocationTolerance: weatherLocationTolerance,
     createApiStatus: createApiStatus,
     settingsKey: "standby-display:settings"
   };
