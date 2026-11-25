@@ -8,7 +8,7 @@
   var timeSynced = false;
   var lastWeather = null;
   var weatherGeneration = 0;
-  var apiStatus = config.createApiStatus(document);
+  var apiStatus = typeof config.createApiStatus === "function" ? config.createApiStatus(document) : function () {};
   var lastDay = "";
   var location = null;
   var locationAt = 0;
@@ -67,7 +67,7 @@
   }
   function updateClock() {
     var localTime = new Date().getTime();
-    if (!config.isUsableDate(localTime + offset)) {
+    if (!isFinite(new Date(localTime + offset).getTime())) {
       offset = 0;
       timeSynced = false;
       apiStatus("clock", "時刻：端末時刻");
@@ -118,12 +118,12 @@
     if (showWeather) {
       function failed() {
         if (generation !== weatherGeneration) return;
-        var cached = lastWeather && config.nearbyWeatherLocation(lastWeather, requested);
+        var cached = lastWeather && typeof config.nearbyWeatherLocation === "function" && config.nearbyWeatherLocation(lastWeather, requested);
         text("weather", cached ? lastWeather.data : "⛅--℃");
         apiStatus("weather", cached ? "天気：前回値（更新失敗）" : "天気：未取得");
       }
       // Do not keep showing another region while this request is pending.
-      if (!lastWeather || !config.nearbyWeatherLocation(lastWeather, requested)) {
+      if (!lastWeather || typeof config.nearbyWeatherLocation !== "function" || !config.nearbyWeatherLocation(lastWeather, requested)) {
         text("weather", "⛅--℃");
       }
       request(api.weather + "?" + query, function (data) {

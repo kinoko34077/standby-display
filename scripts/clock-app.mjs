@@ -96,9 +96,12 @@ export function createClockApp({
   );
 
   const config = globalThis.StandbyConfig;
-  const apiStatus = config.createApiStatus(document);
+  // A cached older shared config must not turn optional API features into a
+  // startup dependency. The data services will degrade until files update.
+  const apiStatus = config?.createApiStatus?.(document) ?? (() => {});
   let timeSynced = false;
   let weatherGeneration = 0;
+  let weatherDisplayLocation = null;
   const state = {
     settings: sanitizeSettings(
       mergeSettings(DEFAULT_SETTINGS, persistedSettings, urlSettings),
@@ -120,7 +123,7 @@ export function createClockApp({
 
   function getNow() {
     const now = Date.now();
-    if (!config.isUsableDate(now + state.clockOffsetMs)) {
+    if (!Number.isFinite(new Date(now + state.clockOffsetMs).getTime())) {
       state.clockOffsetMs = 0;
       timeSynced = false;
       apiStatus("clock", "時刻：端末時刻");
@@ -355,6 +358,7 @@ export function createClockApp({
     if (request !== weatherGeneration) return;
     if (!location) {
       if (state.settings.visibility.weather) {
+        weatherDisplayLocation = null;
         state.supplemental.weatherText = DEFAULT_SUPPLEMENTAL_DATA.weatherText;
         apiStatus("weather", "天気：位置情報未取得");
       } else apiStatus("weather", "");
@@ -365,13 +369,21 @@ export function createClockApp({
     const tasks = [];
 
     if (state.settings.visibility.weather) {
+      if (!config?.nearbyWeatherLocation?.(weatherDisplayLocation, location)) {
+        state.supplemental.weatherText = DEFAULT_SUPPLEMENTAL_DATA.weatherText;
+        apiStatus("weather", "天気：取得中");
+        renderClockView();
+      }
       tasks.push(
         weatherService.fetchWeather(location, {
           onStatus(message) {
             if (request === weatherGeneration && state.settings.visibility.weather) apiStatus("weather", message);
           },
         }).then((weatherText) => {
-          if (request === weatherGeneration && state.settings.visibility.weather) state.supplemental.weatherText = weatherText;
+          if (request === weatherGeneration && state.settings.visibility.weather) {
+            weatherDisplayLocation = location;
+            state.supplemental.weatherText = weatherText;
+          }
         }),
       );
     } else apiStatus("weather", "");

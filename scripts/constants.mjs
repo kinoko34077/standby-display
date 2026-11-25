@@ -63,7 +63,6 @@ export const DATA_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 export const WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
 export const LOCATION_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
 export const API_REQUEST_TIMEOUT_MS = 8000;
-export const WEATHER_CACHE_LOCATION_TOLERANCE = 0.01;
 export const WEATHER_CACHE_KEY = "standby-display:weather-cache";
 export const SETTINGS_STORAGE_KEY = "standby-display:settings";
 export const STATUS_MESSAGE_TIMEOUT_MS = 2200;

@@ -86,7 +86,7 @@ test("manual modes preserve settings and fallback does not force a redirect loop
   assert.match(state.redirect, /legacy\/\?sec=0&bg=112233#clock$/);
 });
 
-function legacyPage({ search = "", storage = "{}", blockedStorage = false, when = new Date(2026, 8, 7, 13, 5, 9), locate = false } = {}) {
+function legacyPage({ search = "", storage = "{}", blockedStorage = false, when = new Date(2026, 8, 7, 13, 5, 9), locate = false, oldConfig = false } = {}) {
   const elements = new Map();
   const element = id => {
     if (!elements.has(id)) elements.set(id, { textContent: "", style: {}, href: "" });
@@ -115,6 +115,7 @@ function legacyPage({ search = "", storage = "{}", blockedStorage = false, when 
   } } } : {};
   const context = vm.createContext({ window, document, navigator, Date: ClockDate });
   vm.runInContext(config, context);
+  if (oldConfig) window.StandbyConfig = {api:window.StandbyConfig.api,settingsKey:window.StandbyConfig.settingsKey};
   vm.runInContext(legacy, context);
   function respond(request, payload, status = 200) { request.status = status; request.responseText = JSON.stringify(payload); request.onload(); }
   return {
@@ -361,4 +362,13 @@ test("legacy time and weather use the same finite-number response contract", () 
   state.runInterval(900000,new Date(when.getTime()+1800000));
   state.respond(state.requests.filter(x=>x.url.includes("/v1/weather")).at(-1),{temp:null});
   assert.equal(state.element("weather").textContent,"⛅--℃");
+});
+
+test("older cached shared config leaves legacy clock running",()=>{
+  const state=legacyPage({oldConfig:true,locate:true});
+  state.respond(state.requests.find(x=>x.url.includes("/v1/time")),{serverTime:null});
+  state.respond(state.requests.find(x=>x.url.includes("/v1/weather")),{temp:null});
+  state.tick(new Date(2026,8,7,13,5,10));
+  assert.equal(state.element("hour").textContent,"13");
+  assert.equal(state.element("seconds").textContent,":10");
 });

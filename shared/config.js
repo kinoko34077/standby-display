@@ -9,7 +9,10 @@
     if (typeof value === "string") {
       value = value.trim();
       if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)) return null;
+      var decimal = value;
       value = Number(value);
+      // A nonzero decimal that underflows to zero is not an equivalent value.
+      if (value === 0 && /[1-9]/.test(decimal.split(/[eE]/)[0])) return null;
     }
     return typeof value === "number" && isFinite(value) ? value : null;
   }
