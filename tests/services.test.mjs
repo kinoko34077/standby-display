@@ -318,7 +318,7 @@ test("fetchJson clears its timeout after a successful response", async () => {
 
 test("time sync rejects malformed success payloads rather than coercing a clock offset", async () => {
   for (const payload of [null, 0, false, [], {}, { serverTime: null }, { serverTime: "" },
-    { serverTime: false }, { serverTime: "123ms" }, { serverTime: "0x10" }, { serverTime: [] },
+    { serverTime: false }, { serverTime: "123ms" }, { serverTime: "0x10" }, { serverTime: "1e-999" }, { serverTime: [] },
     { serverTime: NaN }, { serverTime: Infinity }]) {
     const service = createTimeSyncService(async () => ({ ok: true, json: async () => payload }));
     await assert.rejects(service.syncClockOffset(), /Invalid serverTime payload/);

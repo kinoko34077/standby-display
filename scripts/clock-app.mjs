@@ -95,7 +95,7 @@ export function createClockApp({
     globalThis.StandbyConfig?.api?.textTransform,
   );
 
-  const config = globalThis.StandbyConfig;
+  const config = (typeof window !== "undefined" ? window : globalThis).StandbyConfig;
   // A cached older shared config must not turn optional API features into a
   // startup dependency. The data services will degrade until files update.
   const apiStatus = config?.createApiStatus?.(document) ?? (() => {});

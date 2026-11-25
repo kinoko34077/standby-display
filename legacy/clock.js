@@ -130,7 +130,8 @@
         if (generation !== weatherGeneration) return;
         var temp = config.readFiniteNumber(data, "temp");
         if (temp === null) { failed(); return; }
-        var display = (weatherIcons[data.weather] || "？") + Math.round(temp) + "℃";
+        var icon = Object.prototype.hasOwnProperty.call(weatherIcons, data.weather) ? weatherIcons[data.weather] : "？";
+        var display = icon + Math.round(temp) + "℃";
         lastWeather = {lat:requested.lat, lon:requested.lon, data:display};
         text("weather", display);
         apiStatus("weather", "");

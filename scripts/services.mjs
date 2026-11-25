@@ -126,7 +126,7 @@ export function createWeatherService(fetchImpl, storage) {
     async fetchWeather(location, { onStatus = () => {} } = {}) {
       const request = ++generation;
       const now = Date.now();
-      const cachedWeather = lastGood && config.nearbyWeatherLocation(lastGood, location) &&
+      const cachedWeather = lastGood && config.nearbyWeatherLocation?.(lastGood, location) &&
         lastGood.timestamp <= now ? lastGood : null;
       if (cachedWeather && now - cachedWeather.timestamp < WEATHER_CACHE_TTL_MS) {
         onStatus("");
@@ -142,7 +142,7 @@ export function createWeatherService(fetchImpl, storage) {
         if (temp === null) {
           throw new Error("Invalid weather temperature payload");
         }
-        const icon = WEATHER_ICON_MAP[weather.weather] || "？";
+        const icon = Object.hasOwn(WEATHER_ICON_MAP, weather.weather) ? WEATHER_ICON_MAP[weather.weather] : "？";
         const temperature = `${Math.round(temp)}℃`;
         const displayText = `${icon}${temperature}`;
 

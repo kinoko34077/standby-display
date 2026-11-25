@@ -450,6 +450,7 @@ try{
   // geometry coverage; the existing exact-face assertions above remain.
   try {
     await client.call("Network.enable");
+    await client.call("Network.setCacheDisabled",{cacheDisabled:true});
     await client.call("Network.setBlockedURLs",{urls:["*fonts.cdnfonts.com/*","*unpkg.com/*"]});
     const setup = await client.call("Page.addScriptToEvaluateOnNewDocument",{source:`
       (() => {
@@ -507,6 +508,7 @@ try{
     console.log("PASS real-entry API degradation/recovery and font fallback (original face not claimed)");
     await client.call("Page.removeScriptToEvaluateOnNewDocument",{identifier:setup.identifier});
     await client.call("Network.setBlockedURLs",{urls:[]});
+    await client.call("Network.setCacheDisabled",{cacheDisabled:false});
   }catch(e){
     failed++;console.error("FAIL real-entry API degradation/recovery and font fallback",e.message);
   }
