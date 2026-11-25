@@ -11,7 +11,8 @@
     },
     // A successful HTTP response can still contain invalid measurement data.
     readFiniteNumber: function (payload, key) {
-      var value = payload && payload[key];
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+      var value = payload[key];
       return typeof value === "number" && isFinite(value) ? value : null;
     },
     settingsKey: "standby-display:settings"

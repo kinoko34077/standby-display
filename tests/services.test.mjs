@@ -317,7 +317,7 @@ test("fetchJson clears its timeout after a successful response", async () => {
 });
 
 test("time sync rejects malformed success payloads rather than coercing a clock offset", async () => {
-  for (const payload of [null, {}, { serverTime: null }, { serverTime: "" },
+  for (const payload of [null, 0, false, [], {}, { serverTime: null }, { serverTime: "" },
     { serverTime: false }, { serverTime: "123" }, { serverTime: [] },
     { serverTime: NaN }, { serverTime: Infinity }]) {
     const service = createTimeSyncService(async () => ({ ok: true, json: async () => payload }));
@@ -331,7 +331,7 @@ test("time sync rejects malformed success payloads rather than coercing a clock 
 
 test("invalid weather measurements do not create a false display or overwrite cached data", async () => {
   const saved = JSON.stringify({timestamp: Date.now() - 3600000, lat: 35, lon: 139, data: "☀21℃"});
-  for (const payload of [null, {}, {temp:null}, {temp:""}, {temp:false}, {temp:"21"},
+  for (const payload of [null, 0, false, [], {}, {temp:null}, {temp:""}, {temp:false}, {temp:"21"},
     {temp:[]}, {temp:NaN}, {temp:Infinity}]) {
     const storage = createStorage(saved);
     const service = createWeatherService(createWeatherFetch(payload).fetchImpl, storage);

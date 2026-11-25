@@ -339,7 +339,9 @@ test("legacy time and weather use the same finite-number response contract", () 
     assert.equal(state.element("weather").textContent, "☀0℃");
   }
   state.respond(time, {});
+  state.respond(time, 0);
   state.respond(weather, null);
+  state.respond(weather, 0);
   assert.equal(state.element("hour").textContent, "14");
   assert.equal(state.element("weather").textContent, "☀0℃");
   state.respond(time, {serverTime:when.getTime()});
