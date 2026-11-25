@@ -1,5 +1,6 @@
 import "../shared/config.js";
-const API_ENDPOINTS = (typeof window !== "undefined" ? window : globalThis).StandbyConfig.api;
+const config = (typeof window !== "undefined" ? window : globalThis).StandbyConfig;
+const API_ENDPOINTS = config.api;
 
 import {
   API_REQUEST_TIMEOUT_MS,
@@ -21,9 +22,9 @@ export function createTimeSyncService(fetchImpl) {
         API_ENDPOINTS.clock,
       );
       const responseReceivedAt = Date.now();
-      const serverTime = Number(response.serverTime);
+      const serverTime = config.readFiniteNumber(response, "serverTime");
 
-      if (!Number.isFinite(serverTime)) {
+      if (serverTime === null) {
         throw new Error("Invalid serverTime payload");
       }
 
@@ -137,8 +138,12 @@ export function createWeatherService(fetchImpl, storage) {
           fetchImpl,
           `${API_ENDPOINTS.weather}?lat=${location.lat}&lon=${location.lon}`,
         );
+        const temp = config.readFiniteNumber(weather, "temp");
+        if (temp === null) {
+          throw new Error("Invalid weather temperature payload");
+        }
         const icon = WEATHER_ICON_MAP[weather.weather] || "？";
-        const temperature = `${Math.round(weather.temp)}℃`;
+        const temperature = `${Math.round(temp)}℃`;
         const displayText = `${icon}${temperature}`;
 
         writeWeatherCache(storage, {

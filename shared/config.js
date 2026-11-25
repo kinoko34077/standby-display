@@ -9,6 +9,11 @@
       moon: "https://api.kinotch.workers.dev/v1/astronomy/moon",
       textTransform: "https://api.kinotch.workers.dev"
     },
+    // A successful HTTP response can still contain invalid measurement data.
+    readFiniteNumber: function (payload, key) {
+      var value = payload && payload[key];
+      return typeof value === "number" && isFinite(value) ? value : null;
+    },
     settingsKey: "standby-display:settings"
   };
 }(typeof window !== "undefined" ? window : globalThis));

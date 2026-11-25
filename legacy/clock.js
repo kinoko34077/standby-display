@@ -89,16 +89,18 @@
   function syncTime() {
     var started = new Date().getTime();
     request(api.clock, function (data) {
-      if (typeof data.serverTime !== "number" || !isFinite(data.serverTime)) return;
+      var serverTime = config.readFiniteNumber(data, "serverTime");
+      if (serverTime === null) return;
       var received = new Date().getTime();
-      offset = data.serverTime + (received - started) / 2 - received;
+      offset = serverTime + (received - started) / 2 - received;
       updateClock();
     });
   }
   function refreshForLocation() {
     var query = "lat=" + location.lat + "&lon=" + location.lon;
     if (showWeather) request(api.weather + "?" + query, function (data) {
-      if (typeof data.temp === "number" && isFinite(data.temp)) text("weather", (weatherIcons[data.weather] || "？") + Math.round(data.temp) + "℃");
+      var temp = config.readFiniteNumber(data, "temp");
+      if (temp !== null) text("weather", (weatherIcons[data.weather] || "？") + Math.round(temp) + "℃");
     });
     if (showMoon) request(api.moon + "?" + query, function (data) {
       var age = data.result && data.result[0] ? parseFloat(data.result[0].age) : NaN;

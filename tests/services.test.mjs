@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { WEATHER_CACHE_KEY } from "../scripts/constants.mjs";
+import { DEFAULT_SUPPLEMENTAL_DATA, WEATHER_CACHE_KEY } from "../scripts/constants.mjs";
 import {
   createLocationService,
+  createTimeSyncService,
   createWeatherService,
   estimateClockOffset,
   fetchJson,
@@ -313,4 +314,32 @@ test("fetchJson clears its timeout after a successful response", async () => {
 
   assert.deepEqual(result, { ok: true });
   assert.equal(cleared, 17);
+});
+
+test("time sync rejects malformed success payloads rather than coercing a clock offset", async () => {
+  for (const payload of [null, {}, { serverTime: null }, { serverTime: "" },
+    { serverTime: false }, { serverTime: "123" }, { serverTime: [] },
+    { serverTime: NaN }, { serverTime: Infinity }]) {
+    const service = createTimeSyncService(async () => ({ ok: true, json: async () => payload }));
+    await assert.rejects(service.syncClockOffset(), /Invalid serverTime payload/);
+  }
+  for (const serverTime of [0, Date.now()]) {
+    const service = createTimeSyncService(async () => ({ ok: true, json: async () => ({ serverTime }) }));
+    assert.ok(Number.isFinite(await service.syncClockOffset()));
+  }
+});
+
+test("invalid weather measurements do not create a false display or overwrite cached data", async () => {
+  const saved = JSON.stringify({timestamp: Date.now() - 3600000, lat: 35, lon: 139, data: "☀21℃"});
+  for (const payload of [null, {}, {temp:null}, {temp:""}, {temp:false}, {temp:"21"},
+    {temp:[]}, {temp:NaN}, {temp:Infinity}]) {
+    const storage = createStorage(saved);
+    const service = createWeatherService(createWeatherFetch(payload).fetchImpl, storage);
+    assert.equal(await service.fetchWeather({lat:35,lon:139}), DEFAULT_SUPPLEMENTAL_DATA.weatherText);
+    assert.equal(storage.read(), saved);
+  }
+  const storage = createStorage();
+  const service = createWeatherService(createWeatherFetch({temp:0,weather:"Clear"}).fetchImpl, storage);
+  assert.equal(await service.fetchWeather({lat:35,lon:139}), "☀0℃");
+  assert.equal(JSON.parse(storage.read()).data, "☀0℃");
 });

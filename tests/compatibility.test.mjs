@@ -322,3 +322,28 @@ test("kanji conversion rejects an incompatible canonical probe and keeps local f
   assert.equal(await service.initialize(), false);
   assert.equal(service.convertNewToOld("国亀気旧暦体"), "國龜氣舊曆體");
 });
+
+test("legacy time and weather use the same finite-number response contract", () => {
+  const when = new Date(2026, 8, 7, 13, 5, 9);
+  const state = legacyPage({ when, locate:true });
+  const time = state.requests.find(x => x.url.includes("/v1/time"));
+  const weather = state.requests.find(x => x.url.includes("/v1/weather"));
+  state.respond(time, {serverTime: when.getTime() + 3600000});
+  state.respond(weather, {temp:0,weather:"Clear"});
+  assert.equal(state.element("hour").textContent, "14");
+  assert.equal(state.element("weather").textContent, "☀0℃");
+  for (const value of [null, "", false, "21", []]) {
+    state.respond(time, {serverTime:value});
+    state.respond(weather, {temp:value,weather:"Rain"});
+    assert.equal(state.element("hour").textContent, "14");
+    assert.equal(state.element("weather").textContent, "☀0℃");
+  }
+  state.respond(time, {});
+  state.respond(weather, null);
+  assert.equal(state.element("hour").textContent, "14");
+  assert.equal(state.element("weather").textContent, "☀0℃");
+  state.respond(time, {serverTime:when.getTime()});
+  state.respond(weather, {temp:12.6,weather:"Rain"});
+  assert.equal(state.element("hour").textContent, "13");
+  assert.equal(state.element("weather").textContent, "🌧13℃");
+});
