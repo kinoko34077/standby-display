@@ -142,7 +142,7 @@ export function createWeatherService(fetchImpl, storage) {
         if (temp === null) {
           throw new Error("Invalid weather temperature payload");
         }
-        const icon = Object.hasOwn(WEATHER_ICON_MAP, weather.weather) ? WEATHER_ICON_MAP[weather.weather] : "？";
+        const icon = Object.prototype.hasOwnProperty.call(WEATHER_ICON_MAP, weather.weather) ? WEATHER_ICON_MAP[weather.weather] : "？";
         const temperature = `${Math.round(temp)}℃`;
         const displayText = `${icon}${temperature}`;
 
