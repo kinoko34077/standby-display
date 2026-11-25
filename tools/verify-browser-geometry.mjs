@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, statSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve, sep } from "node:path";
@@ -153,7 +153,7 @@ async function serve() {
       return;
     }
     const full = resolve(root, "." + requestPath);
-    if (!full.startsWith(root + sep) || !existsSync(full)) {
+    if (!full.startsWith(root + sep) || !existsSync(full) || !statSync(full).isFile()) {
       res.writeHead(404);
       res.end("Not found");
       return;
@@ -444,6 +444,73 @@ try{
     }catch(e){
       failed++;console.error("FAIL",ident,e.message);
     }
+  }
+  // A separate real-entry test deliberately denies external font delivery
+  // and injects recoverable API failures. It cannot count as original-font
+  // geometry coverage; the existing exact-face assertions above remain.
+  try {
+    await client.call("Network.enable");
+    await client.call("Network.setCacheDisabled",{cacheDisabled:true});
+    await client.call("Network.setBlockedURLs",{urls:["*fonts.cdnfonts.com/*","*unpkg.com/*"]});
+    const setup = await client.call("Page.addScriptToEvaluateOnNewDocument",{source:`
+      (() => {
+        const realNow=Date.now.bind(Date), nativeFetch=window.fetch.bind(window);
+        const nativeInterval=window.setInterval.bind(window);
+        window.probe={good:false,advance:0,periodic:{}};
+        Date.now=()=>realNow()+window.probe.advance;
+        Object.defineProperty(navigator,"geolocation",{configurable:true,value:{getCurrentPosition(success){success({coords:{latitude:35,longitude:139}});}}});
+        if(navigator.serviceWorker) navigator.serviceWorker.register=async()=>({addEventListener(){}});
+        window.setInterval=(fn,ms,...args)=>{
+          if(ms===900000||ms===3600000) window.probe.periodic[ms]=()=>fn(...args);
+          return nativeInterval(fn,ms,...args);
+        };
+        window.fetch=async(input,init)=>{
+          const target=new URL(typeof input==="string"?input:input.url,location.href);
+          if(target.hostname!=="api.kinotch.workers.dev")return nativeFetch(input,init);
+          let data;
+          if(target.pathname==="/v1/time") data={serverTime:window.probe.good?String(Date.now()):1e20};
+          else if(target.pathname==="/v1/weather") data=window.probe.good?{temp:"21.4",weather:"Clear"}:{temp:null};
+          else if(target.pathname==="/v1/calendar/rokuyo") data=[{rokuyo:"友引"}];
+          else if(target.pathname==="/v1/astronomy/moon") data={result:[{age:15}]};
+          else return new Response("{}",{status:503});
+          return new Response(JSON.stringify(data),{status:200,headers:{"Content-Type":"application/json"}});
+        };
+      })();
+    `});
+    await client.call("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await client.call("Page.navigate",{url:new URL("/index.html?clockfont=d7",url).href});
+    async function waitFor(expr) {
+      for(let i=0;i<100;i++){try{if(await client.eval(expr,4000))return;}catch{}await sleep(100);}
+      throw Error("Recovery probe did not reach "+expr);
+    }
+    await waitFor('document.documentElement.dataset.clockMode==="modern" && document.getElementById("api-status")?.textContent.includes("天気：未取得") && document.getElementById("api-status").textContent.includes("端末時刻")');
+    const snapshot='JSON.stringify([document.querySelector(".clock-panel"),document.querySelector(".settings-trigger-layer")].map(el=>{const r=el.getBoundingClientRect();return [r.x,r.y,r.width,r.height]}))';
+    const before=await client.eval(snapshot);
+    assert(await client.eval('/^\\d{2}$/.test(document.getElementById("hour").textContent) && document.getElementById("hour").textContent!=="88" && document.getElementById("weather").textContent.includes("--")'),"Degraded clock/weather invalid");
+    const seconds=await client.eval('document.getElementById("seconds").textContent');
+    await waitFor('document.getElementById("seconds").textContent!=='+JSON.stringify(seconds));
+    assert(await client.eval('document.fonts.ready.then(()=>!Array.from(document.fonts).some(f=>f.family.replace(/^[\'"]|[\'"]$/g,"")==="Digital-7"&&f.status==="loaded"))'),"Original face unexpectedly loaded under blocked network");
+    await client.eval('window.probe.good=true;window.probe.periodic[3600000]();window.probe.periodic[900000]();true');
+    await waitFor('document.getElementById("weather").textContent==="☀21℃" && document.getElementById("api-status").textContent===""');
+    assert(await client.eval(snapshot)===before,"Degradation/recovery moved clock or control container");
+    await client.eval('window.probe.good=false;window.probe.advance=960000;window.probe.periodic[3600000]();window.probe.periodic[900000]();true');
+    await waitFor('document.getElementById("api-status").textContent.includes("前回同期値") && document.getElementById("api-status").textContent.includes("前回値（更新失敗）")');
+    assert(await client.eval('document.getElementById("weather").textContent==="☀21℃"'),"Last good weather was lost");
+    assert(await client.eval(snapshot)===before,"Status changed layout");
+    await client.eval('document.getElementById("settings-open").click();true');
+    await waitFor('document.body.dataset.settingsOpen==="true"');
+    await client.eval('document.getElementById("settings-close").click();true');
+    await waitFor('document.body.dataset.settingsOpen==="false"');
+    const capture=await client.call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
+    await writeFile(join(artifactDir,"api-and-font-degraded-entry.png"),Buffer.from(capture.data,"base64"));
+    const line=await client.eval('(()=>{const r=document.querySelector(".time-line").getBoundingClientRect();return {top:r.top,bottom:r.bottom}})()');
+    sampleClock(png(capture.data),line);
+    console.log("PASS real-entry API degradation/recovery and font fallback (original face not claimed)");
+    await client.call("Page.removeScriptToEvaluateOnNewDocument",{identifier:setup.identifier});
+    await client.call("Network.setBlockedURLs",{urls:[]});
+    await client.call("Network.setCacheDisabled",{cacheDisabled:false});
+  }catch(e){
+    failed++;console.error("FAIL real-entry API degradation/recovery and font fallback",e.message);
   }
   ws.close();
 }finally{

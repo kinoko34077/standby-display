@@ -996,3 +996,7 @@ body[data-settings-open="true"] .settings-trigger-layer {
   }
 
 }
+
+/* Out-of-flow diagnostic: data degradation never moves clock or controls. */
+.api-status { position: fixed; right: 8px; bottom: 8px; z-index: 3; max-width: 48%; font: 12px/1.3 sans-serif; color: inherit; opacity: .85; pointer-events: none; text-align: right; }
+.api-status:empty { display: none; }

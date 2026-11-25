@@ -86,7 +86,7 @@ test("manual modes preserve settings and fallback does not force a redirect loop
   assert.match(state.redirect, /legacy\/\?sec=0&bg=112233#clock$/);
 });
 
-function legacyPage({ search = "", storage = "{}", blockedStorage = false, when = new Date(2026, 8, 7, 13, 5, 9), locate = false } = {}) {
+function legacyPage({ search = "", storage = "{}", blockedStorage = false, when = new Date(2026, 8, 7, 13, 5, 9), locate = false, oldConfig = false } = {}) {
   const elements = new Map();
   const element = id => {
     if (!elements.has(id)) elements.set(id, { textContent: "", style: {}, href: "" });
@@ -115,6 +115,7 @@ function legacyPage({ search = "", storage = "{}", blockedStorage = false, when 
   } } } : {};
   const context = vm.createContext({ window, document, navigator, Date: ClockDate });
   vm.runInContext(config, context);
+  if (oldConfig) window.StandbyConfig = {api:window.StandbyConfig.api,settingsKey:window.StandbyConfig.settingsKey};
   vm.runInContext(legacy, context);
   function respond(request, payload, status = 200) { request.status = status; request.responseText = JSON.stringify(payload); request.onload(); }
   return {
@@ -321,4 +322,53 @@ test("kanji conversion rejects an incompatible canonical probe and keeps local f
 
   assert.equal(await service.initialize(), false);
   assert.equal(service.convertNewToOld("国亀気旧暦体"), "國龜氣舊曆體");
+});
+
+test("legacy time and weather use the same finite-number response contract", () => {
+  const when = new Date(2026, 8, 7, 13, 5, 9);
+  const state = legacyPage({ when, locate:true });
+  const time = state.requests.find(x => x.url.includes("/v1/time"));
+  const weather = state.requests.find(x => x.url.includes("/v1/weather"));
+  state.respond(time, {serverTime: when.getTime() + 3600000});
+  state.respond(weather, {temp:0,weather:"Clear"});
+  assert.equal(state.element("hour").textContent, "14");
+  assert.equal(state.element("weather").textContent, "☀0℃");
+  for (const value of [null, "", false, "21C", []]) {
+    state.respond(time, {serverTime:value});
+    state.respond(weather, {temp:value,weather:"Rain"});
+    assert.equal(state.element("hour").textContent, "14");
+    assert.equal(state.element("weather").textContent, "☀0℃");
+  }
+  state.respond(time, {});
+  state.respond(time, {serverTime:1e20});
+  state.respond(time, 0);
+  state.respond(weather, null);
+  state.respond(weather, 0);
+  assert.equal(state.element("hour").textContent, "14");
+  assert.equal(state.element("weather").textContent, "☀0℃");
+  assert.match(state.element("api-status").textContent, /前回同期値.*前回値/);
+  state.respond(time, {serverTime:String(when.getTime())});
+  state.respond(weather, {temp:"12.6",weather:"Rain"});
+  assert.equal(state.element("hour").textContent, "13");
+  assert.equal(state.element("weather").textContent, "🌧13℃");
+  assert.equal(state.element("api-status").textContent, "");
+  state.tick(new Date(when.getTime()+1000));
+  assert.equal(state.element("seconds").textContent, ":10");
+  state.runInterval(900000,new Date(when.getTime()+900000));
+  const next = state.requests.filter(x=>x.url.includes("/v1/weather")).at(-1);
+  state.respond(next,{temp:null});
+  // Test harness shifts both coordinates by ~0.01 degrees; use a distant
+  // location through successive refreshes rather than assume float equality.
+  state.runInterval(900000,new Date(when.getTime()+1800000));
+  state.respond(state.requests.filter(x=>x.url.includes("/v1/weather")).at(-1),{temp:null});
+  assert.equal(state.element("weather").textContent,"⛅--℃");
+});
+
+test("older cached shared config leaves legacy clock running",()=>{
+  const state=legacyPage({oldConfig:true,locate:true});
+  state.respond(state.requests.find(x=>x.url.includes("/v1/time")),{serverTime:null});
+  state.respond(state.requests.find(x=>x.url.includes("/v1/weather")),{temp:null});
+  state.tick(new Date(2026,8,7,13,5,10));
+  assert.equal(state.element("hour").textContent,"13");
+  assert.equal(state.element("seconds").textContent,":10");
 });

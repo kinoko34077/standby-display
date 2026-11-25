@@ -1,5 +1,6 @@
 import "../shared/config.js";
-const API_ENDPOINTS = (typeof window !== "undefined" ? window : globalThis).StandbyConfig.api;
+const config = (typeof window !== "undefined" ? window : globalThis).StandbyConfig;
+const API_ENDPOINTS = config.api;
 
 import {
   API_REQUEST_TIMEOUT_MS,
@@ -7,7 +8,6 @@ import {
   LOCATION_CACHE_MAX_AGE_MS,
   MOON_PHASE_EMOJIS,
   WEATHER_CACHE_KEY,
-  WEATHER_CACHE_LOCATION_TOLERANCE,
   WEATHER_CACHE_TTL_MS,
   WEATHER_ICON_MAP,
 } from "./constants.mjs";
@@ -21,9 +21,9 @@ export function createTimeSyncService(fetchImpl) {
         API_ENDPOINTS.clock,
       );
       const responseReceivedAt = Date.now();
-      const serverTime = Number(response.serverTime);
+      const serverTime = config.readFiniteNumber(response, "serverTime");
 
-      if (!Number.isFinite(serverTime)) {
+      if (serverTime === null) {
         throw new Error("Invalid serverTime payload");
       }
 
@@ -52,8 +52,9 @@ export function estimateClockOffset({
     throw new Error("Clock sync response precedes request");
   }
 
-  const roundTripTime = responseReceivedAt - requestStartedAt;
-  return serverTime + roundTripTime / 2 - responseReceivedAt;
+  const offset = config.clockOffset(requestStartedAt, responseReceivedAt, serverTime);
+  if (offset === null) throw new Error("Clock sync timestamp outside usable Date range");
+  return offset;
 }
 
 export function createLocationService(
@@ -119,16 +120,16 @@ export function createLocationService(
 }
 
 export function createWeatherService(fetchImpl, storage) {
+  let lastGood = readWeatherCache(storage);
+  let generation = 0;
   return {
-    async fetchWeather(location) {
-      const cachedWeather = readWeatherCache(storage);
+    async fetchWeather(location, { onStatus = () => {} } = {}) {
+      const request = ++generation;
       const now = Date.now();
-
-      if (
-        cachedWeather &&
-        now - cachedWeather.timestamp < WEATHER_CACHE_TTL_MS &&
-        isNearbyLocation(cachedWeather, location)
-      ) {
+      const cachedWeather = lastGood && config.nearbyWeatherLocation?.(lastGood, location) &&
+        lastGood.timestamp <= now ? lastGood : null;
+      if (cachedWeather && now - cachedWeather.timestamp < WEATHER_CACHE_TTL_MS) {
+        onStatus("");
         return cachedWeather.data;
       }
 
@@ -137,21 +138,26 @@ export function createWeatherService(fetchImpl, storage) {
           fetchImpl,
           `${API_ENDPOINTS.weather}?lat=${location.lat}&lon=${location.lon}`,
         );
-        const icon = WEATHER_ICON_MAP[weather.weather] || "？";
-        const temperature = `${Math.round(weather.temp)}℃`;
+        const temp = config.readFiniteNumber(weather, "temp");
+        if (temp === null) {
+          throw new Error("Invalid weather temperature payload");
+        }
+        const icon = Object.prototype.hasOwnProperty.call(WEATHER_ICON_MAP, weather.weather) ? WEATHER_ICON_MAP[weather.weather] : "？";
+        const temperature = `${Math.round(temp)}℃`;
         const displayText = `${icon}${temperature}`;
 
-        writeWeatherCache(storage, {
-          timestamp: now,
-          lat: location.lat,
-          lon: location.lon,
-          data: displayText,
-        });
-
+        if (request === generation) {
+          lastGood = { timestamp: Date.now(), lat: location.lat, lon: location.lon, data: displayText };
+          writeWeatherCache(storage, lastGood);
+          onStatus("");
+        }
         return displayText;
       } catch (error) {
         console.warn("Weather fetch failed", error);
-        return DEFAULT_SUPPLEMENTAL_DATA.weatherText;
+        if (request === generation) {
+          onStatus(cachedWeather ? "天気：前回値（更新失敗）" : "天気：未取得");
+        }
+        return cachedWeather ? cachedWeather.data : DEFAULT_SUPPLEMENTAL_DATA.weatherText;
       }
     },
   };
@@ -271,10 +277,11 @@ function readWeatherCache(storage) {
 
     const parsedCache = JSON.parse(rawCache);
     if (
-      typeof parsedCache?.timestamp !== "number" ||
-      typeof parsedCache?.lat !== "number" ||
-      typeof parsedCache?.lon !== "number" ||
-      typeof parsedCache?.data !== "string"
+      !Number.isFinite(parsedCache?.timestamp) ||
+      !Number.isFinite(parsedCache?.lat) ||
+      !Number.isFinite(parsedCache?.lon) ||
+      typeof parsedCache?.data !== "string" ||
+      !/^(?:☀|☁|🌧|❄|⛈|🌦|🌫|？)-?\d+(?:e[+-]?\d+)?℃$/i.test(parsedCache.data)
     ) {
       return null;
     }
@@ -284,20 +291,6 @@ function readWeatherCache(storage) {
     console.warn("Weather cache read failed", error);
     return null;
   }
-}
-
-function isNearbyLocation(cachedLocation, currentLocation) {
-  if (
-    typeof currentLocation?.lat !== "number" ||
-    typeof currentLocation?.lon !== "number"
-  ) {
-    return false;
-  }
-
-  return (
-    Math.abs(cachedLocation.lat - currentLocation.lat) <= WEATHER_CACHE_LOCATION_TOLERANCE &&
-    Math.abs(cachedLocation.lon - currentLocation.lon) <= WEATHER_CACHE_LOCATION_TOLERANCE
-  );
 }
 
 function writeWeatherCache(storage, value) {
